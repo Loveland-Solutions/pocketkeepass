@@ -10,6 +10,14 @@ Generated with KeePassXC 2.8.0's `keepassxc-cli` on 2026-11-17. The CLI always w
 | `keyfile-only.kdbx` | `keyfile.keyx` (no password) | "Keyfile Entry" |
 | `pw-and-keyfile.kdbx` | password `test-password` + `pw-and-keyfile.keyx` | "Both Entry" |
 
+A fourth KDBX 3.1 file covers attachments, which KDBX 3 stores inside the XML. It was made with `db-create`, `add`, and `attachment-import`:
+
+| File | Unlock with | Contents |
+|---|---|---|
+| `kdbx3-attachment.kdbx` | password `test-password` | "With Files" (attachments `photo.bin` and `notes.txt`, plus history items that reference them), "No Files" |
+
+`attachment-photo.bin` and `attachment-notes.txt` are the original attached files. The tests upgrade this database to KDBX 4, save it, and check that KeePassXC gets the same two files back out.
+
 Each `*.export.xml` is KeePassXC's own decrypted export of the matching database (`keepassxc-cli export --format xml`). The tests use them as an independent answer key: every field we decrypt must match what KeePassXC decrypts.
 
 ## KDBX 4

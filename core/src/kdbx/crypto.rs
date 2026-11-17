@@ -3,7 +3,9 @@
 
 use aes::Aes256;
 use aes::cipher::block_padding::Pkcs7;
-use aes::cipher::{BlockCipherEncrypt, BlockModeDecrypt, KeyInit, KeyIvInit, StreamCipher};
+use aes::cipher::{
+    BlockCipherEncrypt, BlockModeDecrypt, BlockModeEncrypt, KeyInit, KeyIvInit, StreamCipher,
+};
 use chacha20::ChaCha20;
 use salsa20::Salsa20;
 use twofish::Twofish;
@@ -11,7 +13,7 @@ use zeroize::{Zeroize, Zeroizing};
 
 use crate::error::{Error, Result, corrupt};
 use crate::kdbx::header::VariantDictionary;
-use crate::util::{sha256, sha512};
+use crate::util::{random_bytes, sha256, sha512};
 
 /// Parses a UUID like "31C1F2E6-BF71-4350-BE58-05216AFC5AFF" into its 16 stored bytes.
 const fn uuid(s: &str) -> [u8; 16] {
@@ -42,7 +44,7 @@ pub(crate) const CIPHER_AES256: [u8; 16] = uuid("31C1F2E6-BF71-4350-BE58-05216AF
 pub(crate) const CIPHER_CHACHA20: [u8; 16] = uuid("D6038A2B-8B6F-4CB5-A524-339A31DBB59A");
 pub(crate) const CIPHER_TWOFISH: [u8; 16] = uuid("AD68F29F-576F-4BB9-A36A-D47AF965346C");
 
-const KDF_AES: [u8; 16] = uuid("C9D9F39A-628A-4460-BF74-0D08C18A4FEA");
+pub(crate) const KDF_AES: [u8; 16] = uuid("C9D9F39A-628A-4460-BF74-0D08C18A4FEA");
 const KDF_AES_KEEPASSXC: [u8; 16] = uuid("7C02BB82-79A7-4AC0-927D-114A00648238");
 const KDF_ARGON2D: [u8; 16] = uuid("EF636DDF-8C29-444B-91F7-A9A403E30A0C");
 const KDF_ARGON2ID: [u8; 16] = uuid("9E298B19-56DB-4773-B23D-FC3EC6F0A1E6");
@@ -139,6 +141,55 @@ pub(crate) fn kdbx4_kdf(
     Ok(out)
 }
 
+/// Gives the key derivation a fresh random salt, so that every save derives a different key
+/// from the same password. KeePass and KeePassXC do the same.
+pub(crate) fn reseed_kdf(params: &mut VariantDictionary) -> Result<()> {
+    // The AES-KDF seed is an AES-256 key, so it's always 32 bytes. An Argon2 salt can be longer.
+    let len = params.bytes("S").map_or(32, |s| s.len().max(32));
+    let is_aes = params
+        .bytes("$UUID")
+        .is_some_and(|id| id == KDF_AES || id == KDF_AES_KEEPASSXC);
+    let len = if is_aes { 32 } else { len };
+    params.set("S", VariantDictionary::BYTES, random_bytes(len)?.to_vec());
+    Ok(())
+}
+
+/// The IV (or nonce) length each payload cipher needs.
+pub(crate) fn iv_len(cipher_id: &[u8]) -> Result<usize> {
+    match <[u8; 16]>::try_from(cipher_id).ok() {
+        Some(CIPHER_AES256 | CIPHER_TWOFISH) => Ok(16),
+        Some(CIPHER_CHACHA20) => Ok(12),
+        _ => Err(Error::Unsupported("this encryption cipher".into())),
+    }
+}
+
+/// Encrypts the main payload. The exact inverse of [`decrypt_payload`].
+pub(crate) fn encrypt_payload(
+    cipher_id: &[u8],
+    key: &[u8; 32],
+    iv: &[u8],
+    data: &[u8],
+) -> Result<Vec<u8>> {
+    let bad_iv = |_| corrupt("encryption IV has the wrong length");
+    Ok(match <[u8; 16]>::try_from(cipher_id).ok() {
+        Some(CIPHER_AES256) => cbc::Encryptor::<Aes256>::new_from_slices(key, iv)
+            .map_err(bad_iv)?
+            .encrypt_padded_vec::<Pkcs7>(data),
+        Some(CIPHER_TWOFISH) => cbc::Encryptor::<Twofish>::new_from_slices(key, iv)
+            .map_err(bad_iv)?
+            .encrypt_padded_vec::<Pkcs7>(data),
+        Some(CIPHER_CHACHA20) => {
+            // The copy is plaintext only until the next line encrypts it in place.
+            let mut buf = data.to_vec();
+            ChaCha20::new_from_slices(key, iv)
+                .map_err(bad_iv)?
+                .apply_keystream(&mut buf);
+            buf
+        }
+        _ => return Err(Error::Unsupported("this encryption cipher".into())),
+    })
+}
+
 /// Decrypts the main payload. A padding failure means the key was wrong (KDBX 3) or the data is
 /// damaged (KDBX 4, where the key has already been verified); the caller decides which.
 pub(crate) fn decrypt_payload(
@@ -170,6 +221,8 @@ pub(crate) fn decrypt_payload(
 }
 
 /// The stream cipher that hides "protected" values (passwords etc.) inside the XML.
+pub(crate) const INNER_STREAM_CHACHA20: u32 = 3;
+
 pub(crate) enum InnerStream {
     Salsa20(Box<Salsa20>),
     ChaCha20(Box<ChaCha20>),
@@ -202,5 +255,48 @@ impl InnerStream {
             Self::Salsa20(c) => c.apply_keystream(buf),
             Self::ChaCha20(c) => c.apply_keystream(buf),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn payload_encryption_round_trips_for_every_cipher() {
+        let key = [5u8; 32];
+        for cipher in [CIPHER_AES256, CIPHER_TWOFISH, CIPHER_CHACHA20] {
+            let iv = vec![6u8; iv_len(&cipher).unwrap()];
+            // Lengths around the 16-byte block size exercise the padding.
+            for len in [0, 1, 15, 16, 17, 1000] {
+                let plain: Vec<u8> = (0..len).map(|i| i as u8).collect();
+                let encrypted = encrypt_payload(&cipher, &key, &iv, &plain).unwrap();
+                assert!(len == 0 || encrypted != plain);
+                let decrypted = decrypt_payload(&cipher, &key, &iv, &encrypted).unwrap();
+                assert_eq!(*decrypted, plain);
+            }
+        }
+        assert!(iv_len(&[0u8; 16]).is_err());
+    }
+
+    #[test]
+    fn reseeding_replaces_only_the_salt() {
+        let mut params = VariantDictionary::new();
+        params.set("$UUID", VariantDictionary::BYTES, KDF_ARGON2ID.to_vec());
+        params.set("S", VariantDictionary::BYTES, vec![0; 48]);
+        params.set("M", VariantDictionary::U64, 1024u64.to_le_bytes().to_vec());
+        reseed_kdf(&mut params).unwrap();
+        let salt = params.bytes("S").unwrap();
+        assert_eq!(salt.len(), 48);
+        assert_ne!(salt, [0; 48]);
+        assert_eq!(params.u64("M"), Some(1024));
+        assert_eq!(params.items.len(), 3);
+
+        // AES-KDF needs exactly 32 bytes, whatever was there before.
+        let mut params = VariantDictionary::new();
+        params.set("$UUID", VariantDictionary::BYTES, KDF_AES.to_vec());
+        params.set("S", VariantDictionary::BYTES, vec![0; 48]);
+        reseed_kdf(&mut params).unwrap();
+        assert_eq!(params.bytes("S").unwrap().len(), 32);
     }
 }

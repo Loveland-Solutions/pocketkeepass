@@ -2,6 +2,7 @@
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
+use zeroize::Zeroizing;
 
 use crate::error::{Result, corrupt};
 use crate::kdbx::{self, Decrypted, FormatVersion};
@@ -11,19 +12,51 @@ use crate::xml::Element;
 /// An unlocked KeePass database. All decrypted content is wiped from memory when it's dropped.
 pub struct Database {
     inner: Decrypted,
+    /// The composite key hash the database was opened with, kept so it can be saved again.
+    key: Zeroizing<[u8; 32]>,
 }
 
 impl Database {
     /// Decrypts a whole `.kdbx` file. This is slow on purpose (key derivation), so call it off
     /// the UI thread.
     pub fn open(file: &[u8], key: &CompositeKey) -> Result<Self> {
-        let inner = kdbx::decrypt(file, key)?;
+        let key = key.hash();
+        let inner = kdbx::decrypt(file, &key)?;
         // Make sure the basic shape is there, so the views below can rely on it.
         inner
             .xml
             .path(&["Root", "Group"])
             .ok_or_else(|| corrupt("the database has no root group"))?;
-        Ok(Self { inner })
+        Ok(Self { inner, key })
+    }
+
+    /// Encrypts the database into a complete `.kdbx` file, locked with the key it was opened
+    /// with. Like opening, this is slow on purpose (key derivation), so call it off the UI
+    /// thread.
+    ///
+    /// The file is checked before it's returned: it's read back and compared with the database
+    /// in memory, and any difference is an error rather than a file. The caller still has to
+    /// replace the old file safely (write to a temporary file, then swap).
+    ///
+    /// Only KDBX 4 is written. A KDBX 3 database gives [`crate::Error::NeedsUpgrade`] until
+    /// [`upgrade_to_kdbx4`](Self::upgrade_to_kdbx4) has been called.
+    pub fn save(&self) -> Result<Vec<u8>> {
+        kdbx::encrypt(&self.inner, &self.key)
+    }
+
+    /// Whether this is a KDBX 3 database, which has to be upgraded before it can be saved.
+    pub fn needs_upgrade(&self) -> bool {
+        self.inner.version.major < 4
+    }
+
+    /// Converts a KDBX 3 database to KDBX 4.0 in memory, so that the next [`save`](Self::save)
+    /// writes a KDBX 4 file. Nothing in the database is lost, and the cipher and key derivation
+    /// settings stay the same. Does nothing if the database is already KDBX 4.
+    ///
+    /// Never call this without asking the user: once saved, the file can no longer be opened by
+    /// apps that only understand KDBX 3. If this fails, the database is unchanged.
+    pub fn upgrade_to_kdbx4(&mut self) -> Result<()> {
+        kdbx::upgrade_to_kdbx4(&mut self.inner)
     }
 
     pub fn format_version(&self) -> FormatVersion {

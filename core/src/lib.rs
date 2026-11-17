@@ -5,7 +5,7 @@
 //! HMAC) come from the RustCrypto crates.
 //!
 //! Open a database with [`Database::open`], using a [`CompositeKey`] built from the user's
-//! password and/or key file.
+//! password and/or key file. Turn it back into a `.kdbx` file with [`Database::save`].
 
 mod error;
 mod kdbx;

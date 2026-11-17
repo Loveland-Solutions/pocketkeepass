@@ -15,6 +15,7 @@ base64 = "0.23"
 cbc = { version = "0.2", features = ["alloc", "block-padding"] }
 chacha20 = "0.10"
 flate2 = "1"
+getrandom = "0.4"
 hmac = "0.13"
 quick-xml = "0.42"
 salsa20 = "0.11"

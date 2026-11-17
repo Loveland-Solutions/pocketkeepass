@@ -1,4 +1,4 @@
-/// Everything that can go wrong opening a database, worded so the app can show it to a person.
+/// Everything that can go wrong opening or saving a database, worded so the app can show it to a person.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("The password or key file is incorrect.")]
@@ -18,6 +18,17 @@ pub enum Error {
 
     #[error("The database is damaged: {0}.")]
     Corrupt(String),
+
+    #[error(
+        "This database uses the older KDBX 3 format. It has to be upgraded to KDBX 4 before it can be saved."
+    )]
+    NeedsUpgrade,
+
+    #[error("This device couldn't provide secure random numbers, so the database wasn't saved.")]
+    Random,
+
+    #[error("The new copy of the database failed its safety check, so it wasn't saved.")]
+    SaveCheckFailed,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -1,62 +1,10 @@
 //! Opens real databases written by other KeePass apps and checks every decrypted field against
 //! KeePassXC's own export of the same file.
 
-use std::collections::BTreeMap;
+mod common;
 
-use passthekey_core::xml::{self, Element};
+use common::{PASSWORD, assert_matches_keepassxc_export, open, read};
 use passthekey_core::{CompositeKey, Database, Error};
-
-const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures");
-const PASSWORD: &[u8] = b"test-password";
-
-fn read(name: &str) -> Vec<u8> {
-    std::fs::read(format!("{FIXTURES}/{name}")).unwrap_or_else(|e| panic!("{name}: {e}"))
-}
-
-fn open(db: &str, password: Option<&[u8]>, key_file: Option<&str>) -> Result<Database, Error> {
-    let kf = key_file.map(read);
-    let key = CompositeKey::new(password, kf.as_deref())?;
-    Database::open(&read(db), &key)
-}
-
-/// Every entry (including history entries) in document order, each as its non-empty fields.
-///
-/// Field order and empty fields are ignored: when KeePassXC exports a file another app wrote,
-/// it sorts fields alphabetically and adds empty standard fields. The values must match exactly.
-fn all_entries(root: &Element) -> Vec<BTreeMap<String, String>> {
-    fn walk(el: &Element, out: &mut Vec<BTreeMap<String, String>>) {
-        if el.name == "Entry" {
-            out.push(
-                el.children_named("String")
-                    .map(|s| {
-                        (
-                            s.child_text("Key").to_owned(),
-                            s.child_text("Value").to_owned(),
-                        )
-                    })
-                    .filter(|(_, v)| !v.is_empty())
-                    .collect(),
-            );
-        }
-        for c in &el.children {
-            walk(c, out);
-        }
-    }
-    let mut out = Vec::new();
-    walk(root.child("Root").expect("Root"), &mut out);
-    out
-}
-
-fn assert_matches_keepassxc_export(db: &Database, export_name: &str) {
-    let export = String::from_utf8(read(export_name)).unwrap();
-    let expected = all_entries(&xml::parse(&export).unwrap());
-    let actual = all_entries(db.xml());
-    assert!(!expected.is_empty());
-    assert_eq!(
-        actual, expected,
-        "decrypted fields differ from KeePassXC's export"
-    );
-}
 
 #[test]
 fn password_only_database() {

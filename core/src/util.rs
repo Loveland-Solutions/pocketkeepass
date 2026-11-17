@@ -1,7 +1,7 @@
 use sha2::{Digest, Sha256, Sha512};
 use zeroize::Zeroizing;
 
-use crate::error::{Result, corrupt};
+use crate::error::{Error, Result, corrupt};
 
 pub(crate) fn sha256(parts: &[&[u8]]) -> Zeroizing<[u8; 32]> {
     let mut h = Sha256::new();
@@ -82,8 +82,85 @@ impl<'a> Cursor<'a> {
         Ok(i32::from_le_bytes(self.take(4)?.try_into().unwrap()))
     }
 
-    #[allow(dead_code)] // used by the writer tests (next milestone)
+    #[allow(dead_code)] // kept for symmetry with the other readers
     pub fn u64(&mut self) -> Result<u64> {
         Ok(u64::from_le_bytes(self.take(8)?.try_into().unwrap()))
+    }
+}
+
+/// Fills a buffer from the operating system's secure random number generator.
+pub(crate) fn random_bytes(n: usize) -> Result<Zeroizing<Vec<u8>>> {
+    let mut out = Zeroizing::new(vec![0u8; n]);
+    getrandom::fill(&mut out).map_err(|_| Error::Random)?;
+    Ok(out)
+}
+
+/// A growable byte buffer for plaintext. A plain `Vec` leaves a copy of its old contents behind
+/// in freed memory every time it grows. This one wipes the old allocation first, and wipes itself
+/// on drop.
+pub(crate) struct SecretBuf(Zeroizing<Vec<u8>>);
+
+impl SecretBuf {
+    pub fn with_capacity(n: usize) -> Self {
+        Self(Zeroizing::new(Vec::with_capacity(n)))
+    }
+
+    pub fn extend(&mut self, bytes: &[u8]) {
+        let needed = self.0.len() + bytes.len();
+        if needed > self.0.capacity() {
+            let mut bigger = Zeroizing::new(Vec::with_capacity(needed.max(self.0.capacity() * 2)));
+            bigger.extend_from_slice(&self.0);
+            self.0 = bigger; // the old allocation is wiped as it's dropped
+        }
+        self.0.extend_from_slice(bytes);
+    }
+
+    pub fn push_str(&mut self, s: &str) {
+        self.extend(s.as_bytes());
+    }
+
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> Zeroizing<Vec<u8>> {
+        self.0
+    }
+}
+
+impl std::io::Write for SecretBuf {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.extend(buf);
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn secret_buf_keeps_its_contents_as_it_grows() {
+        let mut buf = SecretBuf::with_capacity(2);
+        let mut expected = Vec::new();
+        for i in 0..1000u32 {
+            buf.extend(&i.to_le_bytes());
+            expected.extend_from_slice(&i.to_le_bytes());
+        }
+        buf.push_str("end");
+        expected.extend_from_slice(b"end");
+        assert_eq!(buf.as_slice(), expected);
+    }
+
+    #[test]
+    fn random_bytes_are_not_all_the_same() {
+        let a = random_bytes(32).unwrap();
+        let b = random_bytes(32).unwrap();
+        assert_eq!(a.len(), 32);
+        assert_ne!(a, b);
     }
 }
