@@ -14,7 +14,7 @@ Today's Android KeePass apps are either clunky or paid. Pass The Key aims to be:
 
 Update this section as milestones land.
 
-- **Done:** Android app shell. `:app` is a placeholder Compose home screen with `FLAG_SECURE`, backups disabled, and no `INTERNET` permission (verified in the built APK). The home screen shows the engine version, which it gets from Rust.
+- **Done:** Android app shell: `FLAG_SECURE`, backups disabled, and no `INTERNET` permission (verified in the built APK).
 - **Done:** our own KDBX **reader** in Rust (`core/`), covering:
   - KDBX 3.1 and 4.x;
   - password, key file, or both (key files in XML v1/v2, raw, hex, or any other file);
@@ -36,10 +36,19 @@ Update this section as milestones land.
   - an opt-in KDBX 3.1 → 4.0 upgrade (`Database::upgrade_to_kdbx4`). Without it, saving a 3.1 database is refused.
 
   KeePassXC opens every file we save and exports the same content it exported from the original, attachments included. It can also edit our files, and we read its result. pykeepass agrees (checked by hand, not in the test suite).
-- **Done:** the UniFFI bridge (`core/src/ffi.rs`). Gradle builds the engine for arm64-v8a, armeabi-v7a, and x86_64, generates the Kotlin bindings, and packages both. The bridge exposes open, summary, upgrade, save, and lock. Kotlin tests call the engine through it on the dev Mac. The debug and minified release APKs were both run on the API 37 emulator, where the engine loads. Unlocking a database on a device hasn't been exercised yet: there is no screen for it.
-- **Tests:** 60 in Rust (`cargo test --release`), 8 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Done:** the UniFFI bridge (`core/src/ffi.rs`). Gradle builds the engine for arm64-v8a, armeabi-v7a, and x86_64, generates the Kotlin bindings, and packages both. The bridge exposes open, summary, upgrade, save, and lock. Kotlin tests call the engine through it on the dev Mac. The debug and minified release APKs both unlock databases on the API 37 emulator.
+- **Done:** MVP feature 1, opening and unlocking a database (`DatabaseViewModel`, `ui/UnlockScreen.kt`):
+  - the system file picker (`ACTION_OPEN_DOCUMENT`) with persisted access (read/write for the database, read for the key file). The last database and key file are remembered (`files/RecentDatabase.kt`, locations and names only), and grants for files no longer in use are released;
+  - password (Material 3 `OutlinedSecureTextField`), key file, or both. An empty password with a key file means key file only. An empty password alone is a real (empty) password;
+  - the password lives in a `TextFieldState` held by the ViewModel, never in saved state (that goes to disk). It's encoded to UTF-8 straight into a `ByteArray` without a `String` (`security/Secrets.kt`), wiped after the call, and the field and its undo history are cleared after unlocking or a wrong key. Key file bytes are read without stray buffer copies and wiped too;
+  - unlocking runs off the main thread and can't be abandoned half-way: if the ViewModel is cleared meanwhile, the result is locked at once;
+  - the database is locked by the Lock button and when the ViewModel is cleared (activity finished). There is no auto-lock yet, so it stays open in the background until then (see "Security");
+  - after unlocking, a temporary screen shows the summary until MVP feature 2.
+
+  Checked by hand on the emulator: wrong password, password only (KDBX 4.0 and 4.1), password + key file, key file only, a deleted database file, rotation, and process death (comes back locked, with the choice remembered). The app logs nothing about secrets.
+- **Tests:** 60 in Rust (`cargo test --release`), 12 in Kotlin (`./gradlew :app:testDebugUnitTest`).
 - **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. The bridge doesn't expose groups, entries, or fields yet either; that comes with MVP features 2 and 3.
-- **Next:** MVP feature 1 (open a database through the system file picker and unlock it).
+- **Next:** MVP feature 2 (browse groups and entries, plus search). It needs the bridge to expose groups and entries. Auto-lock (timeout, screen off) should come soon after, since an unlocked database now stays open in the background.
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 
 ## Building
@@ -188,7 +197,8 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] `save` doesn't set `Meta/Generator`. Decide whether to write "Pass The Key" once editing exists
 - [ ] Benchmark Argon2 unlock time on a low-end phone
 - [ ] AES hardware on Android: from the source, `aes` 0.9 detects ARMv8 AES at runtime on arm64 Android (through `cpufeatures`), so no `RUSTFLAGS` are needed. Not measured on a device yet. 32-bit ARM (armeabi-v7a) always uses the software implementation, so AES-KDF unlocks are slower there
-- [ ] Unlock a real database on a device or the emulator once MVP feature 1 exists (so far only the engine loading has been seen on Android)
+- [ ] Unlock on a physical phone (only the emulator so far)
+- [ ] Compose's text field keeps its own immutable copies of what's typed (and the keyboard sees it). We clear the field and its undo history, but can't wipe those copies. Every Android password manager has the same limit
 - [ ] Reproducible Rust builds for F-Droid (pinned toolchain, path remapping)
 - [ ] KDBX 3: wrong-key detection relies on padding plus the stream start bytes, which is standard. KDBX 4 uses the header HMAC
 - [ ] App icon
