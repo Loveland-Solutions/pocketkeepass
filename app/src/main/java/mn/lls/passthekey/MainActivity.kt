@@ -3,28 +3,19 @@ package mn.lls.passthekey
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import mn.lls.passthekey.core.engineVersion
+import mn.lls.passthekey.ui.UnlockScreen
+import mn.lls.passthekey.ui.UnlockedScreen
+import mn.lls.passthekey.ui.WelcomeScreen
 import mn.lls.passthekey.ui.theme.PassTheKeyTheme
 
 class MainActivity : ComponentActivity() {
@@ -34,42 +25,38 @@ class MainActivity : ComponentActivity() {
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
         setContent {
-            PassTheKeyTheme {
-                // Asking the Rust engine for its version also proves it loaded on this device.
-                HomeScreen(engineVersion = remember { engineVersion() })
-            }
+            PassTheKeyTheme { App() }
         }
     }
 }
 
-@Composable
-private fun HomeScreen(engineVersion: String) {
-    val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    val notYet = stringResource(R.string.not_built_yet)
+/** Every file type: providers label .kdbx files inconsistently, and key files can be anything. */
+private val ANY_FILE = arrayOf("*/*")
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineLarge)
-            Text(stringResource(R.string.home_tagline), style = MaterialTheme.typography.bodyLarge)
-            Button(onClick = { scope.launch { snackbar.showSnackbar(notYet) } }) {
-                Text(stringResource(R.string.open_database))
-            }
-            Text(
-                stringResource(R.string.engine_version, engineVersion),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+@Composable
+private fun App(viewModel: DatabaseViewModel = viewModel()) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val pickDatabase = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(viewModel::onDatabasePicked)
     }
-}
+    val pickKeyFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(viewModel::onKeyFilePicked)
+    }
 
-@Preview(showBackground = true)
-@Composable
-private fun HomeScreenPreview() {
-    PassTheKeyTheme { HomeScreen(engineVersion = "0.1.0") }
+    when (val current = state) {
+        DatabaseState.NoDatabase -> WelcomeScreen(
+            // Asking the Rust engine for its version also proves it loaded on this device.
+            engineVersion = remember { engineVersion() },
+            onOpenDatabase = { pickDatabase.launch(ANY_FILE) },
+        )
+        is DatabaseState.Locked -> UnlockScreen(
+            state = current,
+            password = viewModel.password,
+            onUnlock = viewModel::unlock,
+            onChangeDatabase = { pickDatabase.launch(ANY_FILE) },
+            onAddKeyFile = { pickKeyFile.launch(ANY_FILE) },
+            onRemoveKeyFile = viewModel::removeKeyFile,
+        )
+        is DatabaseState.Unlocked -> UnlockedScreen(state = current, onLock = viewModel::lock)
+    }
 }

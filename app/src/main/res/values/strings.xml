@@ -1,7 +1,30 @@
 <resources>
     <string name="app_name">Pass The Key</string>
+    <string name="engine_version">Engine %1$s</string>
+
+    <!-- Welcome (no database chosen yet) -->
     <string name="home_tagline">Your KeePass passwords, free and offline.</string>
     <string name="open_database">Open database</string>
-    <string name="not_built_yet">Opening databases is coming next.</string>
-    <string name="engine_version">Engine %1$s</string>
+    <string name="open_database_hint">Choose a .kdbx file from this phone or from any cloud storage app.</string>
+
+    <!-- Unlock -->
+    <string name="change_database">Change</string>
+    <string name="master_password">Master password</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+    <string name="key_file">Key file: %1$s</string>
+    <string name="add_key_file">Add key file</string>
+    <string name="remove_key_file">Remove</string>
+    <string name="unlock">Unlock</string>
+    <string name="unlocking">Unlocking… This can take a few seconds.</string>
+    <string name="cant_read_database">Pass The Key can\'t open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.</string>
+    <string name="cant_read_key_file">Pass The Key can\'t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.</string>
+
+    <!-- Unlocked (temporary until browsing exists) -->
+    <string name="unlocked_file">File: %1$s</string>
+    <string name="unlocked_format">Format: KDBX %1$s</string>
+    <string name="unlocked_groups">Groups: %1$d</string>
+    <string name="unlocked_entries">Entries: %1$d</string>
+    <string name="browsing_coming">Browsing entries is coming next.</string>
+    <string name="lock">Lock</string>
 </resources>
