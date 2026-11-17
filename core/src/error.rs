@@ -1,5 +1,8 @@
 /// Everything that can go wrong opening or saving a database, worded so the app can show it to a person.
-#[derive(Debug, thiserror::Error)]
+///
+/// The app sees this as `KeePassException`, one subclass per variant, with these messages.
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi(flat_error, name = "KeePassError")]
 pub enum Error {
     #[error("The password or key file is incorrect.")]
     WrongKey,
@@ -29,6 +32,9 @@ pub enum Error {
 
     #[error("The new copy of the database failed its safety check, so it wasn't saved.")]
     SaveCheckFailed,
+
+    #[error("The database is locked.")]
+    Locked,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -3,4 +3,5 @@
     <string name="home_tagline">Your KeePass passwords, free and offline.</string>
     <string name="open_database">Open database</string>
     <string name="not_built_yet">Opening databases is coming next.</string>
+    <string name="engine_version">Engine %1$s</string>
 </resources>

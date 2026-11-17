@@ -6,8 +6,11 @@
 //!
 //! Open a database with [`Database::open`], using a [`CompositeKey`] built from the user's
 //! password and/or key file. Turn it back into a `.kdbx` file with [`Database::save`].
+//!
+//! The Android app doesn't use these types directly. It goes through the bridge in [`ffi`].
 
 mod error;
+pub mod ffi;
 mod kdbx;
 mod key;
 mod model;
@@ -18,3 +21,5 @@ pub use error::Error;
 pub use kdbx::FormatVersion;
 pub use key::CompositeKey;
 pub use model::{Database, Entry, Group};
+
+uniffi::setup_scaffolding!();

@@ -6,6 +6,20 @@ license = "GPL-3.0-or-later"
 description = "KeePass (KDBX) engine for Pass The Key"
 publish = false
 
+[lib]
+# "lib" for the Rust tests, "cdylib" for the shared library the Android app loads.
+crate-type = ["lib", "cdylib"]
+
+[features]
+# Only for the binding generator below. The library itself never needs it.
+bindgen = ["uniffi/cli", "uniffi/cargo-metadata"]
+
+# Generates the Kotlin side of the bridge from the compiled library. Gradle runs this.
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["bindgen"]
+
 # Dependency rule (see ../CLAUDE.md): only current, maintained crates. The crypto primitives come
 # from RustCrypto. Everything KeePass-specific (format, key handling, data model) is ours.
 [dependencies]
@@ -22,4 +36,5 @@ salsa20 = "0.11"
 sha2 = "0.11"
 thiserror = "2"
 twofish = "0.8"
+uniffi = { version = "0.32", default-features = false }
 zeroize = "1"

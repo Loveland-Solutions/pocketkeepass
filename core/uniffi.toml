@@ -1,0 +1,5 @@
+# How UniFFI generates the Kotlin side of the bridge.
+[bindings.kotlin]
+package_name = "mn.lls.passthekey.core"
+cdylib_name = "passthekey_core"
+android = true

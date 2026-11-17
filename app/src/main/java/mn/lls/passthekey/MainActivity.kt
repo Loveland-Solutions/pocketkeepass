@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import mn.lls.passthekey.core.engineVersion
 import mn.lls.passthekey.ui.theme.PassTheKeyTheme
 
 class MainActivity : ComponentActivity() {
@@ -34,14 +35,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PassTheKeyTheme {
-                HomeScreen()
+                // Asking the Rust engine for its version also proves it loaded on this device.
+                HomeScreen(engineVersion = remember { engineVersion() })
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen() {
+private fun HomeScreen(engineVersion: String) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val notYet = stringResource(R.string.not_built_yet)
@@ -57,6 +59,11 @@ private fun HomeScreen() {
             Button(onClick = { scope.launch { snackbar.showSnackbar(notYet) } }) {
                 Text(stringResource(R.string.open_database))
             }
+            Text(
+                stringResource(R.string.engine_version, engineVersion),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -64,5 +71,5 @@ private fun HomeScreen() {
 @Preview(showBackground = true)
 @Composable
 private fun HomeScreenPreview() {
-    PassTheKeyTheme { HomeScreen() }
+    PassTheKeyTheme { HomeScreen(engineVersion = "0.1.0") }
 }
