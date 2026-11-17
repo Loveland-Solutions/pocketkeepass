@@ -14,7 +14,7 @@ Today's Android KeePass apps are either clunky or paid. Pass The Key aims to be:
 
 Update this section as milestones land.
 
-- **Done:** Android app shell. `:app` is a placeholder Compose home screen with `FLAG_SECURE`, backups disabled, and no `INTERNET` permission (verified in the built APK).
+- **Done:** Android app shell. `:app` is a placeholder Compose home screen with `FLAG_SECURE`, backups disabled, and no `INTERNET` permission (verified in the built APK). The home screen shows the engine version, which it gets from Rust.
 - **Done:** our own KDBX **reader** in Rust (`core/`), covering:
   - KDBX 3.1 and 4.x;
   - password, key file, or both (key files in XML v1/v2, raw, hex, or any other file);
@@ -23,31 +23,55 @@ Update this section as milestones land.
   - Salsa20 and ChaCha20 protected values;
   - a lossless XML tree.
 
-  21 tests. Verified field-for-field against KeePassXC's own exports:
+  Verified field-for-field against KeePassXC's own exports:
   - KDBX 3.1, written by KeePassXC;
   - KDBX 4.0, written by pykeepass, in all three cipher and KDF combinations;
   - KDBX 4.1, written by KeePassXC.
 
   See `core/tests/fixtures/README.md`.
-- **Next:** the **writer** (save), then the UniFFI bridge into `app/`.
-- **Then:** the UniFFI bridge into `:app`, then MVP feature 1 (open a database through the system file picker and unlock it).
+- **Done:** our own KDBX **writer** in Rust (`Database::save`), covering:
+  - KDBX 4.x only, in the file's own version, cipher, compression, and key derivation settings;
+  - fresh key derivation salt, master seed, IV, and protected-value key on every save;
+  - a built-in safety check: the new file is read back and compared with the database in memory before it's returned;
+  - an opt-in KDBX 3.1 → 4.0 upgrade (`Database::upgrade_to_kdbx4`). Without it, saving a 3.1 database is refused.
+
+  KeePassXC opens every file we save and exports the same content it exported from the original, attachments included. It can also edit our files, and we read its result. pykeepass agrees (checked by hand, not in the test suite).
+- **Done:** the UniFFI bridge (`core/src/ffi.rs`). Gradle builds the engine for arm64-v8a, armeabi-v7a, and x86_64, generates the Kotlin bindings, and packages both. The bridge exposes open, summary, upgrade, save, and lock. Kotlin tests call the engine through it on the dev Mac. The debug and minified release APKs were both run on the API 37 emulator, where the engine loads. Unlocking a database on a device hasn't been exercised yet: there is no screen for it.
+- **Tests:** 60 in Rust (`cargo test --release`), 8 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. The bridge doesn't expose groups, entries, or fields yet either; that comes with MVP features 2 and 3.
+- **Next:** MVP feature 1 (open a database through the system file picker and unlock it).
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 
 ## Building
 
 ```sh
 cd core && cargo test --release           # the KeePass engine (Rust); --release because key derivation is slow unoptimized
+                                          # tests/keepassxc_oracle.rs drives keepassxc-cli and skips itself if it isn't installed
 cargo clippy --all-targets && cargo fmt   # keep both clean
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew :app:assembleDebug              # APK lands in app/build/outputs/apk/debug/
+./gradlew :app:assembleDebug              # APK lands in app/build/outputs/apk/debug/; builds the Rust engine too
+./gradlew :app:testDebugUnitTest          # Kotlin tests that call the engine through the bridge, on this computer
 ```
 
 Gradle needs a JDK. The only one on the dev Mac is Android Studio's bundled copy. `local.properties` (gitignored) holds `sdk.dir`.
+
+Gradle builds the Rust engine itself (`buildRust<Variant>` and `generateRustBindings<Variant>` in `app/build.gradle.kts`). That needs:
+
+- Rust with the Android targets: `rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android` (installed on the dev Mac);
+- NDK 28.2.13676358 (installed; pinned as `ndkVersion`).
+
+To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump` instead.
 
 ## Module layout
 
 - `core/` (Rust crate `passthekey-core`): **all** KeePass and crypto logic: file format, key derivation, encryption, the data model. No Android dependencies, so it's tested with plain `cargo test`.
 - `app/` (Android, Kotlin, package `mn.lls.passthekey`): screens plus Android-only integration (file picker, biometrics, autofill, clipboard). It holds no password logic of its own and calls into `core` through UniFFI.
+- The bridge between them:
+  - `core/src/ffi.rs` is the only Rust the app can see. It wraps the engine in types that can cross the bridge and holds no logic of its own.
+  - UniFFI generates the Kotlin side (package `mn.lls.passthekey.core`) into `app/build/generated/` on every build. It is never checked in or edited.
+  - Secrets cross the bridge as bytes (`ByteArray`), never as `String`, so Kotlin can wipe them.
+  - `UnlockedDatabase.lock()` wipes the decrypted database immediately. Don't rely on garbage collection for that.
+  - Kotlin sees engine errors as `KeePassException` subclasses, with the engine's own user-facing messages.
 
 ## Project decisions
 
@@ -67,9 +91,11 @@ Gradle needs a JDK. The only one on the dev Mac is Android Studio's bundled copy
 |---|---|---|
 | Engine language | Rust (edition 2024) | `core/` crate |
 | Android layer language | Kotlin | |
-| Rust ↔ Kotlin bridge | UniFFI (Mozilla) | Generates the Kotlin bindings |
+| Rust ↔ Kotlin bridge | UniFFI 0.32 (Mozilla) | Generates the Kotlin bindings. They need JNA (`net.java.dev.jna:jna` 5.19.1, as an AAR), the one Java library we ship because of it |
+| Android ABIs | arm64-v8a, armeabi-v7a, x86_64 | 64-bit libraries are 16 KB page aligned (checked) |
+| Kotlin tests | JUnit 6 (Jupiter) | Run on the dev computer against the engine built for it |
 | Crypto primitives | RustCrypto: `aes`, `cbc`, `chacha20`, `salsa20`, `twofish`, `argon2`, `sha2`, `hmac` | The only things we don't write ourselves |
-| Other Rust deps | `flate2` (gzip), `quick-xml`, `zeroize`, `uuid`, `base64`, `getrandom`, `thiserror` | All released in 2026 when chosen |
+| Other Rust deps | `flate2` (gzip), `quick-xml`, `zeroize`, `base64`, `getrandom`, `thiserror`, `uniffi` | All released in 2026 when chosen |
 | UI | Jetpack Compose + Material 3 | Dynamic color on Android 12+ |
 | Architecture | Single-activity, MVVM, unidirectional data flow | ViewModel + StateFlow |
 | DI | None for now (manual wiring) | Add Hilt only if wiring gets painful |
@@ -83,13 +109,22 @@ Gradle needs a JDK. The only one on the dev Mac is Android Studio's bundled copy
 
 - **kotpass** (Kotlin KDBX library): last release Sept 2025 and barely maintained. It also silently drops XML it doesn't recognize.
 - **keepass-rs**: current and fine, but the owner wants the format implemented in-house.
-- **androidx.biometric 1.1.0** and **JUnit 4**: both from 2021. Use androidx.biometric 1.4.x and current test tooling.
+- **androidx.biometric 1.1.0** and **JUnit 4**: both from 2021. Use androidx.biometric 1.4.x and current test tooling. Android's instrumented tests (`androidx.test`) are built on JUnit 4, so we don't have any: Kotlin tests run on the dev computer, and on-device behavior is checked by hand on the emulator.
+- **cargo-ndk**: last release August 2025. Gradle calls cargo and the NDK's clang directly instead (`app/build.gradle.kts`).
 
 ### KDBX engine design
 
 - **Lossless by construction.** The decrypted XML is kept as a generic element tree, and the typed views (groups, entries, fields) read and write through that tree. Elements we don't understand are never dropped, because we never parse them into something narrower.
 - **Test oracle:** KeePassXC is installed at `/Applications/KeePassXC.app`. `Contents/MacOS/keepassxc-cli` can create databases (`db-create`, `add`) and export the decrypted XML (`export --format xml`). Generate fixtures with it, and compare our decrypted output with its export.
-- Keep secrets in `zeroize`-on-drop buffers. Never `Debug`-print or log secret values.
+- **Saving** (`core/src/kdbx/write.rs`) is the reading pipeline run backwards. Design rules:
+  - Header fields and inner-header fields we don't understand are written back unchanged.
+  - Every secret that protects the file is regenerated on every save, as KeePass and KeePassXC do. So every save runs the key derivation again and is as slow as unlocking.
+  - `save` never returns a file it hasn't read back and compared with memory (`Error::SaveCheckFailed`). The read-back reuses the derived key instead of deriving it twice.
+  - `Database` keeps the composite key hash in memory while it's open, so saving can't lock the file with a different key by accident.
+  - The one deliberate exception to losslessness: characters XML 1.0 can't represent (most control characters) are left out of unprotected text, as KeePass 2.x does. Writing them makes a file KeePass and KeePassXC refuse to open. The editing API should reject them at input.
+  - KDBX 3 → 4 (`upgrade.rs`) converts dates, moves attachments from `Meta/Binaries` to the inner header, and rebuilds the header. It keeps AES-KDF and its round count.
+- KeePassXC's XML export isn't byte-stable between runs: it stamps `_LAST_MODIFIED`, reorders custom data items, and renumbers attachment `Ref`s. The oracle tests even these out. `keepassxc-cli attachment-export --stdout` re-encodes binary data as text, so export attachments to a file.
+- Keep secrets in `zeroize`-on-drop buffers. Never `Debug`-print or log secret values. Build plaintext in `SecretBuf` (`util.rs`), which wipes its old allocation when it grows.
 
 ## Core requirements
 
@@ -148,8 +183,12 @@ Gradle needs a JDK. The only one on the dev Mac is Android Studio's bundled copy
 ## Open items
 
 - [ ] More sample databases: files written by KeePass 2.x itself (Windows/.NET). KDBX 3.1, 4.0, and 4.1 are covered
+- [ ] Open a file we saved in KeePass 2.x itself (needs Windows or Mono). Only KeePassXC and pykeepass have been checked
+- [ ] KDBX 3 attachments marked `Protected="True"` in `Meta/Binaries` fail to open unless they happen to be text (the reader treats every protected value as UTF-8). Rare: KeePass and KeePassXC don't protect attachments by default
+- [ ] `save` doesn't set `Meta/Generator`. Decide whether to write "Pass The Key" once editing exists
 - [ ] Benchmark Argon2 unlock time on a low-end phone
-- [ ] Cross-compiling Rust for Android: install `cargo-ndk` and the Android Rust targets (NDK 28 is already installed)
-- [ ] The `aes` crate only auto-detects ARMv8 AES hardware on Linux and macOS. On Android, check whether `RUSTFLAGS=-Ctarget-feature=+aes` is needed, or AES-KDF unlocks will be slow
+- [ ] AES hardware on Android: from the source, `aes` 0.9 detects ARMv8 AES at runtime on arm64 Android (through `cpufeatures`), so no `RUSTFLAGS` are needed. Not measured on a device yet. 32-bit ARM (armeabi-v7a) always uses the software implementation, so AES-KDF unlocks are slower there
+- [ ] Unlock a real database on a device or the emulator once MVP feature 1 exists (so far only the engine loading has been seen on Android)
+- [ ] Reproducible Rust builds for F-Droid (pinned toolchain, path remapping)
 - [ ] KDBX 3: wrong-key detection relies on padding plus the stream start bytes, which is standard. KDBX 4 uses the header HMAC
 - [ ] App icon

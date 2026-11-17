@@ -18,6 +18,12 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew :app:assembleDebug
 ```
 
+Gradle builds the Rust engine for Android as part of the app build. That needs Rust with the Android targets and the Android NDK:
+
+```sh
+rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+```
+
 ## License
 
 GPLv3. See [LICENSE](LICENSE).
