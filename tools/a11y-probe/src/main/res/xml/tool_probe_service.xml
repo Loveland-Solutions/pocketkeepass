@@ -8,4 +8,4 @@
     android:description="@string/description"
     android:notificationTimeout="0"
     android:isAccessibilityTool="true"
-    android:packageNames="mn.lls.passthekey" />
+    android:packageNames="mn.lls.pocketkeepass" />

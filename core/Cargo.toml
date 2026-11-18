@@ -1,9 +1,9 @@
 [package]
-name = "passthekey-core"
+name = "pocketkeepass-core"
 version = "0.1.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
-description = "KeePass (KDBX) engine for Pass The Key"
+description = "KeePass (KDBX) engine for PocketKeePass"
 publish = false
 
 [lib]

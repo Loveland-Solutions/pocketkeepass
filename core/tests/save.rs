@@ -4,7 +4,7 @@
 mod common;
 
 use common::{KDBX3, KDBX4, PASSWORD, assert_matches_keepassxc_export, first_difference, read};
-use passthekey_core::{CompositeKey, Database, Error};
+use pocketkeepass_core::{CompositeKey, Database, Error};
 
 #[test]
 fn kdbx4_databases_come_back_identical_after_saving() {

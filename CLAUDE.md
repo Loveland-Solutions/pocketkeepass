@@ -1,10 +1,10 @@
-# Pass The Key: project context
+# PocketKeePass: project context
 
 A free, open-source Android password manager that reads and writes KeePass (`.kdbx`) databases.
 
 ## Why this exists
 
-Today's Android KeePass apps are either clunky or paid. Pass The Key aims to be:
+Today's Android KeePass apps are either clunky or paid. PocketKeePass aims to be:
 
 - **Free, always.** No ads, no paid tier, no tracking, no analytics.
 - **Not terrible.** It should feel like a modern Android app: fast unlock, clean Material 3 UI, autofill that works.
@@ -88,6 +88,7 @@ Update this section as milestones land.
 - **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. Entry dates and attachments aren't shown yet.
 - **Next:** MVP feature 5 (autofill service).
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
+- **Renamed** from Pass The Key to PocketKeePass on 2026-11-18, application ID included (`mn.lls.passthekey` → `mn.lls.pocketkeepass`). Nothing had been published. The test fixtures `browse.*.xml` keep their old `Generator` text, because `browse.kdbx` contains it.
 
 ## Building
 
@@ -107,25 +108,28 @@ Gradle builds the Rust engine itself (`buildRust<Variant>` and `generateRustBind
 - Rust with the Android targets: `rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android` (installed on the dev Mac);
 - NDK 28.2.13676358 (installed; pinned as `ndkVersion`).
 
-To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump --windows` instead (uiautomator isn't an accessibility tool, so on Android 14+ a plain dump no longer sees Pass The Key's window). `adb shell am kill` only works once the app has been in the background for a few seconds. If `adb shell input text` stops reaching a text field, check whether Gboard is showing its full-screen "Try out your stylus" tutorial (`uiautomator dump --windows` lists its window) and tap Cancel.
+To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump --windows` instead (uiautomator isn't an accessibility tool, so on Android 14+ a plain dump no longer sees PocketKeePass's window). `adb shell am kill` only works once the app has been in the background for a few seconds. If `adb shell input text` stops reaching a text field, check whether Gboard is showing its full-screen "Try out your stylus" tutorial (`uiautomator dump --windows` lists its window) and tap Cancel.
 
-`tools/a11y-probe` (Gradle module `:a11y-probe`, never shipped) logs what accessibility apps can read from Pass The Key. See its README.
+`tools/a11y-probe` (Gradle module `:a11y-probe`, never shipped) logs what accessibility apps can read from PocketKeePass. See its README.
 
 ## Module layout
 
-- `core/` (Rust crate `passthekey-core`): **all** KeePass and crypto logic: file format, key derivation, encryption, the data model. No Android dependencies, so it's tested with plain `cargo test`.
-- `app/` (Android, Kotlin, package `mn.lls.passthekey`): screens plus Android-only integration (file picker, biometrics, autofill, clipboard). It holds no password logic of its own and calls into `core` through UniFFI.
+- `core/` (Rust crate `pocketkeepass-core`): **all** KeePass and crypto logic: file format, key derivation, encryption, the data model. No Android dependencies, so it's tested with plain `cargo test`.
+- `app/` (Android, Kotlin, package `mn.lls.pocketkeepass`): screens plus Android-only integration (file picker, biometrics, autofill, clipboard). It holds no password logic of its own and calls into `core` through UniFFI.
 - The bridge between them:
   - `core/src/ffi.rs` is the only Rust the app can see. It wraps the engine in types that can cross the bridge and holds no logic of its own.
-  - UniFFI generates the Kotlin side (package `mn.lls.passthekey.core`) into `app/build/generated/` on every build. It is never checked in or edited.
+  - UniFFI generates the Kotlin side (package `mn.lls.pocketkeepass.core`) into `app/build/generated/` on every build. It is never checked in or edited.
   - Secrets cross the bridge as bytes (`ByteArray`), never as `String`, so Kotlin can wipe them.
   - `UnlockedDatabase.lock()` wipes the decrypted database immediately. Don't rely on garbage collection for that.
   - Kotlin sees engine errors as `KeePassException` subclasses, with the engine's own user-facing messages.
 
 ## Project decisions
 
-- **Name:** "Pass The Key" (display name, with spaces). Publisher: Loveland Solutions.
-- **Application ID / package:** `mn.lls.passthekey`. This is the Loveland Solutions domain (lls.mn) written backwards, and it matches the Tile Timer Android app (`mn.lls.tiletimer`). It can never change once the app is published on Google Play.
+- **Name:** "PocketKeePass" (one word, capitalized like that). Publisher: Loveland Solutions. Chosen 2026-11-18 (it was "Pass The Key" before) so the app is recognizable and searchable as a KeePass app.
+  - KeePass's author asks that other apps never use "KeePass" as a separate word in their name (keepass.info Downloads page). It must be joined to a prefix or suffix, as in KeePassDX or MiniKeePass. So never "Pocket KeePass", and never a store title like "PocketKeePass – KeePass Manager". Say "KeePass" freely in descriptions ("opens and saves KeePass (.kdbx) databases").
+  - Don't use KeePass's own logo or icon anywhere.
+  - The GitHub repository and the local folder are still named `passthekey`.
+- **Application ID / package:** `mn.lls.pocketkeepass`. This is the Loveland Solutions domain (lls.mn) written backwards, and it matches the Tile Timer Android app (`mn.lls.tiletimer`). It can never change once the app is published on Google Play.
 - **License:** GPLv3. Most KeePass apps use it, F-Droid accepts it, it stops closed-source forks, and it lets us reuse KeePassDX code if needed. MIT and Apache-2.0 libraries can be used inside a GPLv3 app.
 - **Distribution:** F-Droid, Google Play, and GitHub releases. F-Droid means no proprietary dependencies (no Google Play Services or Firebase) and reproducible builds where possible.
 - **Dependency standard (the owner's words: "I would rather reinvent the wheel than make junk pieced together from old scrap"):**
@@ -182,7 +186,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - KDFs: Argon2d, Argon2id, AES-KDF. Ciphers: AES-256, ChaCha20 (Twofish is optional).
 - Composite keys: password, key file, or both.
 - **Never lose data.** Preserve fields, attachments, custom data, history, and icons we don't understand, and round-trip them unchanged.
-- Files saved by PassTheKey must open in KeePassXC and KeePass 2.x. That's the compatibility bar.
+- Files saved by PocketKeePass must open in KeePassXC and KeePass 2.x. That's the compatibility bar.
 
 ### Files and sync
 - Use the **Storage Access Framework** (`ACTION_OPEN_DOCUMENT`) with persisted URI permissions. Cloud sync then works through any provider (Google Drive, Dropbox, Nextcloud, Syncthing folders) without our own cloud code.
@@ -234,7 +238,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] More sample databases: files written by KeePass 2.x itself (Windows/.NET). KDBX 3.1, 4.0, and 4.1 are covered
 - [ ] Open a file we saved in KeePass 2.x itself (needs Windows or Mono). Only KeePassXC and pykeepass have been checked
 - [ ] KDBX 3 attachments marked `Protected="True"` in `Meta/Binaries` fail to open unless they happen to be text (the reader treats every protected value as UTF-8). Rare: KeePass and KeePassXC don't protect attachments by default
-- [ ] `save` doesn't set `Meta/Generator`. Decide whether to write "Pass The Key" once editing exists
+- [ ] `save` doesn't set `Meta/Generator`. Decide whether to write "PocketKeePass" once editing exists
 - [ ] Benchmark Argon2 unlock time on a low-end phone
 - [ ] `browse.kdbx` (AES-KDF, 14.3 million rounds, which KeePassXC tuned for 100 ms on the dev Mac) takes about 30–40 s to unlock on the arm64 emulator. Either AES hardware isn't used there or the emulator is just slow; measure on a phone
 - [ ] Show KeePass icons (`IconID`, custom icons) for groups and entries

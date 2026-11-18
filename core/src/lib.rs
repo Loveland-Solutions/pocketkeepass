@@ -1,4 +1,4 @@
-//! The KeePass engine behind Pass The Key.
+//! The KeePass engine behind PocketKeePass.
 //!
 //! Everything KeePass-specific is implemented here, from the file format to key handling to the
 //! data model. Only the cryptographic primitives (AES, ChaCha20, Salsa20, Twofish, Argon2, SHA-2,

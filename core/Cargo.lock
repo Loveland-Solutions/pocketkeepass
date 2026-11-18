@@ -523,27 +523,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
-name = "passthekey-core"
-version = "0.1.0"
-dependencies = [
- "aes",
- "argon2",
- "base64",
- "cbc",
- "chacha20",
- "flate2",
- "getrandom",
- "hmac",
- "quick-xml",
- "salsa20",
- "sha2",
- "thiserror",
- "twofish",
- "uniffi",
- "zeroize",
-]
-
-[[package]]
 name = "password-hash"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -573,6 +552,27 @@ name = "plain"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
+
+[[package]]
+name = "pocketkeepass-core"
+version = "0.1.0"
+dependencies = [
+ "aes",
+ "argon2",
+ "base64",
+ "cbc",
+ "chacha20",
+ "flate2",
+ "getrandom",
+ "hmac",
+ "quick-xml",
+ "salsa20",
+ "sha2",
+ "thiserror",
+ "twofish",
+ "uniffi",
+ "zeroize",
+]
 
 [[package]]
 name = "proc-macro2"

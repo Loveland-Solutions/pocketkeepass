@@ -3,19 +3,19 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-        Deliberately NO INTERNET permission. Pass The Key never talks to the network.
+        Deliberately NO INTERNET permission. PocketKeePass never talks to the network.
         If a library tries to add it, the merged manifest removes it here.
     -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
 
     <application
-        android:name=".PassTheKeyApp"
+        android:name=".PocketKeePassApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="false"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.PassTheKey"
+        android:theme="@style/Theme.PocketKeePass"
         tools:targetApi="36">
 
         <activity

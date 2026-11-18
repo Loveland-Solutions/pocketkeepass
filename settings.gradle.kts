@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PassTheKey"
+rootProject.name = "PocketKeePass"
 // The KeePass engine lives in core/ as a Rust crate, not a Gradle module.
 include(":app")
 // A test-only accessibility app, not shipped. See tools/a11y-probe/README.md.
