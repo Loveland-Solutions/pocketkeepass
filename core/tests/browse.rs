@@ -3,7 +3,7 @@
 mod common;
 
 use common::{PASSWORD, assert_matches_keepassxc_export, open};
-use passthekey_core::{Database, uuid_from_hex, uuid_to_hex};
+use pocketkeepass_core::{Database, uuid_from_hex, uuid_to_hex};
 
 fn database() -> Database {
     open("browse.kdbx", Some(PASSWORD), None).unwrap()

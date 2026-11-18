@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Pass The Key</string>
+    <string name="app_name">PocketKeePass</string>
     <string name="engine_version">Engine %1$s</string>
 
     <!-- Welcome (no database chosen yet) -->
@@ -17,13 +17,13 @@
     <string name="remove_key_file">Remove</string>
     <string name="unlock">Unlock</string>
     <string name="unlocking">Unlocking… This can take a few seconds.</string>
-    <string name="cant_read_database">Pass The Key can\'t open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.</string>
+    <string name="cant_read_database">PocketKeePass can\'t open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.</string>
     <string name="unlock_with_biometrics">Unlock with biometrics</string>
     <string name="biometric_unlock_title">Unlock database</string>
     <string name="use_master_password">Use master password</string>
     <string name="biometric_invalidated">Biometric unlock was turned off because the fingerprints, face, or screen lock on this device changed. Unlock with your master password, then turn it back on in settings.</string>
     <string name="biometric_outdated">Biometric unlock was turned off because this database\'s master password or key file changed. Unlock with the new one, then turn it back on in settings.</string>
-    <string name="cant_read_key_file">Pass The Key can\'t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.</string>
+    <string name="cant_read_key_file">PocketKeePass can\'t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.</string>
 
     <!-- Browse and search -->
     <string name="lock">Lock</string>

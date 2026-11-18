@@ -1,4 +1,4 @@
 <resources>
     <!-- Window theme only; all real styling is done in Compose (ui/theme). -->
-    <style name="Theme.PassTheKey" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.PocketKeePass" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

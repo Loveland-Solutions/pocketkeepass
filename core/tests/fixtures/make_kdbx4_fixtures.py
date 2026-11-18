@@ -1,4 +1,4 @@
-"""Generates KDBX 4 test fixtures for Pass The Key with pykeepass (test tooling only)."""
+"""Generates KDBX 4 test fixtures for PocketKeePass with pykeepass (test tooling only)."""
 import sys
 
 from construct import Container

@@ -12,8 +12,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use common::{FIXTURES, Fixture, KDBX3, KDBX4, first_difference, first_difference_by, read};
-use passthekey_core::Database;
-use passthekey_core::xml::{self, Element};
+use pocketkeepass_core::Database;
+use pocketkeepass_core::xml::{self, Element};
 
 fn keepassxc_cli() -> Option<PathBuf> {
     let path = std::env::var_os("KEEPASSXC_CLI")
@@ -40,7 +40,7 @@ impl TempFile {
 
     /// Just the path, for KeePassXC to write to.
     fn unwritten(name: &str) -> Self {
-        Self(std::env::temp_dir().join(format!("passthekey-{}-{name}", std::process::id())))
+        Self(std::env::temp_dir().join(format!("pocketkeepass-{}-{name}", std::process::id())))
     }
 }
 

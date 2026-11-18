@@ -3,8 +3,8 @@
 
 use std::collections::BTreeMap;
 
-use passthekey_core::xml::{self, Element};
-use passthekey_core::{CompositeKey, Database, Error};
+use pocketkeepass_core::xml::{self, Element};
+use pocketkeepass_core::{CompositeKey, Database, Error};
 
 pub const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures");
 pub const PASSWORD: &[u8] = b"test-password";

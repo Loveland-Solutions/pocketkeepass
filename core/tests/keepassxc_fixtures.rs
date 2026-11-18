@@ -4,7 +4,7 @@
 mod common;
 
 use common::{PASSWORD, assert_matches_keepassxc_export, open, read};
-use passthekey_core::{CompositeKey, Database, Error};
+use pocketkeepass_core::{CompositeKey, Database, Error};
 
 #[test]
 fn password_only_database() {
