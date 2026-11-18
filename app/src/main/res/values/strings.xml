@@ -122,6 +122,7 @@
 
     <!-- Saving -->
     <string name="saving">Saving…</string>
+    <string name="saved">Saved</string>
     <string name="not_saved">Your changes aren\'t saved to the file.</string>
     <string name="what_now">What now?</string>
     <string name="conflict_title">The file changed elsewhere</string>

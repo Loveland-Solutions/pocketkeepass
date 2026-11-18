@@ -1,5 +1,9 @@
 package mn.lls.pocketkeepass.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -19,10 +24,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import mn.lls.pocketkeepass.R
@@ -32,6 +45,7 @@ import mn.lls.pocketkeepass.edit.GroupForm
 import mn.lls.pocketkeepass.edit.Item
 import mn.lls.pocketkeepass.edit.MoveChoice
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
+import kotlinx.coroutines.delay
 
 /** Creating a group, or renaming one and changing its notes. */
 @Composable
@@ -155,14 +169,75 @@ fun UpgradeDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     )
 }
 
+/** How long "Saved" stays under the top bar after a save. */
+private const val SAVED_NOTICE_MS = 2_000L
+
 /**
- * A thin bar under the top bar while saving, or a warning while changes aren't saved, with a
- * button for what can be done about it. Nothing when everything is saved.
+ * True for a moment after a save finishes, so the screen can say so. Keep it in the app's
+ * top-level composable rather than in each screen, so a save that ends while the screen changes
+ * (closing the entry editor, for one) is still noticed.
  */
 @Composable
-fun SaveStatusBar(state: SaveState, onDetails: () -> Unit) {
+fun rememberJustSaved(state: SaveState): Boolean {
+    var justSaved by remember { mutableStateOf(false) }
+    var wasSaving by remember { mutableStateOf(false) }
+    LaunchedEffect(state) {
+        when (state) {
+            SaveState.Saving -> {
+                wasSaving = true
+                justSaved = false
+            }
+            SaveState.Saved -> if (wasSaving) {
+                wasSaving = false
+                justSaved = true
+                delay(SAVED_NOTICE_MS)
+                justSaved = false
+            }
+            is SaveState.Unsaved -> {
+                wasSaving = false
+                justSaved = false
+            }
+        }
+    }
+    return justSaved
+}
+
+/**
+ * A thin bar under the top bar while saving, "Saved" for a moment afterwards ([justSaved], from
+ * [rememberJustSaved]), or a warning while changes aren't saved, with a button for what can be
+ * done about it. Nothing otherwise.
+ */
+@Composable
+fun SaveStatusBar(state: SaveState, justSaved: Boolean, onDetails: () -> Unit) {
     when (state) {
-        SaveState.Saved -> {}
+        SaveState.Saved -> AnimatedVisibility(
+            visible = justSaved,
+            enter = fadeIn(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            // The same height as the "Saving…" bar it replaces, so nothing below jumps.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_check),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    stringResource(R.string.saved),
+                    Modifier.padding(start = 4.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
         SaveState.Saving -> Column {
             LinearProgressIndicator(Modifier.fillMaxWidth())
             Text(

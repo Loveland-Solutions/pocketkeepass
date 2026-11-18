@@ -76,6 +76,8 @@ fun EntryScreen(
     onTotpCode: suspend (unixSeconds: Long) -> String?,
     onCopyTotp: (label: String) -> Unit,
     saveState: SaveState,
+    /** A save just finished: say so for a moment. */
+    justSaved: Boolean,
     onSaveDetails: () -> Unit,
     snackbar: SnackbarHostState,
     onEdit: () -> Unit,
@@ -166,7 +168,7 @@ fun EntryScreen(
             }
         }
         Column(Modifier.fillMaxSize().padding(padding)) {
-        SaveStatusBar(saveState, onSaveDetails)
+        SaveStatusBar(saveState, justSaved, onSaveDetails)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
             if (entry.isInRecycleBin) {
                 Text(
@@ -398,6 +400,7 @@ private fun EntryScreenPreview() {
             onTotpCode = { "123456" },
             onCopyTotp = {},
             saveState = SaveState.Saved,
+            justSaved = false,
             onSaveDetails = {},
             snackbar = SnackbarHostState(),
             onEdit = {},
