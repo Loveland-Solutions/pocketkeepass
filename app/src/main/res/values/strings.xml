@@ -42,4 +42,23 @@
         <item quantity="one">%d entry</item>
         <item quantity="other">%d entries</item>
     </plurals>
+
+    <!-- Auto-lock -->
+    <string name="auto_lock_settings">Auto-lock settings</string>
+    <string name="auto_lock">Auto-lock</string>
+    <string name="auto_lock_timeout">Lock after this long without use, even in the background:</string>
+    <string name="auto_lock_screen_off">Lock when the screen turns off</string>
+    <string name="done">Done</string>
+    <plurals name="seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
+    <plurals name="minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
 </resources>

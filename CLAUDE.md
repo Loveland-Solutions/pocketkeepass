@@ -42,7 +42,7 @@ Update this section as milestones land.
   - password (Material 3 `OutlinedSecureTextField`), key file, or both. An empty password with a key file means key file only. An empty password alone is a real (empty) password;
   - the password lives in a `TextFieldState` held by the ViewModel, never in saved state (that goes to disk). It's encoded to UTF-8 straight into a `ByteArray` without a `String` (`security/Secrets.kt`), wiped after the call, and the field and its undo history are cleared after unlocking or a wrong key. Key file bytes are read without stray buffer copies and wiped too;
   - unlocking runs off the main thread and can't be abandoned half-way: if the ViewModel is cleared meanwhile, the result is locked at once;
-  - the database is locked by the Lock button and when the ViewModel is cleared (activity finished). There is no auto-lock yet, so it stays open in the background until then (see "Security");
+  - the database is locked by the Lock button, by auto-lock (below), and when the ViewModel is cleared (activity finished);
   - after unlocking, the browse screen opens at the root group.
 
   Checked by hand on the emulator: wrong password, password only (KDBX 4.0 and 4.1), password + key file, key file only, a deleted database file, rotation, and process death (comes back locked, with the choice remembered). The app logs nothing about secrets.
@@ -56,9 +56,17 @@ Update this section as milestones land.
   - icons are hand-copied Material icon vector drawables. `material-icons-extended` is deprecated, so KeePass's own entry and group icons (`IconID`) aren't shown yet.
 
   Checked by hand on the emulator with `browse.kdbx`: nested groups and back, the recycle bin, a protected username, several searches (none match passwords), rotation, and locking. A text field in `TopAppBar`'s title slot never received typing on the emulator, so the search bar is its own row.
-- **Tests:** 71 in Rust (`cargo test --release`), 13 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Done:** auto-lock (`security/AutoLock.kt`, `ui/AutoLockDialog.kt`), set from the gear icon on the browse screen:
+  - locks after a timeout without taps or key presses (`Activity.onUserInteraction`), on screen or in the background. Choices run from 30 seconds to 1 hour, with 5 minutes as the default. There's deliberately no "never";
+  - locks when the screen turns off (on by default, can be turned off);
+  - in the foreground, a main-thread timer does it. Android freezes cached apps, and frozen apps run no timers, so leaving the screen also sets an inexact `AlarmManager` alarm (no permission needed) for the deadline. Its delivery unfreezes the app, and the app locks. Coming back to the app checks the time first, in case the alarm is late;
+  - taps inside dialogs don't reach the activity, so changing an auto-lock setting counts as activity instead;
+  - settings live in SharedPreferences (`auto_lock`). Nothing secret.
+
+  Checked by hand on the emulator: foreground timeout, screen off, and background with the app frozen by `am freeze`, where the alarm arrived about 44 s after leaving (30 s timeout) and unfroze the app to lock. Freezing too soon after leaving the app makes Android kill it instead, which also wipes the database.
+- **Tests:** 71 in Rust (`cargo test --release`), 15 in Kotlin (`./gradlew :app:testDebugUnitTest`).
 - **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. The bridge doesn't expose an entry's fields (or its password) yet; that comes with MVP feature 3.
-- **Next:** auto-lock (timeout, screen off), since an unlocked database stays open in the background. Then MVP feature 3 (view an entry, copy username/password/URL).
+- **Next:** MVP feature 3 (view an entry, copy username/password/URL). The entry's password should cross the bridge as bytes.
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 
 ## Building

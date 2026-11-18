@@ -29,6 +29,7 @@ import mn.lls.passthekey.core.UnlockedDatabase
 import mn.lls.passthekey.files.Document
 import mn.lls.passthekey.files.Documents
 import mn.lls.passthekey.files.RecentDatabase
+import mn.lls.passthekey.security.AutoLockSettings
 import mn.lls.passthekey.security.toUtf8Bytes
 import mn.lls.passthekey.security.wipe
 
@@ -68,8 +69,9 @@ sealed interface UnlockError {
 /**
  * Owns the open database for the whole app: choosing the file, unlocking it, and locking it.
  *
- * The decrypted database lives only here. It's locked (wiped) when the user locks it and when
- * this ViewModel is cleared, which happens when the activity finishes for good.
+ * The decrypted database lives only here. It's locked (wiped) when the user locks it, when
+ * auto-lock says so (timeout, screen off), and when this ViewModel is cleared, which happens
+ * when the activity finishes for good.
  */
 class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     private companion object {
@@ -78,6 +80,9 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     private val documents = Documents(app)
     private val recent = RecentDatabase(app)
+    private val autoLock = (app as PassTheKeyApp).autoLock
+
+    val autoLockSettings: StateFlow<AutoLockSettings> = autoLock.settings
 
     /**
      * The master password field's contents. It lives here rather than in `rememberSaveable`
@@ -190,6 +195,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 return@launch
             }
             database = opened
+            autoLock.arm(::lock)
             clearPassword()
             _state.value = DatabaseState.Unlocked(locked.database, locked.keyFile, unlocked.summary, unlocked.root)
         }
@@ -267,6 +273,8 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun setAutoLock(settings: AutoLockSettings) = autoLock.update(settings)
+
     /** Wipes the decrypted database and goes back to the unlock screen. */
     fun lock() {
         closeDatabase()
@@ -330,6 +338,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun closeDatabase() {
+        autoLock.disarm()
         groupJob?.cancel()
         searchJob?.cancel()
         database?.let {

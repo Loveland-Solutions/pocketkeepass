@@ -28,6 +28,24 @@ class MainActivity : ComponentActivity() {
             PassTheKeyTheme { App() }
         }
     }
+
+    private val autoLock get() = (application as PassTheKeyApp).autoLock
+
+    // Every touch and key press, before the app sees it. Counts as using the app for auto-lock.
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        autoLock.onUserInteraction()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        autoLock.onAppVisible()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        autoLock.onAppHidden()
+    }
 }
 
 /** Every file type: providers label .kdbx files inconsistently, and key files can be anything. */
@@ -36,6 +54,7 @@ private val ANY_FILE = arrayOf("*/*")
 @Composable
 private fun App(viewModel: DatabaseViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val autoLockSettings by viewModel.autoLockSettings.collectAsStateWithLifecycle()
     val pickDatabase = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(viewModel::onDatabasePicked)
     }
@@ -65,6 +84,8 @@ private fun App(viewModel: DatabaseViewModel = viewModel()) {
             onOpenSearch = viewModel::openSearch,
             onCloseSearch = viewModel::closeSearch,
             onLock = viewModel::lock,
+            autoLockSettings = autoLockSettings,
+            onChangeAutoLock = viewModel::setAutoLock,
         )
     }
 }

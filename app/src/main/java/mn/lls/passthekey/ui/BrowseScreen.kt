@@ -39,6 +39,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -62,6 +65,7 @@ import mn.lls.passthekey.core.GroupItem
 import mn.lls.passthekey.core.GroupListing
 import mn.lls.passthekey.core.SearchResult
 import mn.lls.passthekey.files.Document
+import mn.lls.passthekey.security.AutoLockSettings
 import mn.lls.passthekey.ui.theme.PassTheKeyTheme
 
 /** Separates group names in a path, e.g. "Work › Servers". */
@@ -78,8 +82,14 @@ fun BrowseScreen(
     onOpenSearch: () -> Unit,
     onCloseSearch: () -> Unit,
     onLock: () -> Unit,
+    autoLockSettings: AutoLockSettings,
+    onChangeAutoLock: (AutoLockSettings) -> Unit,
 ) {
     val listing = state.listing
+    var showAutoLock by remember { mutableStateOf(false) }
+    if (showAutoLock) {
+        AutoLockDialog(autoLockSettings, onChangeAutoLock, onDismiss = { showAutoLock = false })
+    }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val entryDetailsComing = stringResource(R.string.entry_details_coming)
@@ -111,6 +121,9 @@ fun BrowseScreen(
                     actions = {
                         IconButton(onClick = onOpenSearch) {
                             Icon(painterResource(R.drawable.ic_search), stringResource(R.string.search))
+                        }
+                        IconButton(onClick = { showAutoLock = true }) {
+                            Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.auto_lock_settings))
                         }
                         IconButton(onClick = onLock) {
                             Icon(painterResource(R.drawable.ic_lock), stringResource(R.string.lock))
@@ -324,6 +337,16 @@ private val previewState = DatabaseState.Unlocked(
 @Composable
 private fun BrowseScreenPreview() {
     PassTheKeyTheme {
-        BrowseScreen(previewState, TextFieldState(), onOpenGroup = {}, onUp = {}, onOpenSearch = {}, onCloseSearch = {}, onLock = {})
+        BrowseScreen(
+            previewState,
+            TextFieldState(),
+            onOpenGroup = {},
+            onUp = {},
+            onOpenSearch = {},
+            onCloseSearch = {},
+            onLock = {},
+            autoLockSettings = AutoLockSettings.DEFAULT,
+            onChangeAutoLock = {},
+        )
     }
 }
