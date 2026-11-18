@@ -1,6 +1,9 @@
 package mn.lls.passthekey.security
 
 import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
+import java.nio.charset.CodingErrorAction
 
 /**
  * Helpers for handling secrets on the Kotlin side without leaving copies behind.
@@ -80,6 +83,28 @@ private inline fun CharSequence.forEachCodePoint(action: (Int) -> Unit) {
 
 /** Overwrites the array with zeros. */
 fun ByteArray.wipe() = fill(0)
+
+/** Overwrites the array with zeros. */
+fun CharArray.wipe() = fill('\u0000')
+
+/**
+ * Decodes UTF-8 into a new array of exactly the right size, without making a `String` on the
+ * way. Invalid bytes become U+FFFD. The caller wipes the result with [wipe].
+ */
+fun ByteArray.decodeUtf8(): CharArray {
+    // UTF-8 never takes fewer bytes than UTF-16 takes chars, so this is always big enough.
+    val buffer = CharBuffer.allocate(size)
+    Charsets.UTF_8.newDecoder()
+        .onMalformedInput(CodingErrorAction.REPLACE)
+        .onUnmappableCharacter(CodingErrorAction.REPLACE)
+        .apply {
+            decode(ByteBuffer.wrap(this@decodeUtf8), buffer, true)
+            flush(buffer)
+        }
+    val result = buffer.array().copyOf(buffer.position())
+    buffer.array().wipe()
+    return result
+}
 
 /**
  * Reads the whole stream into an array of exactly the right size. Unlike `readBytes()`, every

@@ -31,7 +31,6 @@
     <string name="group_empty">This group is empty.</string>
     <string name="untitled_group">(no name)</string>
     <string name="untitled_entry">(no title)</string>
-    <string name="entry_details_coming">Entry details are coming next.</string>
     <!-- e.g. "2 groups, 5 entries" -->
     <string name="groups_and_entries">%1$s, %2$s</string>
     <plurals name="group_count">
@@ -43,8 +42,25 @@
         <item quantity="other">%d entries</item>
     </plurals>
 
-    <!-- Auto-lock -->
-    <string name="auto_lock_settings">Auto-lock settings</string>
+    <!-- Entry -->
+    <string name="field_username">Username</string>
+    <string name="field_password">Password</string>
+    <string name="field_url">URL</string>
+    <string name="field_notes">Notes</string>
+    <string name="field_tags">Tags</string>
+    <!-- %1$s is a field name, e.g. "Show Password" -->
+    <string name="show_field">Show %1$s</string>
+    <string name="hide_field">Hide %1$s</string>
+    <string name="copy_field">Copy %1$s</string>
+    <!-- e.g. "Copied Password. It clears in 30 seconds." -->
+    <string name="copied">Copied %1$s. It clears in %2$s.</string>
+    <string name="entry_in_recycle_bin">This entry is in the recycle bin.</string>
+    <string name="entry_empty">This entry has no fields.</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="clipboard">Clipboard</string>
+    <string name="clipboard_timeout">Clear copied fields after:</string>
     <string name="auto_lock">Auto-lock</string>
     <string name="auto_lock_timeout">Lock after this long without use, even in the background:</string>
     <string name="auto_lock_screen_off">Lock when the screen turns off</string>

@@ -9,6 +9,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.IOException
+import java.nio.CharBuffer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -22,6 +23,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mn.lls.passthekey.core.DatabaseSummary
+import mn.lls.passthekey.core.EntryDetails
+import mn.lls.passthekey.core.EntryField
 import mn.lls.passthekey.core.GroupListing
 import mn.lls.passthekey.core.KeePassException
 import mn.lls.passthekey.core.SearchResult
@@ -30,6 +33,7 @@ import mn.lls.passthekey.files.Document
 import mn.lls.passthekey.files.Documents
 import mn.lls.passthekey.files.RecentDatabase
 import mn.lls.passthekey.security.AutoLockSettings
+import mn.lls.passthekey.security.decodeUtf8
 import mn.lls.passthekey.security.toUtf8Bytes
 import mn.lls.passthekey.security.wipe
 
@@ -54,6 +58,11 @@ sealed interface DatabaseState {
         val searching: Boolean = false,
         /** Entries matching the query. Empty while the query is blank. */
         val results: List<SearchResult> = emptyList(),
+        /**
+         * The entry being shown, on top of the group or search it was opened from. It carries no
+         * protected values: those are fetched one at a time, when the user asks.
+         */
+        val entry: EntryDetails? = null,
     ) : DatabaseState
 }
 
@@ -81,8 +90,12 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     private val documents = Documents(app)
     private val recent = RecentDatabase(app)
     private val autoLock = (app as PassTheKeyApp).autoLock
+    private val clipboard = (app as PassTheKeyApp).clipboard
 
     val autoLockSettings: StateFlow<AutoLockSettings> = autoLock.settings
+
+    /** How long a copied field stays on the clipboard, in seconds. */
+    val clipboardTimeout: StateFlow<Int> = clipboard.timeoutSeconds
 
     /**
      * The master password field's contents. It lives here rather than in `rememberSaveable`
@@ -103,6 +116,9 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     /** The search running in the engine, if any. A newer query cancels it. */
     private var searchJob: Job? = null
+
+    /** The entry being read from the engine, if any. */
+    private var entryJob: Job? = null
 
     private val _state = MutableStateFlow(
         recent.database?.let { DatabaseState.Locked(it, recent.keyFile) } ?: DatabaseState.NoDatabase,
@@ -253,6 +269,78 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
+    /** Shows an entry. `id` comes from a listing or a search result. */
+    fun openEntry(id: String) {
+        if (_state.value !is DatabaseState.Unlocked) return
+        entryJob?.cancel()
+        entryJob = read(
+            query = { db ->
+                try {
+                    db.entry(id)
+                } catch (_: KeePassException.NotFound) {
+                    null // can't happen until editing exists
+                }
+            },
+            apply = { entry -> _state.update { (it as? DatabaseState.Unlocked)?.copy(entry = entry) ?: it } },
+        )
+    }
+
+    /** Back from the entry to the group or search it was opened from. */
+    fun closeEntry() {
+        entryJob?.cancel()
+        _state.update { (it as? DatabaseState.Unlocked)?.copy(entry = null) ?: it }
+    }
+
+    /**
+     * Fetches a field's value for showing it on screen, or null if the database was locked
+     * meanwhile. Compose can only draw a `String`, which can't be wiped, so call this only when
+     * the user asks to see the value.
+     */
+    suspend fun reveal(entryId: String, field: EntryField): String? {
+        val chars = revealChars(entryId, field) ?: return null
+        return try {
+            String(chars)
+        } finally {
+            chars.wipe()
+        }
+    }
+
+    /**
+     * Copies a field to the clipboard. Protected fields are marked sensitive. Our own copy is
+     * wiped straight after, but Android briefly turns the text into a `String` to hand it to the
+     * clipboard service, and that copy can't be wiped. It isn't kept anywhere, at least.
+     */
+    fun copy(entryId: String, field: EntryField, label: String) {
+        viewModelScope.launch {
+            val chars = revealChars(entryId, field) ?: return@launch
+            try {
+                clipboard.copy(label, CharBuffer.wrap(chars), sensitive = field.isProtected)
+            } finally {
+                chars.wipe()
+            }
+        }
+    }
+
+    fun setClipboardTimeout(seconds: Int) = clipboard.setTimeout(seconds)
+
+    private suspend fun revealChars(entryId: String, field: EntryField): CharArray? {
+        val db = database ?: return null
+        return withContext(Dispatchers.Default) {
+            val bytes = try {
+                db.revealField(entryId, field.key)
+            } catch (_: KeePassException) {
+                return@withContext null // locked meanwhile, or (once editing exists) gone
+            } catch (_: IllegalStateException) {
+                return@withContext null // closed by lock() before the call started
+            }
+            try {
+                bytes.decodeUtf8()
+            } finally {
+                bytes.wipe()
+            }
+        }
+    }
+
     /**
      * Asks the open database something off the main thread, then hands the answer to [apply] on
      * the main thread. A job cancelled meanwhile never gets to [apply], even if the engine had
@@ -341,6 +429,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         autoLock.disarm()
         groupJob?.cancel()
         searchJob?.cancel()
+        entryJob?.cancel()
         database?.let {
             it.lock()
             it.close()

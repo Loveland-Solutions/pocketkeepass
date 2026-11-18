@@ -27,34 +27,27 @@ import androidx.compose.ui.unit.dp
 import mn.lls.passthekey.R
 import mn.lls.passthekey.security.AccessibleToToolsOnly
 import mn.lls.passthekey.security.AutoLockSettings
+import mn.lls.passthekey.security.Clipboard
 
-/** Chooses when the open database locks itself. Changes apply straight away. */
+/** Chooses when the open database locks itself, and when the clipboard is cleared. Changes apply straight away. */
 @Composable
-fun AutoLockDialog(settings: AutoLockSettings, onChange: (AutoLockSettings) -> Unit, onDismiss: () -> Unit) {
+fun SettingsDialog(
+    settings: AutoLockSettings,
+    onChange: (AutoLockSettings) -> Unit,
+    clipboardTimeoutSeconds: Int,
+    onChangeClipboardTimeout: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.done)) } },
-        title = { Text(stringResource(R.string.auto_lock)) },
+        title = { Text(stringResource(R.string.settings)) },
         text = {
             AccessibleToToolsOnly() // a dialog is a window of its own
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.auto_lock), style = MaterialTheme.typography.titleSmall)
                 Text(stringResource(R.string.auto_lock_timeout), style = MaterialTheme.typography.bodyMedium)
-                Column(Modifier.selectableGroup()) {
-                    for (seconds in AutoLockSettings.TIMEOUTS) {
-                        val selected = seconds == settings.timeoutSeconds
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .selectable(selected, role = Role.RadioButton) { onChange(settings.copy(timeoutSeconds = seconds)) }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(selected = selected, onClick = null)
-                            Text(duration(seconds), Modifier.padding(start = 12.dp))
-                        }
-                    }
-                }
-                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                Choices(AutoLockSettings.TIMEOUTS, settings.timeoutSeconds) { onChange(settings.copy(timeoutSeconds = it)) }
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -65,9 +58,33 @@ fun AutoLockDialog(settings: AutoLockSettings, onChange: (AutoLockSettings) -> U
                     Text(stringResource(R.string.auto_lock_screen_off), Modifier.weight(1f))
                     Switch(checked = settings.onScreenOff, onCheckedChange = null)
                 }
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                Text(stringResource(R.string.clipboard), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.clipboard_timeout), style = MaterialTheme.typography.bodyMedium)
+                Choices(Clipboard.TIMEOUTS, clipboardTimeoutSeconds, onChangeClipboardTimeout)
             }
         },
     )
+}
+
+/** Radio buttons for a list of durations, in seconds. */
+@Composable
+private fun Choices(choices: List<Int>, selectedSeconds: Int, onSelect: (Int) -> Unit) {
+    Column(Modifier.selectableGroup()) {
+        for (seconds in choices) {
+            val selected = seconds == selectedSeconds
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(selected, role = Role.RadioButton) { onSelect(seconds) }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = selected, onClick = null)
+                Text(duration(seconds), Modifier.padding(start = 12.dp))
+            }
+        }
+    }
 }
 
 @Composable

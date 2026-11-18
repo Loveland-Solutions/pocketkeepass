@@ -31,8 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -43,7 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -56,7 +54,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import mn.lls.passthekey.DatabaseState
 import mn.lls.passthekey.R
 import mn.lls.passthekey.core.DatabaseSummary
@@ -81,24 +78,25 @@ fun BrowseScreen(
     onUp: () -> Unit,
     onOpenSearch: () -> Unit,
     onCloseSearch: () -> Unit,
+    onOpenEntry: (id: String) -> Unit,
     onLock: () -> Unit,
     autoLockSettings: AutoLockSettings,
     onChangeAutoLock: (AutoLockSettings) -> Unit,
+    clipboardTimeoutSeconds: Int,
+    onChangeClipboardTimeout: (Int) -> Unit,
 ) {
     val listing = state.listing
-    var showAutoLock by remember { mutableStateOf(false) }
-    if (showAutoLock) {
-        AutoLockDialog(autoLockSettings, onChangeAutoLock, onDismiss = { showAutoLock = false })
+    var showSettings by remember { mutableStateOf(false) }
+    if (showSettings) {
+        SettingsDialog(
+            autoLockSettings,
+            onChangeAutoLock,
+            clipboardTimeoutSeconds,
+            onChangeClipboardTimeout,
+            onDismiss = { showSettings = false },
+        )
     }
-    val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    val entryDetailsComing = stringResource(R.string.entry_details_coming)
-    val onOpenEntry: (EntryItem) -> Unit = {
-        scope.launch {
-            snackbar.currentSnackbarData?.dismiss()
-            snackbar.showSnackbar(entryDetailsComing)
-        }
-    }
+    val onOpenEntry: (EntryItem) -> Unit = { onOpenEntry(it.id) }
 
     BackHandler(enabled = state.searching, onBack = onCloseSearch)
     BackHandler(enabled = !state.searching && !listing.isRoot, onBack = onUp)
@@ -122,8 +120,8 @@ fun BrowseScreen(
                         IconButton(onClick = onOpenSearch) {
                             Icon(painterResource(R.drawable.ic_search), stringResource(R.string.search))
                         }
-                        IconButton(onClick = { showAutoLock = true }) {
-                            Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.auto_lock_settings))
+                        IconButton(onClick = { showSettings = true }) {
+                            Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings))
                         }
                         IconButton(onClick = onLock) {
                             Icon(painterResource(R.drawable.ic_lock), stringResource(R.string.lock))
@@ -132,7 +130,6 @@ fun BrowseScreen(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).imePadding()) {
             if (state.searching) {
@@ -222,8 +219,9 @@ private fun GroupContents(listing: GroupListing, onOpenGroup: (String) -> Unit, 
         Message(stringResource(R.string.group_empty))
         return
     }
-    // A fresh list for every group, so each one opens scrolled to the top.
-    val listState = remember(listing.group.id) { LazyListState() }
+    // A fresh list for every group, so each one opens scrolled to the top. Saveable, so coming
+    // back from an entry returns to the same place.
+    val listState = rememberSaveable(listing.group.id, saver = LazyListState.Saver) { LazyListState() }
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(bottom = 16.dp)) {
         items(listing.groups, key = { "g" + it.id }) { group ->
             GroupRow(group, onClick = { onOpenGroup(group.id) })
@@ -344,9 +342,12 @@ private fun BrowseScreenPreview() {
             onUp = {},
             onOpenSearch = {},
             onCloseSearch = {},
+            onOpenEntry = {},
             onLock = {},
             autoLockSettings = AutoLockSettings.DEFAULT,
             onChangeAutoLock = {},
+            clipboardTimeoutSeconds = 30,
+            onChangeClipboardTimeout = {},
         )
     }
 }
