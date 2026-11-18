@@ -87,6 +87,38 @@ pub struct SearchResult {
     pub group_path: Vec<String>,
 }
 
+/// Everything the entry screen shows, except protected values: those cross the bridge only when
+/// the user asks to see or copy one, through `reveal_field`.
+#[derive(uniffi::Record)]
+pub struct EntryDetails {
+    /// The entry's UUID as 32 hex digits.
+    pub id: String,
+    /// Empty if the title is missing or protected.
+    pub title: String,
+    /// Group names from below the root down to the entry's group. Empty for root entries.
+    pub group_path: Vec<String>,
+    pub is_in_recycle_bin: bool,
+    /// Username, password, and URL first, then custom fields in file order, then notes. The
+    /// title isn't repeated here. Standard fields are always listed, even when the file leaves
+    /// them out.
+    pub fields: Vec<EntryField>,
+    /// Split at `;` and `,`, trimmed, empty ones left out.
+    pub tags: Vec<String>,
+}
+
+/// One field of an entry.
+#[derive(uniffi::Record)]
+pub struct EntryField {
+    /// "UserName", "Password", "URL", "Notes", or a custom field's name.
+    pub key: String,
+    /// The value, or "" if the field is protected. Fetch a protected value with `reveal_field`.
+    pub value: String,
+    pub is_protected: bool,
+    /// Whether the value is empty, so the app can tell an empty protected field from one with
+    /// something to show or copy without fetching it.
+    pub is_empty: bool,
+}
+
 #[uniffi::export]
 impl UnlockedDatabase {
     /// Decrypts a whole `.kdbx` file. `password` is the master password as UTF-8 bytes;
@@ -168,6 +200,49 @@ impl UnlockedDatabase {
         })
     }
 
+    /// The entry with this id, for the entry screen. Fails with `NotFound` if there's none.
+    /// Protected values are left out; see `reveal_field`.
+    pub fn entry(&self, id: String) -> Result<EntryDetails> {
+        self.with(|db| {
+            let hit = db
+                .find_entry(&uuid_from_hex(&id).ok_or(Error::NotFound)?)
+                .ok_or(Error::NotFound)?;
+            Ok(EntryDetails {
+                id: entry_id(&hit.entry),
+                title: hit.entry.unprotected_field("Title").to_owned(),
+                group_path: hit.path.iter().map(|g| g.name().to_owned()).collect(),
+                is_in_recycle_bin: hit.path.iter().any(|g| db.is_recycle_bin(g)),
+                fields: entry_fields(&hit.entry),
+                tags: hit
+                    .entry
+                    .tags()
+                    .split([';', ','])
+                    .map(str::trim)
+                    .filter(|t| !t.is_empty())
+                    .map(str::to_owned)
+                    .collect(),
+            })
+        })
+    }
+
+    /// One field's value as UTF-8 bytes, protected or not: for showing or copying it when the
+    /// user asks. Fails with `NotFound` if the entry or the field doesn't exist. The caller
+    /// should wipe the bytes as soon as it's done with them.
+    pub fn reveal_field(&self, entry_id: String, key: String) -> Result<Vec<u8>> {
+        self.with(|db| {
+            let hit = db
+                .find_entry(&uuid_from_hex(&entry_id).ok_or(Error::NotFound)?)
+                .ok_or(Error::NotFound)?;
+            let field = hit.entry.fields().find(|f| f.key == key);
+            // A standard field the file leaves out is just empty: `entry` lists it anyway.
+            match field {
+                Some(f) => Ok(f.value.as_bytes().to_vec()),
+                None if STANDARD_FIELDS.contains(&key.as_str()) => Ok(Vec::new()),
+                None => Err(Error::NotFound),
+            }
+        })
+    }
+
     /// Converts a KDBX 3 database to KDBX 4 in memory so that it can be saved. Ask the user
     /// first: older apps that only read KDBX 3 won't open the file once it's saved.
     pub fn upgrade_to_kdbx4(&self) -> Result<()> {
@@ -216,9 +291,46 @@ fn group_item(db: &Database, group: &Group<'_>) -> GroupItem {
     }
 }
 
+/// The fields every KeePass entry has, besides the title, in the order the entry screen shows
+/// them. Notes come last, after custom fields.
+const STANDARD_FIELDS: [&str; 4] = ["UserName", "Password", "URL", "Notes"];
+
+fn entry_fields(entry: &Entry<'_>) -> Vec<EntryField> {
+    let field = |key: &str| {
+        let found = entry.fields().find(|f| f.key == key);
+        let protected = found.is_some_and(|f| f.protected);
+        let value = found.map_or("", |f| f.value);
+        EntryField {
+            key: key.to_owned(),
+            value: if protected {
+                String::new()
+            } else {
+                value.to_owned()
+            },
+            is_protected: protected,
+            is_empty: value.is_empty(),
+        }
+    };
+    let [username, password, url, notes] = STANDARD_FIELDS;
+    let custom = entry
+        .fields()
+        .filter(|f| f.key != "Title" && !STANDARD_FIELDS.contains(&f.key))
+        .map(|f| field(f.key));
+    [username, password, url]
+        .into_iter()
+        .map(field)
+        .chain(custom)
+        .chain([field(notes)])
+        .collect()
+}
+
+fn entry_id(entry: &Entry<'_>) -> String {
+    id(entry.uuid())
+}
+
 fn entry_item(entry: &Entry<'_>) -> EntryItem {
     EntryItem {
-        id: id(entry.uuid()),
+        id: entry_id(entry),
         title: entry.unprotected_field("Title").to_owned(),
         username: entry.unprotected_field("UserName").to_owned(),
         url: entry.unprotected_field("URL").to_owned(),
@@ -336,6 +448,70 @@ mod tests {
         assert!(db.search("hunter2".to_owned()).unwrap().is_empty());
     }
 
+    fn field<'a>(details: &'a EntryDetails, key: &str) -> &'a EntryField {
+        details.fields.iter().find(|f| f.key == key).unwrap()
+    }
+
+    #[test]
+    fn an_entry_comes_without_its_protected_values() {
+        let db = open("browse.kdbx");
+        let email = db.entry("02".repeat(16)).unwrap();
+        assert_eq!(email.title, "Email");
+        assert!(email.group_path.is_empty() && !email.is_in_recycle_bin);
+        assert_eq!(email.tags, ["personal"]);
+        let keys: Vec<_> = email.fields.iter().map(|f| f.key.as_str()).collect();
+        assert_eq!(keys, ["UserName", "Password", "URL", "Notes"]);
+        assert_eq!(field(&email, "UserName").value, "me@example.com");
+        assert_eq!(field(&email, "Notes").value, "Personal inbox");
+        let password = field(&email, "Password");
+        assert!(password.is_protected && !password.is_empty);
+        assert_eq!(password.value, "");
+
+        // Custom fields come after the standard ones, and notes last, even when missing.
+        let vpn = db.entry("04".repeat(16)).unwrap();
+        let keys: Vec<_> = vpn.fields.iter().map(|f| f.key.as_str()).collect();
+        assert_eq!(keys, ["UserName", "Password", "URL", "Account ID", "Notes"]);
+        assert_eq!(field(&vpn, "Account ID").value, "W-1234");
+        assert!(field(&vpn, "Notes").is_empty);
+        assert_eq!(vpn.group_path, ["Work"]);
+
+        // A protected username is held back like a password.
+        let bank = db.entry("08".repeat(16)).unwrap();
+        assert_eq!(bank.tags, ["bank", "money"]); // KeePassXC sorted them when it wrote the file
+        let username = field(&bank, "UserName");
+        assert!(username.is_protected && username.value.is_empty() && !username.is_empty);
+
+        // The server's password is empty (KeePassXC wrote it as an empty protected value), and
+        // says so without being revealed.
+        let server = db.entry("06".repeat(16)).unwrap();
+        let password = field(&server, "Password");
+        assert!(password.is_empty && password.is_protected);
+
+        assert!(db.entry("0c".repeat(16)).unwrap().is_in_recycle_bin);
+        for bad in ["ee".repeat(16), "01".repeat(16), "nonsense".to_owned()] {
+            assert!(matches!(db.entry(bad), Err(Error::NotFound)));
+        }
+    }
+
+    #[test]
+    fn revealing_a_field_gives_its_bytes() {
+        let db = open("browse.kdbx");
+        let reveal = |id: &str, key: &str| db.reveal_field(id.repeat(16), key.to_owned());
+        assert_eq!(reveal("02", "Password").unwrap(), b"hunter2-mailbox");
+        assert_eq!(reveal("08", "UserName").unwrap(), b"jo-secret-user");
+        assert_eq!(reveal("04", "Account ID").unwrap(), b"W-1234");
+        assert_eq!(reveal("08", "Title").unwrap(), "Crédit Union".as_bytes());
+        assert!(reveal("06", "Password").unwrap().is_empty());
+        assert!(matches!(reveal("06", "Nope"), Err(Error::NotFound)));
+        assert!(matches!(reveal("ee", "Password"), Err(Error::NotFound)));
+        // History items aren't entries of their own.
+        let history_uuid = "02".repeat(16);
+        assert_eq!(
+            reveal(&history_uuid[..2], "Password").unwrap(),
+            b"hunter2-mailbox"
+        );
+    }
+
     #[test]
     fn locking_wipes_the_database_and_refuses_everything_after() {
         let db = open("kdbx4-argon2id-chacha20.kdbx");
@@ -348,5 +524,10 @@ mod tests {
         assert!(matches!(db.upgrade_to_kdbx4(), Err(Error::Locked)));
         assert!(matches!(db.list_group(None), Err(Error::Locked)));
         assert!(matches!(db.search("x".to_owned()), Err(Error::Locked)));
+        assert!(matches!(db.entry("02".repeat(16)), Err(Error::Locked)));
+        assert!(matches!(
+            db.reveal_field("02".repeat(16), "Password".to_owned()),
+            Err(Error::Locked)
+        ));
     }
 }

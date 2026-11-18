@@ -17,7 +17,7 @@ pub struct Listing<'a> {
     pub entries: Vec<Entry<'a>>,
 }
 
-/// An entry that matched a search, and where it lives.
+/// An entry that matched a search (or was looked up by UUID), and where it lives.
 pub struct SearchHit<'a> {
     pub entry: Entry<'a>,
     /// The groups from below the root down to the entry's own group. Empty for root entries.
@@ -42,6 +42,31 @@ impl Database {
             groups,
             entries: group.entries().collect(),
         })
+    }
+
+    /// Finds an entry anywhere in the database (history excluded), with the groups from below
+    /// the root down to its own group.
+    pub fn find_entry(&self, uuid: &[u8; 16]) -> Option<SearchHit<'_>> {
+        fn walk<'a>(
+            group: Group<'a>,
+            uuid: &[u8; 16],
+            path: &mut Vec<Group<'a>>,
+        ) -> Option<Entry<'a>> {
+            if let Some(entry) = group.entries().find(|e| e.uuid().as_ref() == Some(uuid)) {
+                return Some(entry);
+            }
+            for child in group.groups() {
+                path.push(child);
+                if let Some(entry) = walk(child, uuid, path) {
+                    return Some(entry);
+                }
+                path.pop();
+            }
+            None
+        }
+        let mut path = Vec::new();
+        let entry = walk(self.root(), uuid, &mut path)?;
+        Some(SearchHit { entry, path })
     }
 
     /// Whether `group` is this database's recycle bin.
