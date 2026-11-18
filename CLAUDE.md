@@ -52,11 +52,10 @@ Update this section as milestones land.
   - **lists and search never carry or read a protected value**: `Entry::unprotected_field` returns "" for protected fields, so a username the user chose to protect is hidden too. Entry passwords come with MVP feature 3, as bytes;
   - search runs in Rust over the whole database. The query is split into words, and every word must appear, ignoring case, in the title, username, URL, notes, or tags. It skips history, the recycle bin, groups with `EnableSearching` false (inherited by subgroups), and custom fields. Results show their group path;
   - the search query lives in a `TextFieldState` in the ViewModel, out of saved state, and is cleared on lock. Engine reads run off the main thread, and a cancelled read never applies its result;
-  - tapping an entry shows a "coming next" message until MVP feature 3;
   - icons are hand-copied Material icon vector drawables. `material-icons-extended` is deprecated, so KeePass's own entry and group icons (`IconID`) aren't shown yet.
 
   Checked by hand on the emulator with `browse.kdbx`: nested groups and back, the recycle bin, a protected username, several searches (none match passwords), rotation, and locking. A text field in `TopAppBar`'s title slot never received typing on the emulator, so the search bar is its own row.
-- **Done:** auto-lock (`security/AutoLock.kt`, `ui/AutoLockDialog.kt`), set from the gear icon on the browse screen:
+- **Done:** auto-lock (`security/AutoLock.kt`, `ui/SettingsDialog.kt`), set from the gear icon on the browse screen:
   - locks after a timeout without taps or key presses (`Activity.onUserInteraction`), on screen or in the background. Choices run from 30 seconds to 1 hour, with 5 minutes as the default. There's deliberately no "never";
   - locks when the screen turns off (on by default, can be turned off);
   - in the foreground, a main-thread timer does it. Android freezes cached apps, and frozen apps run no timers, so leaving the screen also sets an inexact `AlarmManager` alarm (no permission needed) for the deadline. Its delivery unfreezes the app, and the app locks. Coming back to the app checks the time first, in case the alarm is late;
@@ -69,9 +68,17 @@ Update this section as milestones land.
   - on Android 14+, every window (the activity and each dialog, which is a window of its own: call `AccessibleToToolsOnly()` in it) is hidden from accessibility apps not registered as assistive tools (`isAccessibilityTool`). TalkBack, Switch Access, and Voice Access still work. Compose's events skip that rule, so the window's root marks every event sensitive on its way out. Apps declare themselves tools and only Google Play checks, so this is a second layer.
 
   Checked on the emulator (API 37) with `tools/a11y-probe`, a test-only accessibility app with one service registered as a tool and one not. Before: the non-tool service read the master password as it was typed, and entry names. After: it gets no window content and no events with text; the tool one gets dots for the password and everything else.
-- **Tests:** 71 in Rust (`cargo test --release`), 15 in Kotlin (`./gradlew :app:testDebugUnitTest`).
-- **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. The bridge doesn't expose an entry's fields (or its password) yet; that comes with MVP feature 3.
-- **Next:** MVP feature 3 (view an entry, copy username/password/URL). The entry's password should cross the bridge as bytes.
+- **Done:** MVP feature 3, viewing an entry and copying its fields (`ui/EntryScreen.kt`, `security/Clipboard.kt`):
+  - `entry(id)` returns the entry's fields **without protected values** (they come back as "" with `is_protected`, plus `is_empty`). Username, password, and URL come first, then custom fields in file order, then notes. `reveal_field(entry_id, key)` returns one value as bytes, only when the user taps show or copy;
+  - protected fields show a fixed `••••••••` (it gives nothing away, not even the length) until "show" is tapped. A shown value has to become a `String` for Compose to draw it, so it's kept only while that entry is on screen. Shown passwords use a monospace font;
+  - copying decodes the bytes into a `CharArray` (`decodeUtf8`, no `String`) and wipes it afterwards. Android turns it into a `String` itself to hand it to the clipboard service, and we can't wipe that one. Protected fields are marked sensitive (`EXTRA_IS_SENSITIVE`), so Android 13+ shows dots in its "copied" preview. Below 13, a snackbar confirms the copy;
+  - the clipboard clears itself after 15 s to 5 min (30 s by default, no "never"), set in the settings dialog (formerly the auto-lock dialog). It works like auto-lock: a main-thread timer plus an inexact alarm. The pending clear is remembered in SharedPreferences (`clipboard`, only "a clear is pending" and the clip's timestamp, never the content), so the alarm also works in a fresh process. In the foreground it skips clearing if the user copied something else since (`ClipDescription.timestamp`). In the background Android 10+ hides the clipboard, so it clears anyway;
+  - the entry screen sits on top of the browse screen. Back returns to the same group or search, at the same scroll position (`SaveableStateHolder`; only list positions are saved).
+
+  Checked by hand on the emulator with `browse.kdbx`: protected username and password hidden, show/hide, a custom field, tags, the system's "copied" preview shows dots, the clipboard is empty 30 s after a copy, and after copying, leaving the app, and `am kill`, the alarm started a fresh process about 37 s later and the clipboard was empty. Also back to the list, and Lock from the entry screen.
+- **Tests:** 73 in Rust (`cargo test --release`), 17 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. Entry dates and attachments aren't shown yet.
+- **Next:** MVP feature 4 (biometric quick-unlock).
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 
 ## Building
@@ -92,7 +99,7 @@ Gradle builds the Rust engine itself (`buildRust<Variant>` and `generateRustBind
 - Rust with the Android targets: `rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android` (installed on the dev Mac);
 - NDK 28.2.13676358 (installed; pinned as `ndkVersion`).
 
-To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump` instead. If `adb shell input text` stops reaching a text field, check whether Gboard is showing its full-screen "Try out your stylus" tutorial (`uiautomator dump --windows` lists its window) and tap Cancel.
+To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump --windows` instead (uiautomator isn't an accessibility tool, so on Android 14+ a plain dump no longer sees Pass The Key's window). `adb shell am kill` only works once the app has been in the background for a few seconds. If `adb shell input text` stops reaching a text field, check whether Gboard is showing its full-screen "Try out your stylus" tutorial (`uiautomator dump --windows` lists its window) and tap Cancel.
 
 `tools/a11y-probe` (Gradle module `:a11y-probe`, never shipped) logs what accessibility apps can read from Pass The Key. See its README.
 
@@ -228,5 +235,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] Compose's text field keeps its own immutable copies of what's typed (and the keyboard sees it). We clear the field and its undo history, but can't wipe those copies. Every Android password manager has the same limit
 - [ ] Reproducible Rust builds for F-Droid (pinned toolchain, path remapping)
 - [ ] KDBX 3: wrong-key detection relies on padding plus the stream start bytes, which is standard. KDBX 4 uses the header HMAC
-- [ ] Android 8–13 have no way to hide a window from non-tool accessibility apps. There, only the master password is masked; entry names and usernames on screen are readable by any accessibility app the user enabled. Fields that show secrets (MVP feature 3) must mask them for accessibility the same way
+- [ ] Android 8–13 have no way to hide a window from non-tool accessibility apps. There, the master password and hidden protected fields are masked; entry names, usernames, and any protected value the user taps "show" on are readable by any accessibility app the user enabled
+- [ ] `reveal_field`'s bytes pass through a UniFFI `RustBuffer`, which is freed without being wiped. The decrypted database is in the same memory anyway while it's open, so this adds little, but it's a copy we don't control
+- [ ] Copying a field opens its value to everything that can read the clipboard until it's cleared (keyboards, and on Android 9 and older, any app). The sensitive flag asks keyboards not to keep it in their clipboard history; we can't enforce that
 - [ ] App icon

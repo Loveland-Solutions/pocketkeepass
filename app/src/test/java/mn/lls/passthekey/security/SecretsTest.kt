@@ -52,10 +52,24 @@ class SecretsTest {
     }
 
     @Test
+    fun `UTF-8 decoding matches the JDK's, without going through a String`() {
+        val samples = listOf("", "p4ss", "pässwörd ñ", "密码 パスワード", "🔑 key 🗝️", "\u0000\u007F\u0080߿ࠀ￿")
+        for (sample in samples) {
+            assertArrayEquals(sample.toCharArray(), sample.toByteArray(Charsets.UTF_8).decodeUtf8(), sample)
+        }
+        // Invalid bytes become U+FFFD, as in the JDK.
+        val invalid = byteArrayOf(0x61, 0xFF.toByte(), 0x62, 0xC3.toByte())
+        assertArrayEquals(String(invalid, Charsets.UTF_8).toCharArray(), invalid.decodeUtf8())
+    }
+
+    @Test
     fun `wipe zeroes the array`() {
         val secret = "hunter2".toByteArray()
         secret.wipe()
         assertTrue(secret.all { it == 0.toByte() })
         assertEquals(7, secret.size)
+        val chars = "hunter2".toCharArray()
+        chars.wipe()
+        assertTrue(chars.all { it == '\u0000' })
     }
 }

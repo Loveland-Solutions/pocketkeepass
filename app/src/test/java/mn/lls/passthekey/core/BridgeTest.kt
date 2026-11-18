@@ -123,6 +123,23 @@ class BridgeTest {
     }
 
     @Test
+    fun `an entry arrives without protected values, which come one at a time as bytes`() {
+        UnlockedDatabase.open(fixture("browse.kdbx"), password, null).use { db ->
+            val bank = db.entry("08".repeat(16))
+            assertEquals("Crédit Union", bank.title)
+            assertEquals(listOf("Banking"), bank.groupPath)
+            assertEquals(listOf("UserName", "Password", "URL", "Notes"), bank.fields.map { it.key })
+            assertEquals(EntryField("UserName", "", isProtected = true, isEmpty = false), bank.fields[0])
+            assertEquals(EntryField("URL", "https://cu.example.com", isProtected = false, isEmpty = false), bank.fields[2])
+
+            assertArrayEquals("jo-secret-user".toByteArray(), db.revealField(bank.id, "UserName"))
+            assertArrayEquals("p4ss".toByteArray(), db.revealField(bank.id, "Password"))
+            assertThrows(KeePassException.NotFound::class.java) { db.revealField(bank.id, "Nope") }
+            assertThrows(KeePassException.NotFound::class.java) { db.entry("ee".repeat(16)) }
+        }
+    }
+
+    @Test
     fun `a locked database refuses everything`() {
         val db = UnlockedDatabase.open(fixture("pw-only.kdbx"), password, null)
         assertFalse(db.isLocked())
@@ -132,6 +149,8 @@ class BridgeTest {
         assertThrows(KeePassException.Locked::class.java) { db.save() }
         assertThrows(KeePassException.Locked::class.java) { db.listGroup(null) }
         assertThrows(KeePassException.Locked::class.java) { db.search("email") }
+        assertThrows(KeePassException.Locked::class.java) { db.entry("02".repeat(16)) }
+        assertThrows(KeePassException.Locked::class.java) { db.revealField("02".repeat(16), "Password") }
         db.close()
     }
 }

@@ -22,6 +22,6 @@ pub use browse::{Listing, SearchHit};
 pub use error::Error;
 pub use kdbx::FormatVersion;
 pub use key::CompositeKey;
-pub use model::{Database, Entry, Group, uuid_from_hex, uuid_to_hex};
+pub use model::{Database, Entry, Field, Group, uuid_from_hex, uuid_to_hex};
 
 uniffi::setup_scaffolding!();

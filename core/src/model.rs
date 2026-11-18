@@ -201,6 +201,19 @@ impl<'a> Entry<'a> {
             .map_or("", |v| v.text.as_str())
     }
 
+    /// Every field in file order, standard and custom, protected or not. For the entry screen,
+    /// which shows protected values only when the user asks to see them.
+    pub fn fields(&self) -> impl Iterator<Item = Field<'a>> + 'a {
+        self.el.children_named("String").map(|s| {
+            let value = s.child("Value");
+            Field {
+                key: s.child_text("Key"),
+                value: value.map_or("", |v| v.text.as_str()),
+                protected: value.is_some_and(Element::is_protected),
+            }
+        })
+    }
+
     /// The entry's tags as stored, separated by `;` or `,`.
     pub fn tags(&self) -> &'a str {
         self.el.child_text("Tags")
@@ -235,6 +248,16 @@ impl<'a> Entry<'a> {
             .flat_map(|h| h.children_named("Entry"))
             .map(|el| Entry { el })
     }
+}
+
+/// One of an entry's fields.
+#[derive(Clone, Copy)]
+pub struct Field<'a> {
+    pub key: &'a str,
+    /// Plaintext, even for protected fields. Only show it when the user asks to.
+    pub value: &'a str,
+    /// Whether the file marks the field as protected (passwords, usually).
+    pub protected: bool,
 }
 
 /// A UUID as 32 lowercase hex digits, the form the app uses to refer to groups and entries.
