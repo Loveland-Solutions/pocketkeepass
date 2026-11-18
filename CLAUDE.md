@@ -111,10 +111,18 @@ Update this section as milestones land.
   - the options (never a password) are remembered in SharedPreferences (`password_generator`). The default is 20 characters, every kind, Common symbols (about 122 bits).
 
   Checked by hand on the emulator (API 37): generating for an existing entry without fetching its password, then saving and revealing it (they match); Common, All, and None; look-alikes; every kind turned off (the engine's message, "Use" does nothing); the strength in bits against an independent calculation; the options remembered for the next entry; rotation with the dialog open; and that an accessibility dump of the filled field shows only dots.
+- **Done:** MVP feature 8, TOTP codes (`core/src/totp.rs`, the code row in `ui/EntryScreen.kt`):
+  - **reading the settings and making codes is in Rust** (`Totp::from_entry`, `code_at`). Three ways of storing them are read, in KeePassXC's order: the `otp` field (an `otpauth://totp/` URI as KeePassXC, KeePassDX, and Keepass2Android write it, the KeeOTP plugin's `key=…&size=…&step=…`, or leniently a bare Base32 secret), KeePass 2's `TimeOtp-Secret` / `-Hex` / `-Base32` / `-Base64` with `TimeOtp-Length`, `-Period`, and `-Algorithm`, then the older `TOTP Seed` with `TOTP Settings` (`30;6`, `30;S`). SHA-1, SHA-256, SHA-512, 1 to 10 digits, Steam Guard's 5-letter codes. The HMAC truncation is RFC 4226's;
+  - **settings that can't be used are explained, not guessed at**: a secret that isn't valid Base32, an unknown algorithm, an `otpauth://hotp/` URI (HOTP isn't supported). KeePassXC shows a made-up code for the first and treats HOTP as TOTP;
+  - `entry(id)` carries `totp: TotpStatus` (`None`, `Ready` with the period, length, and the fields the settings came from, or `Invalid` with the reason), nothing secret. `totp_code(entry_id, unix_seconds)` returns one code as bytes. The app passes the start of the current period, so the code and the countdown always agree;
+  - the entry screen shows "One-time code" right after the password, **hidden until "show"** like a password (it's the second factor, and Android 8–13 can't keep it from accessibility apps), with a countdown that's always visible, so the user can see whether there's time to type it. Shown, it's fetched again as each period starts. Copying fetches the current code and marks it sensitive, with the same auto-clear as other fields. When the settings work, the fields holding them are left out of the entry screen (they're still in `fields`, so the editor keeps them); when they don't, they stay, under the reason;
+  - the code is based on the phone's clock. Android keeps it in sync with the network by default.
+
+  KeePassXC agrees on every code (`tests/totp.rs` runs `keepassxc-cli show --totp`), and the RFC 6238 and 4226 test vectors pass. Checked by hand on the emulator (API 37) with `totp.kdbx`: codes for the legacy, Steam, KeePass Base32, and default entries matched KeePassXC's at the same moment, the shown code rolled over by itself, a copy pasted as the plain code and Android's preview showed dots, the HOTP entry explained itself and listed its `otp` field, rotation hides the code again, and the editor still lists every `TimeOtp-*` field.
 - **Done:** the app icon (`art/icon`): an adaptive icon with a themed (monochrome) layer.
-- **Tests:** 120 in Rust (`cargo test --release`), 35 in Kotlin (`./gradlew :app:testDebugUnitTest`).
-- **Not built yet:** changing the master key or database settings, restoring from history, entry dates and attachments (not shown, but kept).
-- **Next:** MVP feature 8 (TOTP).
+- **Tests:** 135 in Rust (`cargo test --release`), 36 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Not built yet:** changing the master key or database settings, restoring from history, entry dates and attachments (not shown, but kept), setting up TOTP from the app (today it means adding an `otp` field holding an `otpauth://` URI by hand).
+- **Next:** the MVP features are all in. Candidates: setting up TOTP in the editor, saving new logins from autofill, testing on a physical phone.
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 - **Renamed** from Pass The Key to PocketKeePass on 2026-11-18, application ID included (`mn.lls.passthekey` → `mn.lls.pocketkeepass`). Nothing had been published. The test fixtures `browse.*.xml` keep their old `Generator` text, because `browse.kdbx` contains it.
 
@@ -171,7 +179,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - **Dependency standard (the owner's words: "I would rather reinvent the wheel than make junk pieced together from old scrap"):**
   - Every dependency must be actively maintained and on a current release. Check the release date before adding anything. Stale, abandoned, or years-old libraries are not acceptable, even when they "work".
   - When no current, high-quality library exists, **we write it ourselves**. That includes the whole KDBX format.
-  - **The one exception:** cryptographic primitives (AES, ChaCha20, Salsa20, Twofish, Argon2, SHA-2, HMAC) come from the RustCrypto crates. Hand-written crypto fails silently and dangerously, while RustCrypto is current, audited, and widely used. Everything above the primitives is ours.
+  - **The one exception:** cryptographic primitives (AES, ChaCha20, Salsa20, Twofish, Argon2, SHA-1, SHA-2, HMAC) come from the RustCrypto crates. Hand-written crypto fails silently and dangerously, while RustCrypto is current, audited, and widely used. Everything above the primitives is ours.
 - **Minimize Java.** Password logic lives in Rust, not on the JVM. Kotlin is only the thin Android layer, because Android's APIs (autofill, biometrics, file picker) are only reachable from Kotlin or Java. A JDK exists only because Gradle requires one.
 
 ## Tech stack (confirmed)
@@ -183,7 +191,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 | Rust ↔ Kotlin bridge | UniFFI 0.32 (Mozilla) | Generates the Kotlin bindings. They need JNA (`net.java.dev.jna:jna` 5.19.1, as an AAR), the one Java library we ship because of it |
 | Android ABIs | arm64-v8a, armeabi-v7a, x86_64 | 64-bit libraries are 16 KB page aligned (checked) |
 | Kotlin tests | JUnit 6 (Jupiter) | Run on the dev computer against the engine built for it |
-| Crypto primitives | RustCrypto: `aes`, `cbc`, `chacha20`, `salsa20`, `twofish`, `argon2`, `sha2`, `hmac` | The only things we don't write ourselves |
+| Crypto primitives | RustCrypto: `aes`, `cbc`, `chacha20`, `salsa20`, `twofish`, `argon2`, `sha1` (TOTP only), `sha2`, `hmac` | The only things we don't write ourselves |
 | Other Rust deps | `flate2` (gzip), `quick-xml`, `zeroize`, `base64`, `getrandom`, `thiserror`, `uniffi` | All released in 2026 when chosen |
 | UI | Jetpack Compose + Material 3 | Dynamic color on Android 12+ |
 | Architecture | Single-activity, MVVM, unidirectional data flow | ViewModel + StateFlow |
@@ -303,3 +311,5 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] Offer to save new logins from autofill (`SaveInfo`, `onSaveRequest`). Unblocked by editing
 - [ ] If the screen is rotated while the unlock screen or chooser is open over an app whose fields have no view IDs, Android can't find the fields again and nothing is filled in. Apps with ordinary layouts are fine (checked)
 - [ ] A filled-in username and password pass through Android's autofill framework as `String`s we can't wipe, like the clipboard copy
+- [ ] TOTP: no setup in the editor yet (paste a secret or an `otpauth://` URI, building the URI in Rust), and no QR scanning (needs the camera and a QR decoder, which we'd write ourselves). No HOTP (KeePass's `HmacOtp-*` fields and `otpauth://hotp/`), which has to save the counter after every code. Autofill doesn't offer the code yet
+- [ ] A shown TOTP code is a `String` (Compose needs one) while it's on screen, like a shown password
