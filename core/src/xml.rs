@@ -23,6 +23,7 @@ use crate::util::SecretBuf;
 
 /// One XML element. All text is wiped from memory when the tree is dropped, because after
 /// decryption it holds passwords.
+#[derive(Clone)]
 pub struct Element {
     pub name: String,
     pub attrs: Vec<(String, String)>,
@@ -202,7 +203,7 @@ fn attach(stack: &mut [Element], root: &mut Option<Element>, el: Element) -> Res
 }
 
 /// Whether XML 1.0 can represent this character at all, escaped or not.
-fn is_xml_char(c: char) -> bool {
+pub(crate) fn is_xml_char(c: char) -> bool {
     matches!(c, '\t' | '\n' | '\r' | '\u{20}'..='\u{D7FF}' | '\u{E000}'..='\u{FFFD}' | '\u{10000}'..)
 }
 

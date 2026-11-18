@@ -9,11 +9,11 @@
 
 use std::sync::{Arc, PoisonError, RwLock, RwLockReadGuard};
 
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 use crate::error::{Error, Result};
 use crate::model::{uuid_from_hex, uuid_to_hex};
-use crate::{CompositeKey, Database, Entry, Group, SearchHit};
+use crate::{CompositeKey, Database, Entry, EntryEdit, FieldValue, Group, SearchHit};
 
 /// A database that has been opened with the right key and is held decrypted in memory.
 ///
@@ -38,6 +38,8 @@ pub struct DatabaseSummary {
     pub group_count: u32,
     /// Entries at any depth, not counting older versions kept in entry history.
     pub entry_count: u32,
+    /// Whether deleting moves things to the recycle bin (rather than deleting them for good).
+    pub recycle_bin_enabled: bool,
 }
 
 /// A group, for showing in a list or a breadcrumb trail.
@@ -111,6 +113,9 @@ pub struct EntryDetails {
     pub id: String,
     /// Empty if the title is missing or protected.
     pub title: String,
+    /// Whether the title is protected, so an editor knows to leave it alone unless the user
+    /// changes it. (Almost never: KeePass doesn't protect titles by default.)
+    pub title_is_protected: bool,
     /// Group names from below the root down to the entry's group. Empty for root entries.
     pub group_path: Vec<String>,
     pub is_in_recycle_bin: bool,
@@ -133,6 +138,53 @@ pub struct EntryField {
     /// Whether the value is empty, so the app can tell an empty protected field from one with
     /// something to show or copy without fetching it.
     pub is_empty: bool,
+}
+
+/// One field of an entry, as it should be after an edit. See `create_entry` and `update_entry`.
+#[derive(uniffi::Record)]
+pub struct FieldEdit {
+    /// "Title", "UserName", "Password", "URL", "Notes", or a custom field's name.
+    pub key: String,
+    /// The new value as UTF-8 bytes, or null to keep the value the entry already has (under
+    /// `previous_key`). Leave protected values the user didn't change as null, so they never
+    /// have to cross the bridge. Wiped on this side after use.
+    pub value: Option<Vec<u8>>,
+    /// The field's name before this edit, if it was renamed. Null means the same as `key`.
+    pub previous_key: Option<String>,
+    /// Whether the file stores the value encrypted. Only used for custom fields: the standard
+    /// ones keep their own protection (or get the database's default).
+    pub is_protected: bool,
+}
+
+/// What deleting did.
+#[derive(uniffi::Enum, Debug, PartialEq, Eq)]
+pub enum Deletion {
+    /// Moved to the recycle bin, where it can be restored from.
+    MovedToRecycleBin,
+    /// Gone for good.
+    Deleted,
+}
+
+/// A group's own details, for editing it.
+#[derive(uniffi::Record)]
+pub struct GroupDetails {
+    pub id: String,
+    pub name: String,
+    pub notes: String,
+    /// True for the root group, which can't be deleted or moved.
+    pub is_root: bool,
+}
+
+/// A group to choose from when moving something.
+#[derive(uniffi::Record)]
+pub struct GroupChoice {
+    pub id: String,
+    pub name: String,
+    /// How many groups lie between this one and the root group: 0 for the root itself.
+    pub depth: u32,
+    pub is_recycle_bin: bool,
+    /// Whether it's inside the recycle bin (at any depth).
+    pub is_in_recycle_bin: bool,
 }
 
 #[uniffi::export]
@@ -202,6 +254,7 @@ impl UnlockedDatabase {
                 needs_upgrade: db.needs_upgrade(),
                 group_count,
                 entry_count,
+                recycle_bin_enabled: db.recycle_bin_enabled(),
             })
         })
     }
@@ -263,6 +316,7 @@ impl UnlockedDatabase {
             Ok(EntryDetails {
                 id: entry_id(&hit.entry),
                 title: hit.entry.unprotected_field("Title").to_owned(),
+                title_is_protected: hit.entry.is_protected("Title"),
                 group_path: hit.path.iter().map(|g| g.name().to_owned()).collect(),
                 is_in_recycle_bin: hit.path.iter().any(|g| db.is_recycle_bin(g)),
                 fields: entry_fields(&hit.entry),
@@ -293,6 +347,122 @@ impl UnlockedDatabase {
                 None if STANDARD_FIELDS.contains(&key.as_str()) => Ok(Vec::new()),
                 None => Err(Error::NotFound),
             }
+        })
+    }
+
+    /// Adds an entry to a group and returns its id. `fields` lists every field it should have,
+    /// in order; standard fields left out are added empty. Fails with `Invalid` (and a sentence
+    /// saying why) for an empty or repeated field name, or text a KeePass file can't hold.
+    ///
+    /// Like every change, this is only in memory until `save`.
+    pub fn create_entry(
+        &self,
+        group_id: String,
+        fields: Vec<FieldEdit>,
+        tags: Vec<String>,
+    ) -> Result<String> {
+        let group = parse_id(&group_id)?;
+        self.with_mut(|db| {
+            let id = with_edit(fields, &tags, |edit| db.create_entry(&group, edit))?;
+            Ok(uuid_to_hex(&id))
+        })
+    }
+
+    /// Changes an entry's fields and tags, keeping its previous version in its history.
+    /// `fields` lists every field it should have, in order: custom fields left out are deleted.
+    /// Returns false if nothing actually changed (and then nothing is touched).
+    pub fn update_entry(
+        &self,
+        id: String,
+        fields: Vec<FieldEdit>,
+        tags: Vec<String>,
+    ) -> Result<bool> {
+        let entry = parse_id(&id)?;
+        self.with_mut(|db| with_edit(fields, &tags, |edit| db.update_entry(&entry, edit)))
+    }
+
+    /// Moves an entry to the recycle bin, or deletes it for good if it's already there or the
+    /// recycle bin is turned off.
+    pub fn delete_entry(&self, id: String) -> Result<Deletion> {
+        let entry = parse_id(&id)?;
+        self.with_mut(|db| db.delete_entry(&entry).map(Deletion::from))
+    }
+
+    /// Moves an entry into another group. Returns false if it's already there.
+    pub fn move_entry(&self, id: String, group_id: String) -> Result<bool> {
+        let (entry, group) = (parse_id(&id)?, parse_id(&group_id)?);
+        self.with_mut(|db| db.move_entry(&entry, &group))
+    }
+
+    /// A group's name and notes, for editing it.
+    pub fn group_details(&self, id: String) -> Result<GroupDetails> {
+        let uuid = parse_id(&id)?;
+        self.with(|db| {
+            let listing = db.listing(Some(&uuid)).ok_or(Error::NotFound)?;
+            Ok(GroupDetails {
+                id,
+                name: listing.group.name().to_owned(),
+                notes: listing.group.notes().to_owned(),
+                is_root: listing.parents.is_empty(),
+            })
+        })
+    }
+
+    /// Adds a group inside another and returns its id.
+    pub fn create_group(&self, parent_id: String, name: String, notes: String) -> Result<String> {
+        let parent = parse_id(&parent_id)?;
+        self.with_mut(|db| Ok(uuid_to_hex(&db.create_group(&parent, &name, &notes)?)))
+    }
+
+    /// Renames a group and changes its notes. Returns false if both were already so.
+    pub fn update_group(&self, id: String, name: String, notes: String) -> Result<bool> {
+        let group = parse_id(&id)?;
+        self.with_mut(|db| db.update_group(&group, &name, &notes))
+    }
+
+    /// Moves a group, with everything in it, to the recycle bin, or deletes it for good (see
+    /// the engine's `Database::delete_group`). The root group can't be deleted.
+    pub fn delete_group(&self, id: String) -> Result<Deletion> {
+        let group = parse_id(&id)?;
+        self.with_mut(|db| db.delete_group(&group).map(Deletion::from))
+    }
+
+    /// Moves a group, with everything in it, into another group. Returns false if it's
+    /// already there. Fails with `Invalid` for the root group, or a move into itself.
+    pub fn move_group(&self, id: String, parent_id: String) -> Result<bool> {
+        let (group, parent) = (parse_id(&id)?, parse_id(&parent_id)?);
+        self.with_mut(|db| db.move_group(&group, &parent))
+    }
+
+    /// Every group, the root first, each followed by its subgroups (file order, the recycle
+    /// bin last): the order a tree of them is drawn in. For choosing where to move something.
+    pub fn all_groups(&self) -> Result<Vec<GroupChoice>> {
+        fn walk(
+            db: &Database,
+            group: Group<'_>,
+            depth: u32,
+            in_bin: bool,
+            out: &mut Vec<GroupChoice>,
+        ) {
+            let is_bin = db.is_recycle_bin(&group);
+            out.push(GroupChoice {
+                id: id(group.uuid()),
+                name: group.name().to_owned(),
+                depth,
+                is_recycle_bin: is_bin,
+                is_in_recycle_bin: in_bin,
+            });
+            let (mut children, bins): (Vec<_>, Vec<_>) =
+                group.groups().partition(|g| !db.is_recycle_bin(g));
+            children.extend(bins);
+            for child in children {
+                walk(db, child, depth + 1, in_bin || is_bin, out);
+            }
+        }
+        self.with(|db| {
+            let mut out = Vec::new();
+            walk(db, db.root(), 0, false, &mut out);
+            Ok(out)
         })
     }
 
@@ -328,6 +498,70 @@ impl UnlockedDatabase {
     fn with<T>(&self, f: impl FnOnce(&Database) -> Result<T>) -> Result<T> {
         f(self.read().as_ref().ok_or(Error::Locked)?)
     }
+
+    fn with_mut<T>(&self, f: impl FnOnce(&mut Database) -> Result<T>) -> Result<T> {
+        let mut db = self.db.write().unwrap_or_else(PoisonError::into_inner);
+        f(db.as_mut().ok_or(Error::Locked)?)
+    }
+}
+
+impl From<crate::Deletion> for Deletion {
+    fn from(deletion: crate::Deletion) -> Self {
+        match deletion {
+            crate::Deletion::MovedToRecycleBin => Deletion::MovedToRecycleBin,
+            crate::Deletion::Deleted => Deletion::Deleted,
+        }
+    }
+}
+
+fn parse_id(id: &str) -> Result<[u8; 16]> {
+    uuid_from_hex(id).ok_or(Error::NotFound)
+}
+
+/// Turns the bridge's field edits into the engine's and calls `f` with them. The values are
+/// wiped afterwards, whatever happens.
+fn with_edit<T>(
+    mut fields: Vec<FieldEdit>,
+    tags: &[String],
+    f: impl FnOnce(&EntryEdit<'_>) -> Result<T>,
+) -> Result<T> {
+    let result = edit_from(&fields, tags, f);
+    for field in &mut fields {
+        if let Some(value) = &mut field.value {
+            value.zeroize();
+        }
+    }
+    result
+}
+
+fn edit_from<T>(
+    fields: &[FieldEdit],
+    tags: &[String],
+    f: impl FnOnce(&EntryEdit<'_>) -> Result<T>,
+) -> Result<T> {
+    let edits = fields
+        .iter()
+        .map(|field| {
+            let value =
+                match &field.value {
+                    Some(bytes) => FieldValue::Set(std::str::from_utf8(bytes).map_err(|_| {
+                        Error::Invalid(format!("“{}” isn't valid text.", field.key))
+                    })?),
+                    None => FieldValue::Keep {
+                        from: field.previous_key.as_deref().unwrap_or(&field.key),
+                    },
+                };
+            Ok(crate::FieldEdit {
+                key: &field.key,
+                value,
+                protected: field.is_protected,
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    f(&EntryEdit {
+        fields: edits,
+        tags: tags.iter().map(String::as_str).collect(),
+    })
 }
 
 fn id(uuid: Option<[u8; 16]>) -> String {
@@ -630,6 +864,117 @@ mod tests {
         );
     }
 
+    fn edit(key: &str, value: Option<&str>) -> FieldEdit {
+        FieldEdit {
+            key: key.to_owned(),
+            value: value.map(|v| v.as_bytes().to_vec()),
+            previous_key: None,
+            is_protected: false,
+        }
+    }
+
+    #[test]
+    fn entries_are_created_and_edited_without_fetching_protected_values() {
+        let db = open("kdbx41-keepassxc.kdbx");
+        let root = db.list_group(None).unwrap().group.id;
+        let id = db
+            .create_entry(
+                root.clone(),
+                vec![edit("Title", Some("Router")), edit("Password", Some("pw"))],
+                vec!["home".to_owned()],
+            )
+            .unwrap();
+        let details = db.entry(id.clone()).unwrap();
+        assert_eq!(
+            (details.title.as_str(), details.tags.as_slice()),
+            ("Router", ["home".to_owned()].as_slice())
+        );
+        assert!(!details.title_is_protected);
+
+        // The password is kept by leaving it null; the custom field is renamed.
+        db.update_entry(
+            id.clone(),
+            vec![edit("Title", Some("Modem")), edit("Password", None)],
+            vec![],
+        )
+        .unwrap();
+        assert_eq!(
+            db.reveal_field(id.clone(), "Password".to_owned()).unwrap(),
+            b"pw"
+        );
+        assert_eq!(db.entry(id.clone()).unwrap().title, "Modem");
+        let mut renamed = edit("Code", None);
+        renamed.previous_key = Some("Missing".to_owned());
+        assert!(matches!(
+            db.update_entry(id.clone(), vec![renamed], vec![]),
+            Err(Error::Invalid(_))
+        ));
+        let bad_utf8 = FieldEdit {
+            value: Some(vec![0xff]),
+            ..edit("Title", None)
+        };
+        assert!(matches!(
+            db.update_entry(id.clone(), vec![bad_utf8], vec![]),
+            Err(Error::Invalid(_))
+        ));
+
+        // The change survives a save.
+        let saved = db.save().unwrap();
+        let reopened =
+            UnlockedDatabase::open(saved, Some(b"test-password".to_vec()), None).unwrap();
+        assert_eq!(reopened.entry(id).unwrap().title, "Modem");
+    }
+
+    #[test]
+    fn groups_are_created_moved_and_deleted() {
+        let db = open("kdbx41-keepassxc.kdbx");
+        let root = db.list_group(None).unwrap().group.id;
+        assert!(db.group_details(root.clone()).unwrap().is_root);
+        let group = db
+            .create_group(root.clone(), "Made".to_owned(), "notes".to_owned())
+            .unwrap();
+        let inner = db
+            .create_group(group.clone(), "Inner".to_owned(), String::new())
+            .unwrap();
+        let details = db.group_details(group.clone()).unwrap();
+        assert_eq!(
+            (
+                details.name.as_str(),
+                details.notes.as_str(),
+                details.is_root
+            ),
+            ("Made", "notes", false)
+        );
+        assert!(
+            db.update_group(group.clone(), "Renamed".to_owned(), String::new())
+                .unwrap()
+        );
+        assert!(matches!(
+            db.move_group(group.clone(), inner.clone()),
+            Err(Error::Invalid(_))
+        ));
+
+        let entry = db
+            .create_entry(inner.clone(), vec![edit("Title", Some("Deep"))], vec![])
+            .unwrap();
+        assert!(db.move_entry(entry.clone(), root.clone()).unwrap());
+
+        let groups = db.all_groups().unwrap();
+        let names: Vec<_> = groups.iter().map(|g| (g.name.as_str(), g.depth)).collect();
+        assert!(names.contains(&("Renamed", 1)) && names.contains(&("Inner", 2)));
+        assert_eq!(groups[0].depth, 0);
+
+        let summary = db.summary().unwrap();
+        let expected = if summary.recycle_bin_enabled {
+            Deletion::MovedToRecycleBin
+        } else {
+            Deletion::Deleted
+        };
+        assert_eq!(db.delete_group(group).unwrap(), expected);
+        assert_eq!(db.delete_entry(entry).unwrap(), expected);
+        assert!(matches!(db.delete_group(root), Err(Error::Invalid(_))));
+    }
+
     #[test]
     fn locking_wipes_the_database_and_refuses_everything_after() {
         let db = open("kdbx4-argon2id-chacha20.kdbx");
@@ -647,6 +992,21 @@ mod tests {
         };
         assert!(matches!(db.autofill_matches(app("x")), Err(Error::Locked)));
         assert!(matches!(db.entry("02".repeat(16)), Err(Error::Locked)));
+        let any = || "02".repeat(16);
+        assert!(matches!(
+            db.create_entry(any(), vec![], vec![]),
+            Err(Error::Locked)
+        ));
+        assert!(matches!(
+            db.update_entry(any(), vec![], vec![]),
+            Err(Error::Locked)
+        ));
+        assert!(matches!(db.delete_entry(any()), Err(Error::Locked)));
+        assert!(matches!(
+            db.create_group(any(), String::new(), String::new()),
+            Err(Error::Locked)
+        ));
+        assert!(matches!(db.all_groups(), Err(Error::Locked)));
         assert!(matches!(
             db.reveal_field("02".repeat(16), "Password".to_owned()),
             Err(Error::Locked)
