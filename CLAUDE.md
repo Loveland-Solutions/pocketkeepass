@@ -128,7 +128,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - **Name:** "PocketKeePass" (one word, capitalized like that). Publisher: Loveland Solutions. Chosen 2026-11-18 (it was "Pass The Key" before) so the app is recognizable and searchable as a KeePass app.
   - KeePass's author asks that other apps never use "KeePass" as a separate word in their name (keepass.info Downloads page). It must be joined to a prefix or suffix, as in KeePassDX or MiniKeePass. So never "Pocket KeePass", and never a store title like "PocketKeePass – KeePass Manager". Say "KeePass" freely in descriptions ("opens and saves KeePass (.kdbx) databases").
   - Don't use KeePass's own logo or icon anywhere.
-  - The GitHub repository and the local folder are still named `passthekey`.
+  - Public repository: github.com/Loveland-Solutions/pocketkeepass, created 2026-11-18 with the history rewritten to the owner's GitHub no-reply address. The earlier private repository is `Loveland-Solutions/passthekey-old` and keeps PRs #1–7. The local folder is still named `passthekey`.
 - **Application ID / package:** `mn.lls.pocketkeepass`. This is the Loveland Solutions domain (lls.mn) written backwards, and it matches the Tile Timer Android app (`mn.lls.tiletimer`). It can never change once the app is published on Google Play.
 - **License:** GPLv3. Most KeePass apps use it, F-Droid accepts it, it stops closed-source forks, and it lets us reuse KeePassDX code if needed. MIT and Apache-2.0 libraries can be used inside a GPLv3 app.
 - **Distribution:** F-Droid, Google Play, and GitHub releases. F-Droid means no proprietary dependencies (no Google Play Services or Firebase) and reproducible builds where possible.
