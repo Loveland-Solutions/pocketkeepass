@@ -93,6 +93,8 @@ fun BrowseScreen(
     onChangeQuickUnlock: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
     saveState: SaveState,
+    /** A save just finished: say so for a moment. */
+    justSaved: Boolean,
     onSaveDetails: () -> Unit,
     snackbar: SnackbarHostState,
     onNewEntry: () -> Unit,
@@ -162,7 +164,7 @@ fun BrowseScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).imePadding()) {
-            SaveStatusBar(saveState, onSaveDetails)
+            SaveStatusBar(saveState, justSaved, onSaveDetails)
             Box(Modifier.weight(1f)) {
                 if (state.searching) {
                     SearchResults(searchQuery.text.isBlank(), state.results, onOpenEntry)
@@ -440,6 +442,7 @@ private fun BrowseScreenPreview() {
             onChangeQuickUnlock = {},
             onOpenSettings = {},
             saveState = SaveState.Saved,
+            justSaved = false,
             onSaveDetails = {},
             snackbar = SnackbarHostState(),
             onNewEntry = {},

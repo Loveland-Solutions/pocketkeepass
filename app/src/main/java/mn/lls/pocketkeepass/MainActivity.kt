@@ -44,6 +44,7 @@ import mn.lls.pocketkeepass.ui.LockUnsavedDialog
 import mn.lls.pocketkeepass.ui.MoveDialog
 import mn.lls.pocketkeepass.ui.SaveProblemDialog
 import mn.lls.pocketkeepass.ui.UpgradeDialog
+import mn.lls.pocketkeepass.ui.rememberJustSaved
 import mn.lls.pocketkeepass.ui.EntryScreen
 import mn.lls.pocketkeepass.ui.UnlockScreen
 import mn.lls.pocketkeepass.ui.WelcomeScreen
@@ -115,6 +116,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
     val clipboardTimeout by viewModel.clipboardTimeout.collectAsStateWithLifecycle()
     val edit by editor.state.collectAsStateWithLifecycle()
     val saveState by editor.saveState.collectAsStateWithLifecycle()
+    val justSaved = rememberJustSaved(saveState)
     val snackbar = remember { SnackbarHostState() }
     // Keeps the browse screen's scroll position while an entry is shown on top of it.
     val savedState = rememberSaveableStateHolder()
@@ -184,6 +186,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                     onTotpCode = { unixSeconds -> viewModel.totpCode(entry.id, unixSeconds) },
                     onCopyTotp = { label -> viewModel.copyTotp(entry.id, label) },
                     saveState = saveState,
+                    justSaved = justSaved,
                     onSaveDetails = { showSaveProblem = true },
                     snackbar = snackbar,
                     onEdit = { editor.editEntry(entry) },
@@ -207,6 +210,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                         onChangeQuickUnlock = viewModel::setQuickUnlock,
                         onOpenSettings = viewModel::refreshQuickUnlock,
                         saveState = saveState,
+                        justSaved = justSaved,
                         onSaveDetails = { showSaveProblem = true },
                         snackbar = snackbar,
                         onNewEntry = { editor.newEntry(listing.group.id) },
