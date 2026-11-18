@@ -6,6 +6,10 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.SyncFailedException
+import java.security.MessageDigest
 import mn.lls.pocketkeepass.security.readAllWiping
 
 /** A file the user picked through the system file picker, and the name it showed there. */
@@ -69,4 +73,40 @@ class Documents(context: Context) {
     fun read(uri: Uri): ByteArray =
         (resolver.openInputStream(uri) ?: throw FileNotFoundException(uri.toString()))
             .use { it.readAllWiping() }
+
+    /**
+     * Replaces the file's contents with [bytes], then reads it back and compares, so a provider
+     * that silently kept old bytes (or didn't truncate) is caught. Throws [WriteCheckException]
+     * then, [FileNotFoundException] if the file is gone, [SecurityException] if the app may
+     * only read it, and [IOException] for anything else.
+     *
+     * Android's file picker gives access to one file, not its folder, so there is no way to
+     * write a temporary file beside it and swap. The database is only written once the engine
+     * has proven the new bytes open correctly, and the read-back proves they arrived.
+     */
+    fun write(uri: Uri, bytes: ByteArray) {
+        // "wt": truncate. Plain "w" leaves the old file's tail behind on some providers.
+        val out = resolver.openOutputStream(uri, "wt") ?: throw FileNotFoundException(uri.toString())
+        out.use {
+            it.write(bytes)
+            it.flush()
+            if (it is FileOutputStream) {
+                try {
+                    it.fd.sync() // to the storage itself, not just the kernel's cache
+                } catch (_: SyncFailedException) {
+                    // Not every file descriptor supports it (pipes from cloud providers).
+                }
+            }
+        }
+        if (!read(uri).contentEquals(bytes)) throw WriteCheckException()
+    }
 }
+
+/** A file read back after saving didn't match what was written. */
+class WriteCheckException : IOException("The file read back differently from what was written")
+
+/**
+ * A fingerprint of a file's contents (SHA-256), to notice when another app or device changed
+ * the database since it was opened. The file is encrypted, so this reveals nothing.
+ */
+fun fingerprint(bytes: ByteArray): ByteArray = MessageDigest.getInstance("SHA-256").digest(bytes)

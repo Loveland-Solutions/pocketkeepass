@@ -95,9 +95,19 @@ Update this section as milestones land.
   - no "compatibility mode" (reading a browser's address bar through accessibility, which can be spoofed), no saving of new logins yet (needs feature 6), no keyboard inline suggestions yet.
 
   Checked by hand on the emulator (API 37) with `tools/autofill-probe` and Chrome 145: the labelled, unlabelled, and username-only forms; "Unlock PocketKeePass" then the chooser (two matches) or a direct fill (one match); a direct fill with nothing shown; search and a manual pick; an entry with nothing to fill (a toast, nothing filled); Chrome on `http://localhost` (offers the `http` entry, not the `https`-only one) and on `https://github.com/login`; the same page inside a non-browser app (gets that app's entries, not the site's, and the warning); locking in the app (the next tap offers "Unlock"); auto-lock 30 s after an autofill-only unlock in a fresh process; rotation in the chooser; the settings switch on and off; the minified release build; and that the probe's autofill service gets one empty container from the unlock screen (it got the password field without the window flag).
-- **Tests:** 90 in Rust (`cargo test --release`), 30 in Kotlin (`./gradlew :app:testDebugUnitTest`).
-- **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. Entry dates and attachments aren't shown yet.
-- **Next:** MVP feature 6 (create and edit entries and groups, then save).
+- **Done:** MVP feature 6, creating, editing, moving, and deleting entries and groups, saved straight away (`core/src/edit.rs`, `edit/`, `ui/EntryEditScreen.kt`, `ui/EditDialogs.kt`, `Session.kt`):
+  - **edits are in place on the XML tree**, so whatever an entry or group holds that we don't understand is untouched. Editing an entry copies it into its history first (trimmed to `Meta/HistoryMaxItems`, default 10) and updates its times. An edit that changes nothing touches nothing. Deleting goes to the recycle bin (created when needed, with search and auto-type off), or for good from inside the bin or with the bin turned off, recorded in `DeletedObjects`. Moves set `LocationChanged`, plus `PreviousParentGroup` in KDBX 4.1. Text a KeePass file can't hold is refused (`Error::Invalid`, a user-facing sentence);
+  - **protected values the user doesn't change never leave the engine.** The editor shows them as fixed dots, and `FieldEdit.value` null means "keep" (by the field's previous name, so renaming keeps the value). Tapping "Change" fetches it into a masked field. Standard fields keep their own protection (or get `Meta/MemoryProtection`'s default); custom fields have a "protect" switch;
+  - the form's text lives in `TextFieldState`s in `EditViewModel`, out of saved state, wiped (with undo history) when it closes or the database locks. Values cross the bridge as bytes and are wiped on both sides;
+  - **every change is saved at once** by `Session` in the app's own scope, never cancelled halfway. Before writing, the file is read and compared with the fingerprint (SHA-256) taken when it was opened or last saved. If another app or device changed it, nothing is written and the user chooses: replace it, discard ours and reload (with the stored key hash), or save a copy (`CreateDocument`). The write truncates (`"wt"`), syncs, then reads the file back and compares. Failures leave the changes in memory with a "not saved" bar, retry, and save-a-copy. Locking with unsaved changes asks first;
+  - a KDBX 3 database asks to upgrade to KDBX 4 before its first change;
+  - a changed database says "PocketKeePass" in `Meta/Generator`, as every KeePass app does with its own name.
+
+  KeePassXC reads our edited KDBX 4.0, 4.1, and upgraded 3.1 files and exports exactly our entries, history included (`keepassxc_oracle.rs`). Checked by hand on the emulator (API 37): a new entry with a protected custom field and tags (KeePassXC shows it all), renaming without touching the password (kept, old version in history), a conflict after the file was replaced behind the app (dialog, "Not now" banner, reload), a new group deleted into a newly created recycle bin, a move, and a KDBX 3.1 file upgraded on its first new entry.
+- **Done:** the app icon (`art/icon`): an adaptive icon with a themed (monochrome) layer.
+- **Tests:** 111 in Rust (`cargo test --release`), 34 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Not built yet:** changing the master key or database settings, restoring from history, entry dates and attachments (not shown, but kept).
+- **Next:** MVP feature 7 (password generator), then 8 (TOTP). The entry editor is where the generator goes.
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 - **Renamed** from Pass The Key to PocketKeePass on 2026-11-18, application ID included (`mn.lls.passthekey` → `mn.lls.pocketkeepass`). Nothing had been published. The test fixtures `browse.*.xml` keep their old `Generator` text, because `browse.kdbx` contains it.
 
@@ -132,14 +142,14 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 
 ## Module layout
 
-- `core/` (Rust crate `pocketkeepass-core`): **all** KeePass and crypto logic: file format, key derivation, encryption, the data model. No Android dependencies, so it's tested with plain `cargo test`.
+- `core/` (Rust crate `pocketkeepass-core`): **all** KeePass and crypto logic: file format, key derivation, encryption, the data model, and editing it (`edit.rs`). No Android dependencies, so it's tested with plain `cargo test`.
 - `app/` (Android, Kotlin, package `mn.lls.pocketkeepass`): screens plus Android-only integration (file picker, biometrics, autofill, clipboard). It holds no password logic of its own and calls into `core` through UniFFI.
 - The bridge between them:
   - `core/src/ffi.rs` is the only Rust the app can see. It wraps the engine in types that can cross the bridge and holds no logic of its own.
   - UniFFI generates the Kotlin side (package `mn.lls.pocketkeepass.core`) into `app/build/generated/` on every build. It is never checked in or edited.
   - Secrets cross the bridge as bytes (`ByteArray`), never as `String`, so Kotlin can wipe them.
   - `UnlockedDatabase.lock()` wipes the decrypted database immediately. Don't rely on garbage collection for that.
-  - The one open `UnlockedDatabase` is held by `Session` (`PocketKeePassApp.session`). Screens and the autofill service read it from there and never keep their own.
+  - The one open `UnlockedDatabase` is held by `Session` (`PocketKeePassApp.session`). Screens and the autofill service read it from there and never keep their own. After changing it, call `Session.changed()`: that saves, and bumps `Session.revision` so screens re-read.
   - Kotlin sees engine errors as `KeePassException` subclasses, with the engine's own user-facing messages.
 
 ## Project decisions
@@ -258,7 +268,12 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] More sample databases: files written by KeePass 2.x itself (Windows/.NET). KDBX 3.1, 4.0, and 4.1 are covered
 - [ ] Open a file we saved in KeePass 2.x itself (needs Windows or Mono). Only KeePassXC and pykeepass have been checked
 - [ ] KDBX 3 attachments marked `Protected="True"` in `Meta/Binaries` fail to open unless they happen to be text (the reader treats every protected value as UTF-8). Rare: KeePass and KeePassXC don't protect attachments by default
-- [ ] `save` doesn't set `Meta/Generator`. Decide whether to write "PocketKeePass" once editing exists
+- [ ] `Meta/HistoryMaxSize` isn't enforced, only `HistoryMaxItems`. KeePass also drops old history once an entry's history passes the size (6 MiB by default), which matters for entries with attachments
+- [ ] No merge on conflict yet: the user picks one version or saves a copy. Merging (by UUID and modification time, using `DeletedObjects`) is on the "Later" list
+- [ ] Auto-lock throws away changes that couldn't be saved (security wins). Only the Lock button asks first. A save that's running when the database locks still finishes
+- [ ] The file picker gives access to one file, not its folder, so saving can't write a temporary file beside it and swap. The engine proves the new bytes open before anything is written, and the write is read back, but a crash halfway through the write itself could still damage the file. Keeping the previous version (encrypted) in app storage would cover that
+- [ ] Saving reads the whole file first to spot changes made elsewhere. Fine for local files; slow over a cloud provider that downloads on every read
+- [ ] Group icons and entry icons for new items are KeePass's defaults (key, folder); there's no way to choose one yet
 - [ ] Benchmark Argon2 unlock time on a low-end phone
 - [ ] `browse.kdbx` (AES-KDF, 14.3 million rounds, which KeePassXC tuned for 100 ms on the dev Mac) takes about 30–40 s to unlock on the arm64 emulator. Either AES hardware isn't used there or the emulator is just slow; measure on a phone
 - [ ] Show KeePass icons (`IconID`, custom icons) for groups and entries
@@ -272,12 +287,11 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] Copying a field opens its value to everything that can read the clipboard until it's cleared (keyboards, and on Android 9 and older, any app). The sensitive flag asks keyboards not to keep it in their clipboard history; we can't enforce that
 - [ ] Quick unlock's button shows until it's tapped even if Android has already deleted the key; the app only finds out when it prepares the cipher. Tapping it then explains and turns quick unlock off
 - [ ] Android 16+ offers the device PIN after too many failed fingerprints, but only to turn the sensor back on. Quick unlock's key accepts strong biometrics only, so the PIN never opens the database. Check how this reads on a real phone
-- [ ] App icon
 - [ ] Autofill treats any parent domain as the same site, without the Public Suffix List. An entry saved for a shared hosting domain itself (`github.io`, `blogspot.com`) would be offered on every site under it. Bundling the list (it changes often, and we have no network) is the fix
 - [ ] Autofill compares host names as text, so an entry saved with a non-ASCII host (`bücher.example`) doesn't match the punycode form browsers report (`xn--bcher-kva.example`). Needs IDNA conversion, which we'd write ourselves or take from a current crate
 - [ ] Trusted browsers: the list is a snapshot from 2026-11-18. Regenerate it before each release. Browsers Google doesn't list are missing, among them Fennec F-Droid, Tor Browser, Cromite, and IronFox, which F-Droid users are likely to have. Add them with certificates taken from their real APKs. Until then they get the chooser with a warning, not automatic matches
 - [ ] Autofill has only been tried on the API 37 emulator, with Chrome. Not yet: Firefox, a physical phone, Android 8 to 12 (which use the same builders, deprecated since 13), a page with a frame from another site (unit-tested only), and the biometric prompt on the autofill unlock screen (the emulator had no fingerprint enrolled)
-- [ ] Autofill can't link an app to an entry yet. Until editing exists (feature 6), an app only gets automatic matches if the entry already has an `androidapp://` URL from another KeePass app; otherwise the user searches every time. After a manual pick, offer to remember the app or site in the entry
-- [ ] Offer to save new logins from autofill (`SaveInfo`, `onSaveRequest`), once editing exists
+- [ ] Autofill can't link an app to an entry yet: an app only gets automatic matches if the entry has an `androidapp://` URL (the user can now add one by editing). After a manual pick, offer to remember the app or site in the entry. Editing exists now, so this is unblocked
+- [ ] Offer to save new logins from autofill (`SaveInfo`, `onSaveRequest`). Unblocked by editing
 - [ ] If the screen is rotated while the unlock screen or chooser is open over an app whose fields have no view IDs, Android can't find the fields again and nothing is filled in. Apps with ordinary layouts are fine (checked)
 - [ ] A filled-in username and password pass through Android's autofill framework as `String`s we can't wipe, like the clipboard copy

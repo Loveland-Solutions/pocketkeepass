@@ -1,13 +1,53 @@
 package mn.lls.pocketkeepass
 
+import android.net.Uri
+import java.io.FileNotFoundException
+import java.io.IOException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mn.lls.pocketkeepass.core.DatabaseSummary
 import mn.lls.pocketkeepass.core.GroupListing
+import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.UnlockedDatabase
 import mn.lls.pocketkeepass.files.Document
+import mn.lls.pocketkeepass.files.Documents
+import mn.lls.pocketkeepass.files.WriteCheckException
+import mn.lls.pocketkeepass.files.fingerprint
 import mn.lls.pocketkeepass.security.AutoLock
+import mn.lls.pocketkeepass.security.wipe
+
+/** Whether the open database's changes are in its file. */
+sealed interface SaveState {
+    /** Everything is saved (or nothing was changed). */
+    data object Saved : SaveState
+
+    /** A save is running. */
+    data object Saving : SaveState
+
+    /** There are changes that aren't in the file, and why. They're lost if the database locks. */
+    data class Unsaved(val problem: SaveProblem) : SaveState
+}
+
+sealed interface SaveProblem {
+    /** Another app or device changed the file since it was opened. Saving would replace that. */
+    data object Conflict : SaveProblem
+
+    /** The file can't be written: it's gone, or the storage app only allows reading it. */
+    data object CantWrite : SaveProblem
+
+    /** The file didn't read back the same after writing. */
+    data object WriteCheckFailed : SaveProblem
+
+    /** The engine refused to save. Its message is user-facing. */
+    data class Engine(val message: String) : SaveProblem
+}
 
 /**
  * The open database, for the whole app ([PocketKeePassApp.session]). The decrypted database
@@ -19,8 +59,12 @@ import mn.lls.pocketkeepass.security.AutoLock
  *
  * It's locked (wiped) by the Lock button, by auto-lock (timeout, screen off), and when the
  * app's own screen is closed for good. Everything here runs on the main thread.
+ *
+ * Every change to the database is saved straight away ([changed]). Saves run in the app's own
+ * scope, not a screen's, and can't be cancelled halfway: a file half-written because the user
+ * left a screen is the worst outcome there is.
  */
-class Session(private val autoLock: AutoLock) {
+class Session(private val autoLock: AutoLock, private val documents: Documents) {
     /** An unlocked database, with what the app shows straight after unlocking it. */
     class Open(
         val database: UnlockedDatabase,
@@ -28,25 +72,180 @@ class Session(private val autoLock: AutoLock) {
         val keyFile: Document?,
         val summary: DatabaseSummary,
         val root: GroupListing,
+        /** The [fingerprint] of the file as we last read or wrote it. */
+        @Volatile var fileFingerprint: ByteArray,
     )
+
+    private val scope = MainScope()
 
     private val _open = MutableStateFlow<Open?>(null)
 
     /** The open database, or null while it's locked. */
     val open: StateFlow<Open?> = _open.asStateFlow()
 
+    private val _revision = MutableStateFlow(0L)
+
+    /** Goes up by one after every change to the open database, so screens know to re-read it. */
+    val revision: StateFlow<Long> = _revision.asStateFlow()
+
+    private val _saveState = MutableStateFlow<SaveState>(SaveState.Saved)
+    val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
+
+    private var saveJob: Job? = null
+
+    /** Another change arrived while a save was running: save again when it's done. */
+    private var saveAgain = false
+
+    /** Locked while a save was running: wipe it when the save is done. */
+    private var wipeAfterSave: Open? = null
+
     /** A database was just unlocked. Any other one is locked first. */
     fun start(open: Open) {
         lock()
+        _saveState.value = SaveState.Saved
         _open.value = open
         autoLock.arm(::lock)
     }
 
-    /** Wipes the decrypted database. Safe to call when nothing is open. */
+    /**
+     * Wipes the decrypted database. Safe to call when nothing is open. Unsaved changes are lost.
+     *
+     * A save that's running finishes first (it already has the encrypted bytes, so the change
+     * still reaches the file), and the database is wiped right after. Waiting for it here would
+     * freeze the screen for as long as key derivation takes.
+     */
     fun lock() {
         val open = _open.value ?: return
         autoLock.disarm()
         _open.value = null
+        _saveState.value = SaveState.Saved
+        if (saveJob?.isActive == true) wipeAfterSave = open else wipe(open)
+    }
+
+    /** The open database was just changed in memory. Screens re-read it, and it's saved. */
+    fun changed() {
+        _revision.value++
+        save()
+    }
+
+    /**
+     * Saves the open database to its file. Unless [overwrite] is true, a file that another app
+     * or device changed since we read it isn't replaced: the state becomes
+     * [SaveProblem.Conflict] instead, for the user to decide.
+     */
+    fun save(overwrite: Boolean = false) {
+        val open = _open.value ?: return
+        if (saveJob?.isActive == true) {
+            saveAgain = true
+            return
+        }
+        _saveState.value = SaveState.Saving
+        saveJob = scope.launch {
+            val problem = withContext(Dispatchers.IO + NonCancellable) { write(open, overwrite) }
+            wipeAfterSave?.let {
+                wipeAfterSave = null
+                wipe(it)
+            }
+            if (_open.value !== open) return@launch // locked meanwhile
+            _saveState.value = problem?.let(SaveState::Unsaved) ?: SaveState.Saved
+            if (saveAgain) {
+                saveAgain = false
+                if (problem == null) save()
+            }
+        }
+    }
+
+    /**
+     * Writes the open database to a new file the user picked ("save a copy"), leaving the
+     * database's own file alone. Returns null on success, or what went wrong.
+     */
+    suspend fun saveCopy(uri: Uri): SaveProblem? {
+        val open = _open.value ?: return null
+        return withContext(Dispatchers.IO + NonCancellable) {
+            val bytes = try {
+                withContext(Dispatchers.Default) { open.database.save() }
+            } catch (e: KeePassException) {
+                return@withContext SaveProblem.Engine(e.message.orEmpty())
+            }
+            writeChecked(uri, bytes)
+        }
+    }
+
+    /**
+     * Throws away the changes and opens the file as it is now, with the same master key. Used
+     * after a conflict. Returns false if the master key no longer opens it (it was changed
+     * elsewhere); the database is locked then, for the user to unlock with the new one.
+     */
+    suspend fun reload(): Boolean {
+        val open = _open.value ?: return false
+        val reopened = withContext(Dispatchers.IO + NonCancellable) {
+            try {
+                val file = documents.read(open.document.uri)
+                val keyHash = open.database.keyHash()
+                try {
+                    val db = UnlockedDatabase.openWithKeyHash(file, keyHash)
+                    Open(db, open.document, open.keyFile, db.summary(), db.listGroup(null), fingerprint(file))
+                } finally {
+                    keyHash.wipe()
+                }
+            } catch (_: KeePassException) {
+                null
+            } catch (_: IOException) {
+                null
+            } catch (_: SecurityException) {
+                null
+            }
+        }
+        if (_open.value !== open) {
+            reopened?.database?.let { it.lock(); it.close() }
+            return false
+        }
+        if (reopened == null) {
+            lock()
+            return false
+        }
+        start(reopened)
+        return true
+    }
+
+    /** Saves to the database's own file. Returns null on success, or what went wrong. */
+    private suspend fun write(open: Open, overwrite: Boolean): SaveProblem? {
+        val bytes = try {
+            withContext(Dispatchers.Default) { open.database.save() }
+        } catch (_: KeePassException.Locked) {
+            return null // locked before the save started; nothing to do
+        } catch (_: IllegalStateException) {
+            return null // closed by lock() before the call started
+        } catch (e: KeePassException) {
+            return SaveProblem.Engine(e.message.orEmpty())
+        }
+        val uri = open.document.uri
+        if (!overwrite) {
+            val current = try {
+                documents.read(uri)
+            } catch (e: Exception) {
+                return problemFor(e) ?: throw e
+            }
+            if (!fingerprint(current).contentEquals(open.fileFingerprint)) return SaveProblem.Conflict
+        }
+        return writeChecked(uri, bytes).also { if (it == null) open.fileFingerprint = fingerprint(bytes) }
+    }
+
+    private fun writeChecked(uri: Uri, bytes: ByteArray): SaveProblem? = try {
+        documents.write(uri, bytes)
+        null
+    } catch (e: Exception) {
+        problemFor(e) ?: throw e
+    }
+
+    private fun problemFor(e: Exception): SaveProblem? = when (e) {
+        is WriteCheckException -> SaveProblem.WriteCheckFailed
+        is FileNotFoundException, is SecurityException, is IOException, is IllegalArgumentException,
+        is UnsupportedOperationException -> SaveProblem.CantWrite
+        else -> null
+    }
+
+    private fun wipe(open: Open) {
         open.database.lock()
         open.database.close()
     }

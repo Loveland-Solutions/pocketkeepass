@@ -1,6 +1,7 @@
 package mn.lls.pocketkeepass
 
 import android.app.Application
+import mn.lls.pocketkeepass.files.Documents
 import mn.lls.pocketkeepass.security.AutoLock
 import mn.lls.pocketkeepass.security.Clipboard
 
@@ -20,7 +21,7 @@ class PocketKeePassApp : Application() {
     override fun onCreate() {
         super.onCreate()
         autoLock = AutoLock(this)
-        session = Session(autoLock)
+        session = Session(autoLock, Documents(this))
         clipboard = Clipboard(this)
     }
 }
