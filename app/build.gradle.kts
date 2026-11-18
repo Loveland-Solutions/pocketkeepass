@@ -1,3 +1,4 @@
+import java.util.Properties
 import javax.inject.Inject
 import org.gradle.process.ExecOperations
 
@@ -13,6 +14,18 @@ val rustTargets = mapOf(
     "x86_64" to "x86_64-linux-android",
 )
 
+// The upload key for Google Play, from keystore.properties (git-ignored, never in the repo).
+// Google re-signs with the app signing key it holds. Without the file, release builds are unsigned.
+val uploadKey: Properties? = rootDir.resolve("keystore.properties").takeIf { it.exists() }?.let { path ->
+    val properties = Properties()
+    path.inputStream().use { properties.load(it) }
+    properties
+}
+
+// Every build gets a higher version code than the last: the number of commits.
+val commitCount = providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
+    .standardOutput.asText.map { it.trim().toInt() }
+
 android {
     namespace = "mn.lls.pocketkeepass"
     compileSdk = 37
@@ -22,7 +35,7 @@ android {
         applicationId = "mn.lls.pocketkeepass"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        versionCode = commitCount.get()
         versionName = "0.1.0"
 
         // Only the ABIs the Rust engine is built for. (JNA ships its own library for more.)
@@ -31,8 +44,20 @@ android {
         }
     }
 
+    signingConfigs {
+        if (uploadKey != null) {
+            create("upload") {
+                storeFile = file(uploadKey.getProperty("storeFile"))
+                storePassword = uploadKey.getProperty("storePassword")
+                keyAlias = uploadKey.getProperty("keyAlias")
+                keyPassword = uploadKey.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
