@@ -76,9 +76,17 @@ Update this section as milestones land.
   - the entry screen sits on top of the browse screen. Back returns to the same group or search, at the same scroll position (`SaveableStateHolder`; only list positions are saved).
 
   Checked by hand on the emulator with `browse.kdbx`: protected username and password hidden, show/hide, a custom field, tags, the system's "copied" preview shows dots, the clipboard is empty 30 s after a copy, and after copying, leaving the app, and `am kill`, the alarm started a fresh process about 37 s later and the clipboard was empty. Also back to the list, and Lock from the entry screen.
-- **Tests:** 73 in Rust (`cargo test --release`), 17 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Done:** MVP feature 4, biometric quick unlock (`security/QuickUnlock.kt`, the switch in the settings dialog):
+  - what's stored is the **composite key hash** (`Database::key_hash`, `open_with_key_hash`), not the derived key. Every save makes a fresh key derivation salt, so a stored derived key would stop working after any save, ours or another app's. The hash keeps working until the master key changes. The cost: key derivation still runs, so it's no faster than typing the password;
+  - the hash is encrypted with an AES-256-GCM Android Keystore key that needs a strong biometric for every use (`setUserAuthenticationParameters(0, AUTH_BIOMETRIC_STRONG)` on 11+), is deleted by Android when biometrics or the screen lock change, and lives in StrongBox when the phone has it. The device PIN can't use it. Only the ciphertext, its IV, and the database's location are stored (SharedPreferences `quick_unlock`);
+  - it's opt-in from settings (turning it on takes a biometric check too), one database at a time. Picking another database, or adding or removing the key file, turns it off;
+  - the prompt (androidx.biometric 1.4's `registerForAuthenticationResult`) opens by itself once after each lock, and the unlock screen has a button for it. "Use master password" closes it quietly. If Android deleted the key, or the hash no longer opens the database, quick unlock turns itself off and the unlock screen says why;
+  - the ViewModel sends prompt requests through a channel. The activity shows them, and the result goes back to the ViewModel with its authenticated cipher, so a rotation mid-prompt still unlocks.
+
+  Checked by hand on the emulator (API 37): unavailable without a fingerprint, turning it on, the auto prompt after locking, unlocking, "Use master password", failed attempts until lockout, rotation mid-prompt, process death (comes back locked and prompts), the file replaced by one with another password (turned off, explained), and a second fingerprint enrolled (turned off, explained).
+- **Tests:** 75 in Rust (`cargo test --release`), 18 in Kotlin (`./gradlew :app:testDebugUnitTest`).
 - **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. Entry dates and attachments aren't shown yet.
-- **Next:** MVP feature 4 (biometric quick-unlock).
+- **Next:** MVP feature 5 (autofill service).
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 
 ## Building
@@ -183,7 +191,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 
 ### Security
 - **No `INTERNET` permission.** The app never talks to the network. This is a headline feature.
-- Biometric quick-unlock: the derived key is encrypted with an Android Keystore key that requires biometric auth and is invalidated when biometrics change. Master password is always the fallback.
+- Biometric quick-unlock: the composite key hash (not the derived key, which changes on every save) is encrypted with an Android Keystore key that requires biometric auth and is invalidated when biometrics change. Master password is always the fallback.
 - `FLAG_SECURE` on all windows that show secrets (no screenshots, blank in recents).
 - Clipboard: mark copied secrets as sensitive (`ClipDescription.EXTRA_IS_SENSITIVE` on 13+) and auto-clear after a configurable timeout.
 - Auto-lock on timeout and on screen off (configurable).
@@ -238,4 +246,6 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] Android 8–13 have no way to hide a window from non-tool accessibility apps. There, the master password and hidden protected fields are masked; entry names, usernames, and any protected value the user taps "show" on are readable by any accessibility app the user enabled
 - [ ] `reveal_field`'s bytes pass through a UniFFI `RustBuffer`, which is freed without being wiped. The decrypted database is in the same memory anyway while it's open, so this adds little, but it's a copy we don't control
 - [ ] Copying a field opens its value to everything that can read the clipboard until it's cleared (keyboards, and on Android 9 and older, any app). The sensitive flag asks keyboards not to keep it in their clipboard history; we can't enforce that
+- [ ] Quick unlock's button shows until it's tapped even if Android has already deleted the key; the app only finds out when it prepares the cipher. Tapping it then explains and turns quick unlock off
+- [ ] Android 16+ offers the device PIN after too many failed fingerprints, but only to turn the sensor back on. Quick unlock's key accepts strong biometrics only, so the PIN never opens the database. Check how this reads on a real phone
 - [ ] App icon
