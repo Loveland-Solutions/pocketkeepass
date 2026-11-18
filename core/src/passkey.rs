@@ -84,6 +84,8 @@ pub enum AppTrust {
 /// A passkey offered for a sign-in, and where its entry lives. Nothing secret.
 pub struct PasskeyHit<'a> {
     pub hit: SearchHit<'a>,
+    /// The site the passkey is for, lowercase.
+    pub rp_id: String,
     /// The account name, as the site gave it.
     pub username: &'a str,
     pub status: PasskeyStatus,
@@ -452,6 +454,7 @@ impl Database {
                 Err(reason) => PasskeyStatus::Unusable(reason),
             };
             hits.push(PasskeyHit {
+                rp_id: passkey.rp_id.clone(),
                 username: passkey.username,
                 status,
                 trust: trust(&entry, client),

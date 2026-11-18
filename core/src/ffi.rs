@@ -139,6 +139,8 @@ pub enum AppTrust {
 #[derive(uniffi::Record)]
 pub struct PasskeyChoice {
     pub result: SearchResult,
+    /// The site the passkey is for.
+    pub rp_id: String,
     /// The account name the site gave.
     pub username: String,
     /// Why the passkey can't be used, or null if it can.
@@ -501,6 +503,7 @@ impl UnlockedDatabase {
                     .into_iter()
                     .map(|p| PasskeyChoice {
                         result: search_result(&p.hit),
+                        rp_id: p.rp_id,
                         username: p.username.to_owned(),
                         unusable_reason: unusable_reason(p.status),
                         trust: p.trust.into(),

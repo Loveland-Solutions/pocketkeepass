@@ -6,6 +6,7 @@ activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 coreKtx = "1.19.1"
 biometric = "1.4.0-beta01"
+credentials = "1.6.0"
 jna = "5.19.1"
 junit = "6.1.3"
 
@@ -15,6 +16,8 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+# The passkey provider API (Android 14+). Not credentials-play-services-auth: a provider doesn't need Google Play Services.
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 # Required by the Kotlin bindings UniFFI generates for the Rust engine.
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
