@@ -13,8 +13,9 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import mn.lls.passthekey.core.engineVersion
+import mn.lls.passthekey.security.AccessibleToToolsOnly
+import mn.lls.passthekey.ui.BrowseScreen
 import mn.lls.passthekey.ui.UnlockScreen
-import mn.lls.passthekey.ui.UnlockedScreen
 import mn.lls.passthekey.ui.WelcomeScreen
 import mn.lls.passthekey.ui.theme.PassTheKeyTheme
 
@@ -25,8 +26,27 @@ class MainActivity : ComponentActivity() {
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
         setContent {
+            AccessibleToToolsOnly()
             PassTheKeyTheme { App() }
         }
+    }
+
+    private val autoLock get() = (application as PassTheKeyApp).autoLock
+
+    // Every touch and key press, before the app sees it. Counts as using the app for auto-lock.
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        autoLock.onUserInteraction()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        autoLock.onAppVisible()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        autoLock.onAppHidden()
     }
 }
 
@@ -36,6 +56,7 @@ private val ANY_FILE = arrayOf("*/*")
 @Composable
 private fun App(viewModel: DatabaseViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val autoLockSettings by viewModel.autoLockSettings.collectAsStateWithLifecycle()
     val pickDatabase = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(viewModel::onDatabasePicked)
     }
@@ -57,6 +78,16 @@ private fun App(viewModel: DatabaseViewModel = viewModel()) {
             onAddKeyFile = { pickKeyFile.launch(ANY_FILE) },
             onRemoveKeyFile = viewModel::removeKeyFile,
         )
-        is DatabaseState.Unlocked -> UnlockedScreen(state = current, onLock = viewModel::lock)
+        is DatabaseState.Unlocked -> BrowseScreen(
+            state = current,
+            searchQuery = viewModel.searchQuery,
+            onOpenGroup = viewModel::openGroup,
+            onUp = { viewModel.goUp() },
+            onOpenSearch = viewModel::openSearch,
+            onCloseSearch = viewModel::closeSearch,
+            onLock = viewModel::lock,
+            autoLockSettings = autoLockSettings,
+            onChangeAutoLock = viewModel::setAutoLock,
+        )
     }
 }

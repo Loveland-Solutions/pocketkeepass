@@ -5,23 +5,31 @@ import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mn.lls.passthekey.core.DatabaseSummary
+import mn.lls.passthekey.core.GroupListing
 import mn.lls.passthekey.core.KeePassException
+import mn.lls.passthekey.core.SearchResult
 import mn.lls.passthekey.core.UnlockedDatabase
 import mn.lls.passthekey.files.Document
 import mn.lls.passthekey.files.Documents
 import mn.lls.passthekey.files.RecentDatabase
+import mn.lls.passthekey.security.AutoLockSettings
 import mn.lls.passthekey.security.toUtf8Bytes
 import mn.lls.passthekey.security.wipe
 
@@ -40,6 +48,12 @@ sealed interface DatabaseState {
         val database: Document,
         val keyFile: Document?,
         val summary: DatabaseSummary,
+        /** The group being shown. Starts at the root group. */
+        val listing: GroupListing,
+        /** Whether the search bar is open. The query itself is [DatabaseViewModel.searchQuery]. */
+        val searching: Boolean = false,
+        /** Entries matching the query. Empty while the query is blank. */
+        val results: List<SearchResult> = emptyList(),
     ) : DatabaseState
 }
 
@@ -55,12 +69,20 @@ sealed interface UnlockError {
 /**
  * Owns the open database for the whole app: choosing the file, unlocking it, and locking it.
  *
- * The decrypted database lives only here. It's locked (wiped) when the user locks it and when
- * this ViewModel is cleared, which happens when the activity finishes for good.
+ * The decrypted database lives only here. It's locked (wiped) when the user locks it, when
+ * auto-lock says so (timeout, screen off), and when this ViewModel is cleared, which happens
+ * when the activity finishes for good.
  */
 class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
+    private companion object {
+        const val SEARCH_DELAY_MS = 150L
+    }
+
     private val documents = Documents(app)
     private val recent = RecentDatabase(app)
+    private val autoLock = (app as PassTheKeyApp).autoLock
+
+    val autoLockSettings: StateFlow<AutoLockSettings> = autoLock.settings
 
     /**
      * The master password field's contents. It lives here rather than in `rememberSaveable`
@@ -68,12 +90,34 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
      */
     val password = TextFieldState()
 
+    /**
+     * The search box's contents. Like [password], it stays out of saved state: what someone
+     * searches for in their password manager is nobody else's business.
+     */
+    val searchQuery = TextFieldState()
+
     private var database: UnlockedDatabase? = null
+
+    /** The group listing being read from the engine, if any. Opening another group cancels it. */
+    private var groupJob: Job? = null
+
+    /** The search running in the engine, if any. A newer query cancels it. */
+    private var searchJob: Job? = null
 
     private val _state = MutableStateFlow(
         recent.database?.let { DatabaseState.Locked(it, recent.keyFile) } ?: DatabaseState.NoDatabase,
     )
     val state: StateFlow<DatabaseState> = _state.asStateFlow()
+
+    init {
+        // Search as the user types, once they pause for a moment.
+        viewModelScope.launch {
+            snapshotFlow { searchQuery.text.toString() }.collectLatest { query ->
+                delay(SEARCH_DELAY_MS)
+                search(query)
+            }
+        }
+    }
 
     /** The user picked a database file. It replaces the previous one, and its key file. */
     fun onDatabasePicked(uri: Uri) {
@@ -135,7 +179,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 passwordBytes?.wipe()
             }
 
-            val (opened, summary) = outcome.getOrElse { e ->
+            val (opened, unlocked) = outcome.getOrElse { e ->
                 if (e is KeePassException.WrongKey) clearPassword()
                 val error = when (e) {
                     is CantReadException -> UnlockError.CantRead(e.keyFile)
@@ -151,14 +195,90 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 return@launch
             }
             database = opened
+            autoLock.arm(::lock)
             clearPassword()
-            _state.value = DatabaseState.Unlocked(locked.database, locked.keyFile, summary)
+            _state.value = DatabaseState.Unlocked(locked.database, locked.keyFile, unlocked.summary, unlocked.root)
         }
     }
+
+    /** Shows a group's contents. `id` comes from a [GroupListing]; null means the root group. */
+    fun openGroup(id: String?) {
+        if (_state.value !is DatabaseState.Unlocked) return
+        groupJob?.cancel()
+        groupJob = read(
+            query = { db ->
+                try {
+                    db.listGroup(id)
+                } catch (_: KeePassException.NotFound) {
+                    db.listGroup(null) // gone, which can't happen until editing exists: go home
+                }
+            },
+            apply = { listing -> _state.update { (it as? DatabaseState.Unlocked)?.copy(listing = listing) ?: it } },
+        )
+    }
+
+    /** Goes to the parent group. Returns false at the root group, where there's nowhere to go. */
+    fun goUp(): Boolean {
+        val unlocked = _state.value as? DatabaseState.Unlocked ?: return false
+        val parent = unlocked.listing.parents.lastOrNull() ?: return false
+        openGroup(parent.id)
+        return true
+    }
+
+    fun openSearch() {
+        _state.update { (it as? DatabaseState.Unlocked)?.copy(searching = true) ?: it }
+    }
+
+    fun closeSearch() {
+        searchQuery.clearText()
+        _state.update { (it as? DatabaseState.Unlocked)?.copy(searching = false, results = emptyList()) ?: it }
+    }
+
+    private fun search(query: String) {
+        val unlocked = _state.value as? DatabaseState.Unlocked ?: return
+        if (!unlocked.searching) return
+        searchJob?.cancel()
+        if (query.isBlank()) {
+            _state.update { (it as? DatabaseState.Unlocked)?.copy(results = emptyList()) ?: it }
+            return
+        }
+        searchJob = read(
+            query = { db -> db.search(query) },
+            apply = { results ->
+                _state.update { current ->
+                    // The user may have closed the search while it ran.
+                    if (current is DatabaseState.Unlocked && current.searching) current.copy(results = results) else current
+                }
+            },
+        )
+    }
+
+    /**
+     * Asks the open database something off the main thread, then hands the answer to [apply] on
+     * the main thread. A job cancelled meanwhile never gets to [apply], even if the engine had
+     * already answered, so a slow, outdated answer can't overwrite a newer one. If the database
+     * is locked meanwhile, the engine refuses to answer and nothing happens.
+     */
+    private fun <T> read(query: (UnlockedDatabase) -> T, apply: (T) -> Unit): Job? {
+        val db = database ?: return null
+        return viewModelScope.launch {
+            val answer = try {
+                withContext(Dispatchers.Default) { query(db) }
+            } catch (_: KeePassException.Locked) {
+                return@launch
+            } catch (_: IllegalStateException) {
+                return@launch // closed by lock() before the call started
+            }
+            apply(answer)
+        }
+    }
+
+    fun setAutoLock(settings: AutoLockSettings) = autoLock.update(settings)
 
     /** Wipes the decrypted database and goes back to the unlock screen. */
     fun lock() {
         closeDatabase()
+        searchQuery.clearText()
         val unlocked = _state.value as? DatabaseState.Unlocked ?: return
         _state.value = DatabaseState.Locked(unlocked.database, unlocked.keyFile)
     }
@@ -166,6 +286,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         closeDatabase()
         clearPassword()
+        searchQuery.clearText()
     }
 
     /**
@@ -176,14 +297,14 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         database: Document,
         keyFile: Document?,
         password: ByteArray?,
-    ): Pair<UnlockedDatabase, DatabaseSummary> = withContext(Dispatchers.IO + NonCancellable) {
+    ): Pair<UnlockedDatabase, Opened> = withContext(Dispatchers.IO + NonCancellable) {
         val file = read(database.uri, isKeyFile = false)
         val key = keyFile?.let { read(it.uri, isKeyFile = true) }
         try {
             withContext(Dispatchers.Default) {
                 val opened = UnlockedDatabase.open(file, password, key)
                 try {
-                    opened to opened.summary()
+                    opened to Opened(opened.summary(), opened.listGroup(null))
                 } catch (e: KeePassException) {
                     opened.lock()
                     opened.close()
@@ -217,6 +338,9 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun closeDatabase() {
+        autoLock.disarm()
+        groupJob?.cancel()
+        searchJob?.cancel()
         database?.let {
             it.lock()
             it.close()
@@ -230,6 +354,9 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         password.clearText()
         password.undoState.clearHistory()
     }
+
+    /** What the app shows straight after unlocking. */
+    private class Opened(val summary: DatabaseSummary, val root: GroupListing)
 
     private class CantReadException(val keyFile: Boolean, cause: Throwable) : Exception(cause)
 }

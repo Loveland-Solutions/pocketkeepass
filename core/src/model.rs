@@ -81,6 +81,18 @@ impl Database {
         }
     }
 
+    /// The recycle bin group's UUID, if the recycle bin is turned on and has been created.
+    pub fn recycle_bin(&self) -> Option<[u8; 16]> {
+        let meta = self.inner.xml.child("Meta")?;
+        if meta
+            .child_text("RecycleBinEnabled")
+            .eq_ignore_ascii_case("false")
+        {
+            return None;
+        }
+        decode_uuid(meta.child_text("RecycleBinUUID")).filter(|uuid| *uuid != [0; 16])
+    }
+
     /// Number of attachments stored in the KDBX 4 inner header.
     pub fn attachment_count(&self) -> usize {
         self.inner.binaries.len()
@@ -108,6 +120,19 @@ impl<'a> Group<'a> {
 
     pub fn notes(&self) -> &'a str {
         self.el.child_text("Notes")
+    }
+
+    /// The group's own search setting: `Some(false)` keeps its entries (and those of its
+    /// subgroups, unless they say otherwise) out of search results, `None` inherits the parent's.
+    pub fn enable_searching(&self) -> Option<bool> {
+        let value = self.el.child_text("EnableSearching").trim();
+        if value.eq_ignore_ascii_case("true") {
+            Some(true)
+        } else if value.eq_ignore_ascii_case("false") {
+            Some(false)
+        } else {
+            None // "null", or missing
+        }
     }
 
     pub fn groups(&self) -> impl Iterator<Item = Group<'a>> + 'a {
@@ -161,8 +186,24 @@ impl<'a> Entry<'a> {
             .children_named("String")
             .find(|s| s.child_text("Key") == key)
             .and_then(|s| s.child("Value"))
-            .and_then(|v| v.attr("Protected"))
-            .is_some_and(|p| p.eq_ignore_ascii_case("true"))
+            .is_some_and(Element::is_protected)
+    }
+
+    /// A field's value, or "" if it's missing or protected. Use this for anything shown in
+    /// lists or searched, so protected values (passwords, and any other field the user chose to
+    /// protect) never leave the engine by accident.
+    pub fn unprotected_field(&self, key: &str) -> &'a str {
+        self.el
+            .children_named("String")
+            .find(|s| s.child_text("Key") == key)
+            .and_then(|s| s.child("Value"))
+            .filter(|v| !v.is_protected())
+            .map_or("", |v| v.text.as_str())
+    }
+
+    /// The entry's tags as stored, separated by `;` or `,`.
+    pub fn tags(&self) -> &'a str {
+        self.el.child_text("Tags")
     }
 
     pub fn title(&self) -> &'a str {
@@ -194,6 +235,23 @@ impl<'a> Entry<'a> {
             .flat_map(|h| h.children_named("Entry"))
             .map(|el| Entry { el })
     }
+}
+
+/// A UUID as 32 lowercase hex digits, the form the app uses to refer to groups and entries.
+pub fn uuid_to_hex(uuid: &[u8; 16]) -> String {
+    uuid.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// The reverse of [`uuid_to_hex`]. Accepts either case.
+pub fn uuid_from_hex(hex: &str) -> Option<[u8; 16]> {
+    if hex.len() != 32 || !hex.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return None;
+    }
+    let mut uuid = [0; 16];
+    for (byte, pair) in uuid.iter_mut().zip(hex.as_bytes().chunks(2)) {
+        *byte = u8::from_str_radix(std::str::from_utf8(pair).ok()?, 16).ok()?; // checked above
+    }
+    Some(uuid)
 }
 
 fn decode_uuid(text: &str) -> Option<[u8; 16]> {

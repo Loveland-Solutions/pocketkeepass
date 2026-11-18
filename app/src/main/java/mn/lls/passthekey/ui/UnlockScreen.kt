@@ -44,6 +44,7 @@ import mn.lls.passthekey.DatabaseState
 import mn.lls.passthekey.R
 import mn.lls.passthekey.UnlockError
 import mn.lls.passthekey.files.Document
+import mn.lls.passthekey.security.hideTextFromAccessibility
 import mn.lls.passthekey.ui.theme.PassTheKeyTheme
 
 /** Asks for the master password and/or key file of the chosen database. */
@@ -105,7 +106,10 @@ fun UnlockScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 onKeyboardAction = { onUnlock() },
                 isError = state.error != null,
-                modifier = Modifier.fillMaxWidth().focusRequester(focus),
+                modifier = Modifier
+                    .hideTextFromAccessibility(password, shown = showPassword)
+                    .fillMaxWidth()
+                    .focusRequester(focus),
             )
 
             val keyFile = state.keyFile

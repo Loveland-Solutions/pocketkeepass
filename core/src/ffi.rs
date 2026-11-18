@@ -12,7 +12,8 @@ use std::sync::{Arc, PoisonError, RwLock, RwLockReadGuard};
 use zeroize::Zeroizing;
 
 use crate::error::{Error, Result};
-use crate::{CompositeKey, Database, Group};
+use crate::model::{uuid_from_hex, uuid_to_hex};
+use crate::{CompositeKey, Database, Entry, Group};
 
 /// A database that has been opened with the right key and is held decrypted in memory.
 ///
@@ -37,6 +38,53 @@ pub struct DatabaseSummary {
     pub group_count: u32,
     /// Entries at any depth, not counting older versions kept in entry history.
     pub entry_count: u32,
+}
+
+/// A group, for showing in a list or a breadcrumb trail.
+#[derive(uniffi::Record)]
+pub struct GroupItem {
+    /// The group's UUID as 32 hex digits. Pass it to `list_group` to open the group.
+    pub id: String,
+    pub name: String,
+    /// Direct subgroups.
+    pub group_count: u32,
+    /// Direct entries, not counting those in subgroups.
+    pub entry_count: u32,
+    pub is_recycle_bin: bool,
+}
+
+/// An entry, for showing in a list. Protected fields are left empty: a list never carries a
+/// password, nor a username or URL the user chose to protect.
+#[derive(uniffi::Record)]
+pub struct EntryItem {
+    /// The entry's UUID as 32 hex digits.
+    pub id: String,
+    pub title: String,
+    pub username: String,
+    pub url: String,
+}
+
+/// One group's contents, as the app shows them.
+#[derive(uniffi::Record)]
+pub struct GroupListing {
+    pub group: GroupItem,
+    /// True for the root group, whose name is usually not worth showing.
+    pub is_root: bool,
+    /// The groups from the root down to this group's parent, for "up" and breadcrumbs. Empty
+    /// for the root group.
+    pub parents: Vec<GroupItem>,
+    /// Subgroups in file order, with the recycle bin last.
+    pub groups: Vec<GroupItem>,
+    /// Entries in file order.
+    pub entries: Vec<EntryItem>,
+}
+
+/// An entry that matched a search.
+#[derive(uniffi::Record)]
+pub struct SearchResult {
+    pub entry: EntryItem,
+    /// Group names from below the root down to the entry's group. Empty for root entries.
+    pub group_path: Vec<String>,
 }
 
 #[uniffi::export]
@@ -85,6 +133,41 @@ impl UnlockedDatabase {
         })
     }
 
+    /// Lists a group's subgroups and entries: the root group if `id` is null. Fails with
+    /// `NotFound` if there's no group with that id.
+    pub fn list_group(&self, id: Option<String>) -> Result<GroupListing> {
+        self.with(|db| {
+            let uuid = match id {
+                None => None,
+                Some(id) => Some(uuid_from_hex(&id).ok_or(Error::NotFound)?),
+            };
+            let listing = db.listing(uuid.as_ref()).ok_or(Error::NotFound)?;
+            let item = |g: &Group<'_>| group_item(db, g);
+            Ok(GroupListing {
+                group: item(&listing.group),
+                is_root: listing.parents.is_empty(),
+                parents: listing.parents.iter().map(item).collect(),
+                groups: listing.groups.iter().map(item).collect(),
+                entries: listing.entries.iter().map(entry_item).collect(),
+            })
+        })
+    }
+
+    /// Searches every entry's title, username, URL, notes, and tags. See the engine's
+    /// `Database::search` for exactly what's searched and what isn't (passwords never are).
+    pub fn search(&self, query: String) -> Result<Vec<SearchResult>> {
+        self.with(|db| {
+            Ok(db
+                .search(&query)
+                .iter()
+                .map(|hit| SearchResult {
+                    entry: entry_item(&hit.entry),
+                    group_path: hit.path.iter().map(|g| g.name().to_owned()).collect(),
+                })
+                .collect())
+        })
+    }
+
     /// Converts a KDBX 3 database to KDBX 4 in memory so that it can be saved. Ask the user
     /// first: older apps that only read KDBX 3 won't open the file once it's saved.
     pub fn upgrade_to_kdbx4(&self) -> Result<()> {
@@ -116,6 +199,29 @@ impl UnlockedDatabase {
 
     fn with<T>(&self, f: impl FnOnce(&Database) -> Result<T>) -> Result<T> {
         f(self.read().as_ref().ok_or(Error::Locked)?)
+    }
+}
+
+fn id(uuid: Option<[u8; 16]>) -> String {
+    uuid.as_ref().map(uuid_to_hex).unwrap_or_default()
+}
+
+fn group_item(db: &Database, group: &Group<'_>) -> GroupItem {
+    GroupItem {
+        id: id(group.uuid()),
+        name: group.name().to_owned(),
+        group_count: group.groups().count() as u32,
+        entry_count: group.entries().count() as u32,
+        is_recycle_bin: db.is_recycle_bin(group),
+    }
+}
+
+fn entry_item(entry: &Entry<'_>) -> EntryItem {
+    EntryItem {
+        id: id(entry.uuid()),
+        title: entry.unprotected_field("Title").to_owned(),
+        username: entry.unprotected_field("UserName").to_owned(),
+        url: entry.unprotected_field("URL").to_owned(),
     }
 }
 
@@ -192,6 +298,45 @@ mod tests {
     }
 
     #[test]
+    fn groups_are_listed_by_id_without_protected_values() {
+        let db = open("browse.kdbx");
+        let root = db.list_group(None).unwrap();
+        assert!(root.is_root && root.parents.is_empty());
+        assert_eq!(root.group.id, "01".repeat(16));
+        let work = &root.groups[0];
+        assert_eq!(
+            (work.name.as_str(), work.group_count, work.entry_count),
+            ("Work", 1, 1)
+        );
+        assert!(root.groups[3].is_recycle_bin);
+        assert_eq!(root.entries[0].username, "me@example.com");
+
+        let servers = db.list_group(Some("05".repeat(16))).unwrap();
+        assert!(!servers.is_root);
+        let parents: Vec<_> = servers.parents.iter().map(|g| g.name.as_str()).collect();
+        assert_eq!(parents, ["Root", "Work"]);
+
+        // The username of "Crédit Union" is protected, so the list leaves it out.
+        let banking = db.list_group(Some(root.groups[1].id.clone())).unwrap();
+        assert_eq!(banking.entries[0].username, "");
+        assert_eq!(banking.entries[0].url, "https://cu.example.com");
+
+        for bad in ["ee".repeat(16), "nonsense".to_owned()] {
+            assert!(matches!(db.list_group(Some(bad)), Err(Error::NotFound)));
+        }
+    }
+
+    #[test]
+    fn search_results_carry_their_group_path() {
+        let db = open("browse.kdbx");
+        let results = db.search("admin".to_owned()).unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].entry.title, "Database Server");
+        assert_eq!(results[0].group_path, ["Work", "Servers"]);
+        assert!(db.search("hunter2".to_owned()).unwrap().is_empty());
+    }
+
+    #[test]
     fn locking_wipes_the_database_and_refuses_everything_after() {
         let db = open("kdbx4-argon2id-chacha20.kdbx");
         assert!(!db.is_locked());
@@ -201,5 +346,7 @@ mod tests {
         assert!(matches!(db.summary(), Err(Error::Locked)));
         assert!(matches!(db.save(), Err(Error::Locked)));
         assert!(matches!(db.upgrade_to_kdbx4(), Err(Error::Locked)));
+        assert!(matches!(db.list_group(None), Err(Error::Locked)));
+        assert!(matches!(db.search("x".to_owned()), Err(Error::Locked)));
     }
 }

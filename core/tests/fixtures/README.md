@@ -49,4 +49,24 @@ Then re-export each file with `keepassxc-cli export --format xml`.
 2. `keepassxc-cli add` and `mkdir` added "Added By KeePassXC", "KXC Group", and "KXC Group/Nested". KeePassXC rewrites the whole file with its own writer on every edit.
 3. `keepassxc-cli mv` moved "Nested" to the root. That records `PreviousParentGroup`, a 4.1-only field, so KeePassXC upgrades the file to 4.1.
 
+## Browsing and search
+
+`browse.kdbx` unlocks with password `test-password`. It's KDBX 3.1, **written by KeePassXC** from the hand-written `browse.source.xml`:
+
+```sh
+printf 'test-password\ntest-password\n' | keepassxc-cli import -q -p -t 100 browse.source.xml browse.kdbx
+echo test-password | keepassxc-cli export -q --format xml browse.kdbx > browse.export.xml
+```
+
+Hand-written XML gives every group and entry a fixed UUID (all 16 bytes the same: `01` for the root, up to `0c`), plus the cases the browse and search tests need:
+
+| Group | Entries | What it tests |
+|---|---|---|
+| Root (`01`) | "Email" (`02`): tags, notes, and a history item titled "Old Mail Title" | History is never searched |
+| Work (`03`) | "VPN" (`04`): a plain custom field "Account ID" | Custom fields aren't searched |
+| Work/Servers (`05`) | "Database Server" (`06`): notes "Rack 4, row B" | Nested paths, notes |
+| Recycle Bin (`0b`), second in the file | "Deleted Email" (`0c`) | Listed last, never searched |
+| Banking (`07`) | "Crédit Union" (`08`): tags `money;bank`, and a **protected username** | Protected fields stay out of lists and search |
+| Archive (`09`), `EnableSearching` false | "Archived Email" (`0a`) | Unsearchable groups |
+
 **Not yet covered:** files written by the original KeePass 2.x (Windows/.NET).

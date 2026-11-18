@@ -36,19 +36,42 @@ Update this section as milestones land.
   - an opt-in KDBX 3.1 → 4.0 upgrade (`Database::upgrade_to_kdbx4`). Without it, saving a 3.1 database is refused.
 
   KeePassXC opens every file we save and exports the same content it exported from the original, attachments included. It can also edit our files, and we read its result. pykeepass agrees (checked by hand, not in the test suite).
-- **Done:** the UniFFI bridge (`core/src/ffi.rs`). Gradle builds the engine for arm64-v8a, armeabi-v7a, and x86_64, generates the Kotlin bindings, and packages both. The bridge exposes open, summary, upgrade, save, and lock. Kotlin tests call the engine through it on the dev Mac. The debug and minified release APKs both unlock databases on the API 37 emulator.
+- **Done:** the UniFFI bridge (`core/src/ffi.rs`). Gradle builds the engine for arm64-v8a, armeabi-v7a, and x86_64, generates the Kotlin bindings, and packages both. The bridge exposes open, summary, group listings, search, upgrade, save, and lock. Kotlin tests call the engine through it on the dev Mac. The debug and minified release APKs both unlock databases on the API 37 emulator.
 - **Done:** MVP feature 1, opening and unlocking a database (`DatabaseViewModel`, `ui/UnlockScreen.kt`):
   - the system file picker (`ACTION_OPEN_DOCUMENT`) with persisted access (read/write for the database, read for the key file). The last database and key file are remembered (`files/RecentDatabase.kt`, locations and names only), and grants for files no longer in use are released;
   - password (Material 3 `OutlinedSecureTextField`), key file, or both. An empty password with a key file means key file only. An empty password alone is a real (empty) password;
   - the password lives in a `TextFieldState` held by the ViewModel, never in saved state (that goes to disk). It's encoded to UTF-8 straight into a `ByteArray` without a `String` (`security/Secrets.kt`), wiped after the call, and the field and its undo history are cleared after unlocking or a wrong key. Key file bytes are read without stray buffer copies and wiped too;
   - unlocking runs off the main thread and can't be abandoned half-way: if the ViewModel is cleared meanwhile, the result is locked at once;
-  - the database is locked by the Lock button and when the ViewModel is cleared (activity finished). There is no auto-lock yet, so it stays open in the background until then (see "Security");
-  - after unlocking, a temporary screen shows the summary until MVP feature 2.
+  - the database is locked by the Lock button, by auto-lock (below), and when the ViewModel is cleared (activity finished);
+  - after unlocking, the browse screen opens at the root group.
 
   Checked by hand on the emulator: wrong password, password only (KDBX 4.0 and 4.1), password + key file, key file only, a deleted database file, rotation, and process death (comes back locked, with the choice remembered). The app logs nothing about secrets.
-- **Tests:** 60 in Rust (`cargo test --release`), 12 in Kotlin (`./gradlew :app:testDebugUnitTest`).
-- **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. The bridge doesn't expose groups, entries, or fields yet either; that comes with MVP features 2 and 3.
-- **Next:** MVP feature 2 (browse groups and entries, plus search). It needs the bridge to expose groups and entries. Auto-lock (timeout, screen off) should come soon after, since an unlocked database now stays open in the background.
+- **Done:** MVP feature 2, browsing groups and entries, plus search (`core/src/browse.rs`, `ui/BrowseScreen.kt`):
+  - groups and entries are addressed by UUID (32 hex digits across the bridge), never by name, since KeePass allows duplicate names;
+  - groups and entries are listed in file order, except that the recycle bin always comes last. The top bar shows the way back up, and the system back button goes up a level;
+  - **lists and search never carry or read a protected value**: `Entry::unprotected_field` returns "" for protected fields, so a username the user chose to protect is hidden too. Entry passwords come with MVP feature 3, as bytes;
+  - search runs in Rust over the whole database. The query is split into words, and every word must appear, ignoring case, in the title, username, URL, notes, or tags. It skips history, the recycle bin, groups with `EnableSearching` false (inherited by subgroups), and custom fields. Results show their group path;
+  - the search query lives in a `TextFieldState` in the ViewModel, out of saved state, and is cleared on lock. Engine reads run off the main thread, and a cancelled read never applies its result;
+  - tapping an entry shows a "coming next" message until MVP feature 3;
+  - icons are hand-copied Material icon vector drawables. `material-icons-extended` is deprecated, so KeePass's own entry and group icons (`IconID`) aren't shown yet.
+
+  Checked by hand on the emulator with `browse.kdbx`: nested groups and back, the recycle bin, a protected username, several searches (none match passwords), rotation, and locking. A text field in `TopAppBar`'s title slot never received typing on the emulator, so the search bar is its own row.
+- **Done:** auto-lock (`security/AutoLock.kt`, `ui/AutoLockDialog.kt`), set from the gear icon on the browse screen:
+  - locks after a timeout without taps or key presses (`Activity.onUserInteraction`), on screen or in the background. Choices run from 30 seconds to 1 hour, with 5 minutes as the default. There's deliberately no "never";
+  - locks when the screen turns off (on by default, can be turned off);
+  - in the foreground, a main-thread timer does it. Android freezes cached apps, and frozen apps run no timers, so leaving the screen also sets an inexact `AlarmManager` alarm (no permission needed) for the deadline. Its delivery unfreezes the app, and the app locks. Coming back to the app checks the time first, in case the alarm is late;
+  - taps inside dialogs don't reach the activity, so changing an auto-lock setting counts as activity instead;
+  - settings live in SharedPreferences (`auto_lock`). Nothing secret.
+
+  Checked by hand on the emulator: foreground timeout, screen off, and background with the app frozen by `am freeze`, where the alarm arrived about 44 s after leaving (30 s timeout) and unfroze the app to lock. Freezing too soon after leaving the app makes Android kill it instead, which also wipes the database.
+- **Done:** keeping text away from accessibility apps (`security/Accessibility.kt`). Accessibility apps can read the screen, and abusing that is the usual way Android spyware steals passwords:
+  - since Android 8.0, a password field gives every accessibility app its real text, marked as a password, and only TalkBack chooses not to read it. So the master password field gives one dot per character instead, unless the user taps "show password". Screen readers still hear the length;
+  - on Android 14+, every window (the activity and each dialog, which is a window of its own: call `AccessibleToToolsOnly()` in it) is hidden from accessibility apps not registered as assistive tools (`isAccessibilityTool`). TalkBack, Switch Access, and Voice Access still work. Compose's events skip that rule, so the window's root marks every event sensitive on its way out. Apps declare themselves tools and only Google Play checks, so this is a second layer.
+
+  Checked on the emulator (API 37) with `tools/a11y-probe`, a test-only accessibility app with one service registered as a tool and one not. Before: the non-tool service read the master password as it was typed, and entry names. After: it gets no window content and no events with text; the tool one gets dots for the password and everything else.
+- **Tests:** 71 in Rust (`cargo test --release`), 15 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. The bridge doesn't expose an entry's fields (or its password) yet; that comes with MVP feature 3.
+- **Next:** MVP feature 3 (view an entry, copy username/password/URL). The entry's password should cross the bridge as bytes.
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 
 ## Building
@@ -69,7 +92,9 @@ Gradle builds the Rust engine itself (`buildRust<Variant>` and `generateRustBind
 - Rust with the Android targets: `rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android` (installed on the dev Mac);
 - NDK 28.2.13676358 (installed; pinned as `ndkVersion`).
 
-To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump` instead.
+To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump` instead. If `adb shell input text` stops reaching a text field, check whether Gboard is showing its full-screen "Try out your stylus" tutorial (`uiautomator dump --windows` lists its window) and tap Cancel.
+
+`tools/a11y-probe` (Gradle module `:a11y-probe`, never shipped) logs what accessibility apps can read from Pass The Key. See its README.
 
 ## Module layout
 
@@ -196,9 +221,12 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] KDBX 3 attachments marked `Protected="True"` in `Meta/Binaries` fail to open unless they happen to be text (the reader treats every protected value as UTF-8). Rare: KeePass and KeePassXC don't protect attachments by default
 - [ ] `save` doesn't set `Meta/Generator`. Decide whether to write "Pass The Key" once editing exists
 - [ ] Benchmark Argon2 unlock time on a low-end phone
+- [ ] `browse.kdbx` (AES-KDF, 14.3 million rounds, which KeePassXC tuned for 100 ms on the dev Mac) takes about 30–40 s to unlock on the arm64 emulator. Either AES hardware isn't used there or the emulator is just slow; measure on a phone
+- [ ] Show KeePass icons (`IconID`, custom icons) for groups and entries
 - [ ] AES hardware on Android: from the source, `aes` 0.9 detects ARMv8 AES at runtime on arm64 Android (through `cpufeatures`), so no `RUSTFLAGS` are needed. Not measured on a device yet. 32-bit ARM (armeabi-v7a) always uses the software implementation, so AES-KDF unlocks are slower there
 - [ ] Unlock on a physical phone (only the emulator so far)
 - [ ] Compose's text field keeps its own immutable copies of what's typed (and the keyboard sees it). We clear the field and its undo history, but can't wipe those copies. Every Android password manager has the same limit
 - [ ] Reproducible Rust builds for F-Droid (pinned toolchain, path remapping)
 - [ ] KDBX 3: wrong-key detection relies on padding plus the stream start bytes, which is standard. KDBX 4 uses the header HMAC
+- [ ] Android 8–13 have no way to hide a window from non-tool accessibility apps. There, only the master password is masked; entry names and usernames on screen are readable by any accessibility app the user enabled. Fields that show secrets (MVP feature 3) must mask them for accessibility the same way
 - [ ] App icon
