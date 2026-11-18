@@ -34,7 +34,7 @@ pub use key::CompositeKey;
 pub use model::{Database, Entry, Field, Group, uuid_from_hex, uuid_to_hex};
 pub use passkey::{
     AppTrust, CreatedPasskey, CreationSummary, PasskeyHit, PasskeyStatus, PasskeyTarget,
-    has_passkey, is_passkey_field,
+    PasskeyView, has_passkey, is_passkey_field, passkey_of,
 };
 pub use totp::{OTP_FIELD, Totp, TotpAlgorithm};
 pub use webauthn::Client;

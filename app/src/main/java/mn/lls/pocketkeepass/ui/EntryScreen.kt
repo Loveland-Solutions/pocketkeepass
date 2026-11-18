@@ -390,6 +390,7 @@ private fun EntryScreenPreview() {
                 ),
                 tags = listOf("personal"),
                 totp = TotpStatus.Ready(periodSeconds = 30u, length = 6u, fields = listOf("otp")),
+                passkey = null,
             ),
             databaseName = "Passwords",
             clipboardTimeoutSeconds = 30,

@@ -108,6 +108,84 @@ pub enum FillTarget {
     },
 }
 
+/// Who is asking for a passkey. See the engine's `webauthn::Client`.
+#[derive(uniffi::Enum)]
+pub enum PasskeyClient {
+    /// A browser the app has verified (package name and signing certificate), which supplies
+    /// the SHA-256 of its own client data.
+    Browser { client_data_hash: Vec<u8> },
+    /// Any other app: its package name, and the SHA-256 of each of its signing certificates,
+    /// the current one first.
+    App {
+        package: String,
+        certificates: Vec<Vec<u8>>,
+    },
+}
+
+/// Whether the app asking may use a passkey.
+#[derive(uniffi::Enum)]
+pub enum AppTrust {
+    /// A verified browser.
+    Browser,
+    /// The app is linked to the entry with a matching certificate.
+    Linked,
+    /// Not linked yet: ask the user, then `link_app`.
+    NotLinked,
+    /// An app with this name is linked, but signed by someone else. Refuse, don't ask.
+    OtherSigner,
+}
+
+/// A passkey that can answer a sign-in. Nothing secret.
+#[derive(uniffi::Record)]
+pub struct PasskeyChoice {
+    pub result: SearchResult,
+    /// The account name the site gave.
+    pub username: String,
+    /// Why the passkey can't be used, or null if it can.
+    pub unusable_reason: Option<String>,
+    pub trust: AppTrust,
+}
+
+/// What a request to create a passkey is for, to show before asking the user.
+#[derive(uniffi::Record)]
+pub struct PasskeyCreation {
+    /// The site, e.g. "example.com".
+    pub rp_id: String,
+    /// The site's name for itself. May be empty.
+    pub rp_name: String,
+    pub user_name: String,
+    pub user_display_name: String,
+    /// Entries for the same site without a passkey, that the new one could be added to.
+    pub candidates: Vec<SearchResult>,
+}
+
+/// Where a new passkey goes.
+#[derive(uniffi::Enum)]
+pub enum PasskeyTarget {
+    NewEntry { group_id: String },
+    Entry { entry_id: String },
+}
+
+/// A passkey just made.
+#[derive(uniffi::Record)]
+pub struct CreatedPasskey {
+    pub entry_id: String,
+    /// The response to hand back to the site. Not secret.
+    pub response_json: String,
+}
+
+/// An entry's passkey, for the entry screen. Nothing secret.
+#[derive(uniffi::Record)]
+pub struct PasskeyInfo {
+    pub rp_id: String,
+    pub username: String,
+    /// Why the passkey can't be used, or null if it can.
+    pub unusable_reason: Option<String>,
+    /// The fields making up the passkey and its app links. The entry screen can leave them out
+    /// since it shows the passkey; they're still in `fields`, and must stay in an edit.
+    pub fields: Vec<String>,
+}
+
 /// Everything the entry screen shows, except protected values: those cross the bridge only when
 /// the user asks to see or copy one, through `reveal_field`.
 #[derive(uniffi::Record)]
@@ -130,6 +208,8 @@ pub struct EntryDetails {
     pub tags: Vec<String>,
     /// Whether the entry makes TOTP codes. Fetch the current one with `totp_code`.
     pub totp: TotpStatus,
+    /// The entry's passkey, if it has one.
+    pub passkey: Option<PasskeyInfo>,
 }
 
 /// An entry's TOTP setup. Nothing secret.
@@ -365,6 +445,12 @@ impl UnlockedDatabase {
                         reason: e.to_string(),
                     },
                 },
+                passkey: crate::passkey_of(&hit.entry).map(|p| PasskeyInfo {
+                    rp_id: p.rp_id,
+                    username: p.username.to_owned(),
+                    unusable_reason: unusable_reason(p.status),
+                    fields: p.fields.iter().map(|f| (*f).to_owned()).collect(),
+                }),
             })
         })
     }
@@ -399,6 +485,102 @@ impl UnlockedDatabase {
                 None => Err(Error::NotFound),
             }
         })
+    }
+
+    /// The passkeys that can answer a sign-in request (Credential Manager's request JSON), in
+    /// file order. Nothing secret: sign with `assert_passkey` once the user has picked one.
+    pub fn passkeys_for(
+        &self,
+        request_json: String,
+        client: PasskeyClient,
+    ) -> Result<Vec<PasskeyChoice>> {
+        with_client(&client, |client| {
+            self.with(|db| {
+                Ok(db
+                    .passkeys_for(&request_json, client)?
+                    .into_iter()
+                    .map(|p| PasskeyChoice {
+                        result: search_result(&p.hit),
+                        username: p.username.to_owned(),
+                        unusable_reason: unusable_reason(p.status),
+                        trust: p.trust.into(),
+                    })
+                    .collect())
+            })
+        })
+    }
+
+    /// Checks a request to create a passkey and says what it's for. Fails with
+    /// `PasskeyUnsupported` or `PasskeyExists` before the user is asked anything.
+    pub fn passkey_creation(&self, request_json: String) -> Result<PasskeyCreation> {
+        self.with(|db| {
+            let summary = db.passkey_creation(&request_json)?;
+            Ok(PasskeyCreation {
+                candidates: summary.candidates.iter().map(search_result).collect(),
+                rp_id: summary.rp_id,
+                rp_name: summary.rp_name,
+                user_name: summary.user_name,
+                user_display_name: summary.user_display_name,
+            })
+        })
+    }
+
+    /// Makes a passkey and stores it (an app is linked at the same time). Only call this after
+    /// the user agreed and was verified. Like every change, it's only in memory until `save`;
+    /// if saving fails, call `undo_passkey`.
+    pub fn create_passkey(
+        &self,
+        target: PasskeyTarget,
+        request_json: String,
+        client: PasskeyClient,
+    ) -> Result<CreatedPasskey> {
+        let target = match target {
+            PasskeyTarget::NewEntry { group_id } => crate::PasskeyTarget::NewEntry {
+                group: parse_id(&group_id)?,
+            },
+            PasskeyTarget::Entry { entry_id } => crate::PasskeyTarget::Entry(parse_id(&entry_id)?),
+        };
+        with_client(&client, |client| {
+            self.with_mut(|db| {
+                let created = db.create_passkey(target, &request_json, client)?;
+                Ok(CreatedPasskey {
+                    entry_id: uuid_to_hex(&created.entry),
+                    response_json: created.response_json,
+                })
+            })
+        })
+    }
+
+    /// Takes back the passkey `create_passkey` made last, if it went into this entry.
+    pub fn undo_passkey(&self, entry_id: String) -> Result<bool> {
+        let entry = parse_id(&entry_id)?;
+        self.with_mut(|db| db.undo_passkey(&entry))
+    }
+
+    /// Signs a sign-in request with an entry's passkey and returns the response for the site.
+    /// Only call this after the user picked the passkey and was verified.
+    pub fn assert_passkey(
+        &self,
+        entry_id: String,
+        request_json: String,
+        client: PasskeyClient,
+    ) -> Result<String> {
+        let entry = parse_id(&entry_id)?;
+        with_client(&client, |client| {
+            self.with(|db| db.assert_passkey(&entry, &request_json, client))
+        })
+    }
+
+    /// Links an app to an entry, after the user agreed. `certificates` are SHA-256 hashes.
+    pub fn link_app(
+        &self,
+        entry_id: String,
+        package: String,
+        certificates: Vec<Vec<u8>>,
+    ) -> Result<bool> {
+        let entry = parse_id(&entry_id)?;
+        let certificates = certificate_hashes(&certificates)?;
+        self.with_mut(|db| db.link_app(&entry, &package, &certificates))
     }
 
     /// Adds an entry to a group and returns its id. `fields` lists every field it should have,
@@ -561,6 +743,57 @@ impl From<crate::Deletion> for Deletion {
         match deletion {
             crate::Deletion::MovedToRecycleBin => Deletion::MovedToRecycleBin,
             crate::Deletion::Deleted => Deletion::Deleted,
+        }
+    }
+}
+
+impl From<crate::AppTrust> for AppTrust {
+    fn from(trust: crate::AppTrust) -> Self {
+        match trust {
+            crate::AppTrust::Browser => AppTrust::Browser,
+            crate::AppTrust::Linked => AppTrust::Linked,
+            crate::AppTrust::NotLinked => AppTrust::NotLinked,
+            crate::AppTrust::OtherSigner => AppTrust::OtherSigner,
+        }
+    }
+}
+
+fn unusable_reason(status: crate::PasskeyStatus) -> Option<String> {
+    match status {
+        crate::PasskeyStatus::Ready => None,
+        crate::PasskeyStatus::Unusable(reason) => Some(reason),
+    }
+}
+
+fn certificate_hashes(certificates: &[Vec<u8>]) -> Result<Vec<[u8; 32]>> {
+    certificates
+        .iter()
+        .map(|c| {
+            c.as_slice()
+                .try_into()
+                .map_err(|_| Error::Invalid("An app certificate hash isn't SHA-256.".into()))
+        })
+        .collect()
+}
+
+/// Turns the bridge's passkey client into the engine's and calls `f` with it.
+fn with_client<T>(
+    client: &PasskeyClient,
+    f: impl FnOnce(&crate::Client<'_>) -> Result<T>,
+) -> Result<T> {
+    match client {
+        PasskeyClient::Browser { client_data_hash } => {
+            f(&crate::Client::Browser { client_data_hash })
+        }
+        PasskeyClient::App {
+            package,
+            certificates,
+        } => {
+            let certificates = certificate_hashes(certificates)?;
+            f(&crate::Client::App {
+                package,
+                certificates: &certificates,
+            })
         }
     }
 }

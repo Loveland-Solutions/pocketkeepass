@@ -250,6 +250,51 @@ class BridgeTest {
     }
 
     @Test
+    fun `passkeys cross as records and sealed classes, and requests and responses as JSON`() {
+        UnlockedDatabase.open(fixture("passkey.kdbx"), password, null).use { db ->
+            val browser = PasskeyClient.Browser(clientDataHash = ByteArray(32) { 0x5a })
+            val app = PasskeyClient.App("com.example.app", listOf(ByteArray(32) { 0xaa.toByte() }))
+            val signIn = """{"rpId":"app.example","challenge":"AQID"}"""
+
+            val choices = db.passkeysFor(signIn, app)
+            assertEquals(1, choices.size)
+            assertEquals("Linked App", choices[0].result.entry.title)
+            assertEquals("app-user", choices[0].username)
+            assertEquals(null, choices[0].unusableReason)
+            assertEquals(AppTrust.LINKED, choices[0].trust)
+            assertEquals(AppTrust.BROWSER, db.passkeysFor(signIn, browser)[0].trust)
+
+            val response = db.assertPasskey(choices[0].result.entry.id, signIn, app)
+            assertTrue(response.contains("\"signature\""))
+
+            val ed = db.entry("35".repeat(16)).passkey!!
+            assertEquals("ed.example", ed.rpId)
+            assertTrue(ed.unusableReason!!.contains("Ed25519"))
+            assertTrue("KPEX_PASSKEY_PRIVATE_KEY_PEM" in ed.fields)
+            assertEquals(null, db.entry("37".repeat(16)).passkey)
+
+            val create = """{"rp":{"id":"new.example","name":"New"},"user":{"id":"dQ","name":"u","displayName":"U"},""" +
+                """"challenge":"AQ","pubKeyCredParams":[{"type":"public-key","alg":-7}]}"""
+            assertEquals("new.example", db.passkeyCreation(create).rpId)
+            val created = db.createPasskey(PasskeyTarget.NewEntry(groupId = "01".repeat(16)), create, browser)
+            assertTrue(created.responseJson.contains("\"attestationObject\""))
+            assertTrue(db.undoPasskey(created.entryId))
+            assertThrows(KeePassException.NotFound::class.java) { db.entry(created.entryId) }
+
+            // The fixture's "Example (Passkey)" has credential ID 0x31 × 32, "MTEx…" in base64url.
+            val duplicate = create.replace("new.example", "example.com").replace(
+                "\"pubKeyCredParams\"",
+                "\"excludeCredentials\":[{\"type\":\"public-key\",\"id\":\"${"MTEx".repeat(10)}MTE\"}],\"pubKeyCredParams\"",
+            )
+            assertThrows(KeePassException.PasskeyExists::class.java) { db.passkeyCreation(duplicate) }
+            assertThrows(KeePassException.PasskeyUnsupported::class.java) {
+                db.passkeyCreation(create.replace("-7", "-8"))
+            }
+            assertThrows(KeePassException.Invalid::class.java) { db.assertPasskey("37".repeat(16), signIn, browser) }
+        }
+    }
+
+    @Test
     fun `a locked database refuses everything`() {
         val db = UnlockedDatabase.open(fixture("pw-only.kdbx"), password, null)
         assertFalse(db.isLocked())

@@ -134,6 +134,31 @@ struct Stored<'a> {
     backed_up: bool,
 }
 
+/// An entry's passkey, for the entry screen. Nothing secret.
+pub struct PasskeyView<'a> {
+    pub rp_id: String,
+    pub username: &'a str,
+    pub status: PasskeyStatus,
+    /// The entry's fields that make up the passkey and its app links, which the entry screen
+    /// can leave out since it shows the passkey instead. An edit must keep them.
+    pub fields: Vec<&'a str>,
+}
+
+/// The entry's passkey, if it has one. An entry with passkey fields that don't make a passkey
+/// (some missing) has none.
+pub fn passkey_of<'a>(entry: &Entry<'a>) -> Option<PasskeyView<'a>> {
+    let passkey = stored(entry)?;
+    Some(PasskeyView {
+        status: match load_key(passkey.pem) {
+            Ok(_) => PasskeyStatus::Ready,
+            Err(reason) => PasskeyStatus::Unusable(reason),
+        },
+        rp_id: passkey.rp_id,
+        username: passkey.username,
+        fields: entry.field_keys().filter(|k| is_passkey_field(k)).collect(),
+    })
+}
+
 /// Whether an entry has any passkey fields at all, usable or not.
 pub fn has_passkey(entry: &Entry<'_>) -> bool {
     entry.field_keys().any(|k| k.starts_with(PREFIX))
