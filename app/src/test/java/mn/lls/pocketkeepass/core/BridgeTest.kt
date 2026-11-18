@@ -234,6 +234,22 @@ class BridgeTest {
     }
 
     @Test
+    fun `TOTP settings cross as a sealed class, and codes as bytes`() {
+        UnlockedDatabase.open(fixture("totp.kdbx"), password, null).use { db ->
+            val ready = db.entry("21".repeat(16)).totp
+            assertEquals(TotpStatus.Ready(periodSeconds = 30u, length = 6u, fields = listOf("otp")), ready)
+            // The RFC 4226 code for counter 1, which a 30-second period reaches at 30 to 59.
+            assertArrayEquals("287082".toByteArray(), db.totpCode("21".repeat(16), 59uL))
+
+            val broken = db.entry("2c".repeat(16)).totp
+            assertTrue(broken is TotpStatus.Invalid && "Base32" in broken.reason)
+            assertThrows(KeePassException.Invalid::class.java) { db.totpCode("2c".repeat(16), 59uL) }
+            assertEquals(TotpStatus.None, db.entry("2e".repeat(16)).totp)
+            assertThrows(KeePassException.NotFound::class.java) { db.totpCode("2e".repeat(16), 59uL) }
+        }
+    }
+
+    @Test
     fun `a locked database refuses everything`() {
         val db = UnlockedDatabase.open(fixture("pw-only.kdbx"), password, null)
         assertFalse(db.isLocked())
@@ -245,6 +261,7 @@ class BridgeTest {
         assertThrows(KeePassException.Locked::class.java) { db.search("email") }
         assertThrows(KeePassException.Locked::class.java) { db.entry("02".repeat(16)) }
         assertThrows(KeePassException.Locked::class.java) { db.revealField("02".repeat(16), "Password") }
+        assertThrows(KeePassException.Locked::class.java) { db.totpCode("02".repeat(16), 59uL) }
         assertThrows(KeePassException.Locked::class.java) { db.createGroup("02".repeat(16), "x", "") }
         assertThrows(KeePassException.Locked::class.java) { db.deleteEntry("02".repeat(16)) }
         db.close()

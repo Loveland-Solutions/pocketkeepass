@@ -61,6 +61,11 @@
     <!-- e.g. "Copied Password. It clears in 30 seconds." -->
     <string name="copied">Copied %1$s. It clears in %2$s.</string>
     <string name="entry_in_recycle_bin">This entry is in the recycle bin.</string>
+    <string name="totp">One-time code</string>
+    <plurals name="totp_changes_in">
+        <item quantity="one">Changes in %d second</item>
+        <item quantity="other">Changes in %d seconds</item>
+    </plurals>
     <string name="entry_empty">This entry has no fields.</string>
 
     <!-- Editing -->

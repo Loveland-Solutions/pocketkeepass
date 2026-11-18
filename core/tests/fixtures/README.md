@@ -88,4 +88,23 @@ Hand-written XML gives every group and entry a fixed UUID (all 16 bytes the same
 | Hidden (`03`), `EnableSearching` false | "Hidden Example" (`1c`): `https://example.com` | Groups hidden from search are hidden from autofill |
 | Recycle Bin (`04`) | "Deleted Example" (`1d`): `https://example.com` | Never offered |
 
+## TOTP
+
+`totp.kdbx` unlocks with password `test-password`. Like `browse.kdbx`, it's KDBX 3.1, **written by KeePassXC** from the hand-written `totp.source.xml` with the same two commands. Entries are `21` to `2e`, all in the root group. Every secret is one of RFC 6238's (`12345678901234567890`, or its 32- and 64-byte versions for SHA-256 and SHA-512), so the expected codes come from the RFC's tables.
+
+| Entry | Settings | What it tests |
+|---|---|---|
+| "Defaults" (`21`) | `otp`: `otpauth://totp/…?secret=…&issuer=…` | SHA-1, 6 digits, 30 s when the URI doesn't say |
+| "SHA-256" (`22`), "SHA-512" (`23`) | `otp` with `algorithm`, `digits=8`, and (SHA-256) `period=60` | The other algorithms, 8 digits, another period |
+| "Steam" (`24`) | `otp` with `encoder=steam` | Steam Guard's 5-letter codes |
+| "KeeOTP" (`25`) | `otp`: `key=…&size=7&step=45` | The KeeOTP plugin's form, which KeePassXC also reads |
+| "Legacy" (`26`), "Legacy Steam" (`27`) | `TOTP Seed` with `TOTP Settings` `30;8` or `30;S` | What KeePassXC wrote before 2.6, and TrayTOTP |
+| "KeePass Base32" (`28`) | `TimeOtp-Secret-Base32`, `-Length` 8, `-Period` 60, `-Algorithm` `HMAC-SHA-256` | KeePass 2's own fields |
+| "KeePass UTF-8" (`29`), "KeePass Hex" (`2a`), "KeePass Base64" (`2b`) | `TimeOtp-Secret`, `-Secret-Hex` (with SHA-512), `-Secret-Base64` (with length 7) | KeePass 2's other secret encodings. KeePassXC 2.8 doesn't read these |
+| "Broken" (`2c`) | `otp` with a secret that isn't Base32 | Refused with a reason. KeePassXC makes up a code |
+| "Counter" (`2d`) | `otp`: `otpauth://hotp/…` | HOTP is refused with a reason. KeePassXC treats it as TOTP |
+| "No TOTP" (`2e`) | none | |
+
+`tests/totp.rs` also compares our codes with what `keepassxc-cli show --totp` prints at the same moment, for every entry KeePassXC reads.
+
 **Not yet covered:** files written by the original KeePass 2.x (Windows/.NET).

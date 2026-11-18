@@ -15,7 +15,7 @@ use crate::error::{Error, Result};
 use crate::model::{uuid_from_hex, uuid_to_hex};
 use crate::{
     CompositeKey, Database, Entry, EntryEdit, FieldValue, Group, PasswordOptions, SearchHit,
-    Symbols,
+    Symbols, Totp,
 };
 
 /// A database that has been opened with the right key and is held decrypted in memory.
@@ -128,6 +128,29 @@ pub struct EntryDetails {
     pub fields: Vec<EntryField>,
     /// Split at `;` and `,`, trimmed, empty ones left out.
     pub tags: Vec<String>,
+    /// Whether the entry makes TOTP codes. Fetch the current one with `totp_code`.
+    pub totp: TotpStatus,
+}
+
+/// An entry's TOTP setup. Nothing secret.
+#[derive(uniffi::Enum)]
+pub enum TotpStatus {
+    /// The entry has no TOTP settings.
+    None,
+    /// The entry makes codes.
+    Ready {
+        /// How long each code lasts, in seconds. A new code starts whenever the Unix time is a
+        /// multiple of this.
+        period_seconds: u32,
+        /// How many characters a code has.
+        length: u32,
+        /// The fields holding the settings (`otp`, or KeePass's `TimeOtp-*`, and so on), which
+        /// the entry screen can leave out since it shows the code instead. They're still in
+        /// `fields`, and must stay in an edit.
+        fields: Vec<String>,
+    },
+    /// The entry has TOTP settings that can't be used, and this sentence says why.
+    Invalid { reason: String },
 }
 
 /// One field of an entry.
@@ -331,7 +354,32 @@ impl UnlockedDatabase {
                     .filter(|t| !t.is_empty())
                     .map(str::to_owned)
                     .collect(),
+                totp: match Totp::from_entry(&hit.entry) {
+                    Ok(None) => TotpStatus::None,
+                    Ok(Some(totp)) => TotpStatus::Ready {
+                        period_seconds: totp.period(),
+                        length: totp.length(),
+                        fields: totp.fields().to_vec(),
+                    },
+                    Err(e) => TotpStatus::Invalid {
+                        reason: e.to_string(),
+                    },
+                },
             })
+        })
+    }
+
+    /// The entry's TOTP code for a moment in time, given in seconds since 1970 (UTC), as ASCII
+    /// bytes. Fails with `NotFound` if the entry is gone or has no TOTP settings, and with
+    /// `Invalid` (a sentence for the user) if its settings can't be used. The caller should wipe
+    /// the bytes as soon as it's done with them.
+    pub fn totp_code(&self, entry_id: String, unix_seconds: u64) -> Result<Vec<u8>> {
+        self.with(|db| {
+            let hit = db
+                .find_entry(&uuid_from_hex(&entry_id).ok_or(Error::NotFound)?)
+                .ok_or(Error::NotFound)?;
+            let totp = Totp::from_entry(&hit.entry)?.ok_or(Error::NotFound)?;
+            Ok(totp.code_at(unix_seconds).as_bytes().to_vec())
         })
     }
 
@@ -880,6 +928,54 @@ mod tests {
         for bad in ["ee".repeat(16), "01".repeat(16), "nonsense".to_owned()] {
             assert!(matches!(db.entry(bad), Err(Error::NotFound)));
         }
+    }
+
+    #[test]
+    fn totp_codes_cross_the_bridge_as_bytes() {
+        let db = open("totp.kdbx");
+        let ready = db.entry("21".repeat(16)).unwrap();
+        match ready.totp {
+            TotpStatus::Ready {
+                period_seconds,
+                length,
+                fields,
+            } => {
+                assert_eq!((period_seconds, length), (30, 6));
+                assert_eq!(fields, ["otp"]);
+            }
+            _ => panic!("expected TOTP"),
+        }
+        // The setting fields are still listed, so an edit keeps them.
+        assert!(
+            ready
+                .fields
+                .iter()
+                .any(|f| f.key == "otp" && f.is_protected && f.value.is_empty())
+        );
+        assert_eq!(db.totp_code("21".repeat(16), 59).unwrap(), b"287082");
+
+        let broken = db.entry("2c".repeat(16)).unwrap();
+        assert!(
+            matches!(broken.totp, TotpStatus::Invalid { ref reason } if reason.contains("Base32"))
+        );
+        assert!(matches!(
+            db.totp_code("2c".repeat(16), 59),
+            Err(Error::Invalid(_))
+        ));
+
+        assert!(matches!(
+            db.entry("2e".repeat(16)).unwrap().totp,
+            TotpStatus::None
+        ));
+        assert!(matches!(
+            db.totp_code("2e".repeat(16), 59),
+            Err(Error::NotFound)
+        ));
+        db.lock();
+        assert!(matches!(
+            db.totp_code("21".repeat(16), 59),
+            Err(Error::Locked)
+        ));
     }
 
     #[test]

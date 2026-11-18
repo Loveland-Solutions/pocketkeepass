@@ -692,13 +692,46 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun revealChars(entryId: String, field: EntryField): CharArray? = revealChars(entryId, field.key)
 
-    private suspend fun revealChars(entryId: String, key: String): CharArray? {
+    private suspend fun revealChars(entryId: String, key: String): CharArray? = engineChars { it.revealField(entryId, key) }
+
+    /**
+     * The entry's TOTP code for [unixSeconds] (seconds since 1970, UTC), for showing it, or null
+     * if the database was locked meanwhile, the entry is gone, or its settings can't be used.
+     * Like a revealed field, it's a `String` only because Compose needs one, so call this only
+     * while the user has asked to see the code.
+     */
+    suspend fun totpCode(entryId: String, unixSeconds: Long): String? {
+        val chars = totpChars(entryId, unixSeconds) ?: return null
+        return try {
+            String(chars)
+        } finally {
+            chars.wipe()
+        }
+    }
+
+    /** Copies the entry's current TOTP code, marked sensitive like a password. */
+    fun copyTotp(entryId: String, label: String) {
+        viewModelScope.launch {
+            val chars = totpChars(entryId, System.currentTimeMillis() / 1000) ?: return@launch
+            try {
+                clipboard.copy(label, CharBuffer.wrap(chars), sensitive = true)
+            } finally {
+                chars.wipe()
+            }
+        }
+    }
+
+    private suspend fun totpChars(entryId: String, unixSeconds: Long): CharArray? =
+        engineChars { it.totpCode(entryId, unixSeconds.toULong()) }
+
+    /** Asks the engine for secret bytes off the main thread, and turns them into a wipeable `CharArray`. */
+    private suspend fun engineChars(call: (UnlockedDatabase) -> ByteArray): CharArray? {
         val db = database ?: return null
         return withContext(Dispatchers.Default) {
             val bytes = try {
-                db.revealField(entryId, key)
+                call(db)
             } catch (_: KeePassException) {
-                return@withContext null // locked meanwhile, or (once editing exists) gone
+                return@withContext null // locked meanwhile, gone, or (TOTP) unusable settings
             } catch (_: IllegalStateException) {
                 return@withContext null // closed by lock() before the call started
             }

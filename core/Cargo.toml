@@ -33,6 +33,8 @@ getrandom = "0.4"
 hmac = "0.13"
 quick-xml = "0.42"
 salsa20 = "0.11"
+# SHA-1 only for TOTP codes, where RFC 6238 and nearly every service still use it.
+sha1 = { version = "0.11", default-features = false }
 sha2 = "0.11"
 thiserror = "2"
 twofish = "0.8"

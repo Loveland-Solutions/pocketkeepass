@@ -176,6 +176,8 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                     onLock = lock,
                     onReveal = { field -> viewModel.reveal(entry.id, field) },
                     onCopy = { field, label -> viewModel.copy(entry.id, field, label) },
+                    onTotpCode = { unixSeconds -> viewModel.totpCode(entry.id, unixSeconds) },
+                    onCopyTotp = { label -> viewModel.copyTotp(entry.id, label) },
                     saveState = saveState,
                     onSaveDetails = { showSaveProblem = true },
                     snackbar = snackbar,
