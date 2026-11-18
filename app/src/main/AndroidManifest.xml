@@ -8,6 +8,18 @@
     -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
 
+    <!--
+        Lets PocketKeePass look up installed web browsers. Autofill only believes a website
+        address reported by a browser whose signing certificate it has checked.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <application
         android:name=".PocketKeePassApp"
         android:allowBackup="false"
@@ -27,6 +39,30 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            The autofill service. Only Android itself can connect to it (BIND_AUTOFILL_SERVICE),
+            and the user has to choose PocketKeePass in Android's settings first.
+        -->
+        <service
+            android:name=".autofill.PocketAutofillService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.autofill"
+                android:resource="@xml/autofill_service" />
+        </service>
+
+        <!-- Opened by a tap on an autofill suggestion, on top of the app being filled in. -->
+        <activity
+            android:name=".autofill.AutofillActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PocketKeePass.Autofill"
+            android:windowSoftInputMode="adjustResize" />
 
         <!-- Auto-lock's background alarm. Only this app can send it. -->
         <receiver

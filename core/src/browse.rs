@@ -85,12 +85,29 @@ impl Database {
         let terms: Vec<String> = query.split_whitespace().map(str::to_lowercase).collect();
         let mut hits = Vec::new();
         if !terms.is_empty() {
-            let bin = self.recycle_bin();
-            let root = self.root();
-            let searchable = root.enable_searching().unwrap_or(true);
-            search_group(root, &terms, bin, searchable, &mut Vec::new(), &mut hits);
+            self.for_each_searchable(|entry, path| {
+                if matches(&entry, &terms) {
+                    hits.push(SearchHit {
+                        entry,
+                        path: path.to_vec(),
+                    });
+                }
+            });
         }
         hits
+    }
+
+    /// Calls `visit` for every entry that search and autofill may offer, in file order, with
+    /// the groups from below the root down to the entry's own group. That leaves out old
+    /// versions in entry history, the recycle bin, and groups whose "searchable" setting is off.
+    pub(crate) fn for_each_searchable<'a>(
+        &'a self,
+        mut visit: impl FnMut(Entry<'a>, &[Group<'a>]),
+    ) {
+        let root = self.root();
+        let searchable = root.enable_searching().unwrap_or(true);
+        let bin = self.recycle_bin();
+        visit_group(root, bin, searchable, &mut Vec::new(), &mut visit);
     }
 }
 
@@ -113,22 +130,16 @@ fn find_group<'a>(
     None
 }
 
-fn search_group<'a>(
+fn visit_group<'a>(
     group: Group<'a>,
-    terms: &[String],
     bin: Option<[u8; 16]>,
     searchable: bool,
     path: &mut Vec<Group<'a>>,
-    hits: &mut Vec<SearchHit<'a>>,
+    visit: &mut impl FnMut(Entry<'a>, &[Group<'a>]),
 ) {
     if searchable {
         for entry in group.entries() {
-            if matches(&entry, terms) {
-                hits.push(SearchHit {
-                    entry,
-                    path: path.clone(),
-                });
-            }
+            visit(entry, path);
         }
     }
     for child in group.groups() {
@@ -137,7 +148,7 @@ fn search_group<'a>(
         }
         let searchable = child.enable_searching().unwrap_or(searchable);
         path.push(child);
-        search_group(child, terms, bin, searchable, path, hits);
+        visit_group(child, bin, searchable, path, visit);
         path.pop();
     }
 }

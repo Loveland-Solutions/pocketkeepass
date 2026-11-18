@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KeePassFile>
+	<Meta>
+		<Generator>PocketKeePass test fixture</Generator>
+		<DatabaseName>Autofill Test</DatabaseName>
+		<MemoryProtection>
+			<ProtectTitle>False</ProtectTitle>
+			<ProtectUserName>False</ProtectUserName>
+			<ProtectPassword>True</ProtectPassword>
+			<ProtectURL>False</ProtectURL>
+			<ProtectNotes>False</ProtectNotes>
+		</MemoryProtection>
+		<RecycleBinEnabled>True</RecycleBinEnabled>
+		<RecycleBinUUID>BAQEBAQEBAQEBAQEBAQEBA==</RecycleBinUUID>
+	</Meta>
+	<Root>
+		<Group>
+			<UUID>AQEBAQEBAQEBAQEBAQEBAQ==</UUID>
+			<Name>Root</Name>
+			<IconID>48</IconID>
+			<Entry>
+				<UUID>EREREREREREREREREREREQ==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Example</Value></String>
+				<String><Key>UserName</Key><Value ProtectInMemory="True">jo-protected</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">example-pw</Value></String>
+				<String><Key>URL</Key><Value>https://example.com/account</Value></String>
+				<History>
+					<Entry>
+						<UUID>EREREREREREREREREREREQ==</UUID>
+						<IconID>0</IconID>
+						<String><Key>Title</Key><Value>Example (old address)</Value></String>
+						<String><Key>URL</Key><Value>https://old.example.com</Value></String>
+					</Entry>
+				</History>
+			</Entry>
+			<Entry>
+				<UUID>EhISEhISEhISEhISEhISEg==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Shop</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">shop-pw</Value></String>
+				<String><Key>URL</Key><Value>http://www.shop.example.org:8443/cart</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>ExMTExMTExMTExMTExMTEw==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>No Scheme</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">plain-pw</Value></String>
+				<String><Key>URL</Key><Value>plain.example.net/path</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>FBQUFBQUFBQUFBQUFBQUFA==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>App Link</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">app-pw</Value></String>
+				<String><Key>URL</Key><Value>androidapp://com.example.app</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>FRUVFRUVFRUVFRUVFRUVFQ==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Site And App</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">both-pw</Value></String>
+				<String><Key>URL</Key><Value>https://both.example.com</Value></String>
+				<String><Key>KP2A_URL</Key><Value>androidapp://com.example.both</Value></String>
+				<String><Key>KP2A_URL_1</Key><Value>https://other.example.com</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>FhYWFhYWFhYWFhYWFhYWFg==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>KeePassDX Style</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">dx-pw</Value></String>
+				<String><Key>URL</Key><Value></Value></String>
+				<String><Key>AndroidApp</Key><Value>com.example.dx</Value></String>
+				<String><Key>AndroidApp_1</Key><Value>com.example.dx2</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>FxcXFxcXFxcXFxcXFxcXFw==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Protected URL</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">secret-pw</Value></String>
+				<String><Key>URL</Key><Value ProtectInMemory="True">https://secret.example.com</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>GBgYGBgYGBgYGBgYGBgYGA==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Command</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">cmd-pw</Value></String>
+				<String><Key>URL</Key><Value>cmd://ssh example.com</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>GRkZGRkZGRkZGRkZGRkZGQ==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>No URL</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">none-pw</Value></String>
+			</Entry>
+			<Group>
+				<UUID>AgICAgICAgICAgICAgICAg==</UUID>
+				<Name>Sites</Name>
+				<IconID>48</IconID>
+				<Entry>
+					<UUID>GhoaGhoaGhoaGhoaGhoaGg==</UUID>
+					<IconID>0</IconID>
+					<String><Key>Title</Key><Value>Example Login</Value></String>
+					<String><Key>UserName</Key><Value>jo.login</Value></String>
+					<String><Key>Password</Key><Value ProtectInMemory="True">login-pw</Value></String>
+					<String><Key>URL</Key><Value>https://login.example.com</Value></String>
+				</Entry>
+				<Entry>
+					<UUID>GxsbGxsbGxsbGxsbGxsbGw==</UUID>
+					<IconID>0</IconID>
+					<String><Key>Title</Key><Value>Example Admin</Value></String>
+					<String><Key>UserName</Key><Value>admin</Value></String>
+					<String><Key>Password</Key><Value ProtectInMemory="True">admin-pw</Value></String>
+					<String><Key>URL</Key><Value>https://admin.example.com</Value></String>
+				</Entry>
+			</Group>
+			<Group>
+				<UUID>AwMDAwMDAwMDAwMDAwMDAw==</UUID>
+				<Name>Hidden</Name>
+				<IconID>48</IconID>
+				<EnableSearching>false</EnableSearching>
+				<Entry>
+					<UUID>HBwcHBwcHBwcHBwcHBwcHA==</UUID>
+					<IconID>0</IconID>
+					<String><Key>Title</Key><Value>Hidden Example</Value></String>
+					<String><Key>UserName</Key><Value>jo</Value></String>
+					<String><Key>Password</Key><Value ProtectInMemory="True">hidden-pw</Value></String>
+					<String><Key>URL</Key><Value>https://example.com</Value></String>
+				</Entry>
+			</Group>
+			<Group>
+				<UUID>BAQEBAQEBAQEBAQEBAQEBA==</UUID>
+				<Name>Recycle Bin</Name>
+				<IconID>48</IconID>
+				<Entry>
+					<UUID>HR0dHR0dHR0dHR0dHR0dHQ==</UUID>
+					<IconID>0</IconID>
+					<String><Key>Title</Key><Value>Deleted Example</Value></String>
+					<String><Key>UserName</Key><Value>jo</Value></String>
+					<String><Key>Password</Key><Value ProtectInMemory="True">deleted-pw</Value></String>
+					<String><Key>URL</Key><Value>https://example.com</Value></String>
+				</Entry>
+			</Group>
+		</Group>
+	</Root>
+</KeePassFile>

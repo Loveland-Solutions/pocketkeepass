@@ -48,15 +48,20 @@ import mn.lls.pocketkeepass.files.Document
 import mn.lls.pocketkeepass.security.hideTextFromAccessibility
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
-/** Asks for the master password and/or key file of the chosen database. */
+/**
+ * Asks for the master password and/or key file of the chosen database.
+ *
+ * Without [onChangeDatabase], [onAddKeyFile], or [onRemoveKeyFile], that choice isn't offered:
+ * the screen autofill shows on top of another app only unlocks.
+ */
 @Composable
 fun UnlockScreen(
     state: DatabaseState.Locked,
     password: TextFieldState,
     onUnlock: () -> Unit,
-    onChangeDatabase: () -> Unit,
-    onAddKeyFile: () -> Unit,
-    onRemoveKeyFile: () -> Unit,
+    onChangeDatabase: (() -> Unit)?,
+    onAddKeyFile: (() -> Unit)?,
+    onRemoveKeyFile: (() -> Unit)?,
     onQuickUnlock: () -> Unit,
     onOfferQuickUnlock: () -> Unit,
 ) {
@@ -92,8 +97,10 @@ fun UnlockScreen(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = onChangeDatabase, enabled = enabled) {
-                    Text(stringResource(R.string.change_database))
+                if (onChangeDatabase != null) {
+                    TextButton(onClick = onChangeDatabase, enabled = enabled) {
+                        Text(stringResource(R.string.change_database))
+                    }
                 }
             }
 
@@ -122,8 +129,10 @@ fun UnlockScreen(
             val keyFile = state.keyFile
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (keyFile == null) {
-                    TextButton(onClick = onAddKeyFile, enabled = enabled) {
-                        Text(stringResource(R.string.add_key_file))
+                    if (onAddKeyFile != null) {
+                        TextButton(onClick = onAddKeyFile, enabled = enabled) {
+                            Text(stringResource(R.string.add_key_file))
+                        }
                     }
                 } else {
                     Text(
@@ -133,8 +142,10 @@ fun UnlockScreen(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    TextButton(onClick = onRemoveKeyFile, enabled = enabled) {
-                        Text(stringResource(R.string.remove_key_file))
+                    if (onRemoveKeyFile != null) {
+                        TextButton(onClick = onRemoveKeyFile, enabled = enabled) {
+                            Text(stringResource(R.string.remove_key_file))
+                        }
                     }
                 }
             }

@@ -123,6 +123,22 @@ class BridgeTest {
     }
 
     @Test
+    fun `autofill targets cross as an enum with values, and matches come back as records`() {
+        UnlockedDatabase.open(fixture("autofill.kdbx"), password, null).use { db ->
+            val web = db.autofillMatches(FillTarget.Web("login.example.com", plainHttp = false))
+            assertEquals(listOf("Example Login", "Example"), web.map { it.entry.title })
+            assertEquals(listOf("Sites"), web[0].groupPath)
+            assertEquals("", web[1].entry.username) // protected, so a suggestion can't show it
+            assertTrue(db.autofillMatches(FillTarget.Web("login.example.com", plainHttp = true)).isEmpty())
+
+            val app = db.autofillMatches(FillTarget.App("com.example.app"))
+            assertEquals(listOf("App Link"), app.map { it.entry.title })
+            assertArrayEquals("app-pw".toByteArray(), db.revealField(app[0].entry.id, "Password"))
+            assertTrue(db.autofillMatches(FillTarget.App("com.example.other")).isEmpty())
+        }
+    }
+
+    @Test
     fun `an entry arrives without protected values, which come one at a time as bytes`() {
         UnlockedDatabase.open(fixture("browse.kdbx"), password, null).use { db ->
             val bank = db.entry("08".repeat(16))

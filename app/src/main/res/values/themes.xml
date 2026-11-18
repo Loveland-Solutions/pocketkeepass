@@ -1,4 +1,15 @@
 <resources>
     <!-- Window theme only; all real styling is done in Compose (ui/theme). -->
     <style name="Theme.PocketKeePass" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!--
+        The screen autofill opens on top of another app. See-through, so that filling in an
+        entry with the database already unlocked shows nothing at all. Its real screens (unlock,
+        choose an entry) paint the whole window.
+    -->
+    <style name="Theme.PocketKeePass.Autofill">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 </resources>

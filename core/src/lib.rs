@@ -9,6 +9,7 @@
 //!
 //! The Android app doesn't use these types directly. It goes through the bridge in [`ffi`].
 
+mod autofill;
 mod browse;
 mod error;
 pub mod ffi;
@@ -18,6 +19,7 @@ mod model;
 mod util;
 pub mod xml;
 
+pub use autofill::FillTarget;
 pub use browse::{Listing, SearchHit};
 pub use error::Error;
 pub use kdbx::FormatVersion;
