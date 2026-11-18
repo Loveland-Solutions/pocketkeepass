@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import mn.lls.passthekey.core.engineVersion
+import mn.lls.passthekey.security.AccessibleToToolsOnly
 import mn.lls.passthekey.ui.BrowseScreen
 import mn.lls.passthekey.ui.UnlockScreen
 import mn.lls.passthekey.ui.WelcomeScreen
@@ -25,6 +26,7 @@ class MainActivity : ComponentActivity() {
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
         setContent {
+            AccessibleToToolsOnly()
             PassTheKeyTheme { App() }
         }
     }

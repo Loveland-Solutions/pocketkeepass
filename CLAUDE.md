@@ -64,6 +64,11 @@ Update this section as milestones land.
   - settings live in SharedPreferences (`auto_lock`). Nothing secret.
 
   Checked by hand on the emulator: foreground timeout, screen off, and background with the app frozen by `am freeze`, where the alarm arrived about 44 s after leaving (30 s timeout) and unfroze the app to lock. Freezing too soon after leaving the app makes Android kill it instead, which also wipes the database.
+- **Done:** keeping text away from accessibility apps (`security/Accessibility.kt`). Accessibility apps can read the screen, and abusing that is the usual way Android spyware steals passwords:
+  - since Android 8.0, a password field gives every accessibility app its real text, marked as a password, and only TalkBack chooses not to read it. So the master password field gives one dot per character instead, unless the user taps "show password". Screen readers still hear the length;
+  - on Android 14+, every window (the activity and each dialog, which is a window of its own: call `AccessibleToToolsOnly()` in it) is hidden from accessibility apps not registered as assistive tools (`isAccessibilityTool`). TalkBack, Switch Access, and Voice Access still work. Compose's events skip that rule, so the window's root marks every event sensitive on its way out. Apps declare themselves tools and only Google Play checks, so this is a second layer.
+
+  Checked on the emulator (API 37) with `tools/a11y-probe`, a test-only accessibility app with one service registered as a tool and one not. Before: the non-tool service read the master password as it was typed, and entry names. After: it gets no window content and no events with text; the tool one gets dots for the password and everything else.
 - **Tests:** 71 in Rust (`cargo test --release`), 15 in Kotlin (`./gradlew :app:testDebugUnitTest`).
 - **Not built yet:** any way to change a database (edit entries or groups, change the master key). `save` writes back what was opened. Editing is MVP feature 6. The bridge doesn't expose an entry's fields (or its password) yet; that comes with MVP feature 3.
 - **Next:** MVP feature 3 (view an entry, copy username/password/URL). The entry's password should cross the bridge as bytes.
@@ -87,7 +92,9 @@ Gradle builds the Rust engine itself (`buildRust<Variant>` and `generateRustBind
 - Rust with the Android targets: `rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android` (installed on the dev Mac);
 - NDK 28.2.13676358 (installed; pinned as `ndkVersion`).
 
-To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump` instead.
+To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_37.0`. `FLAG_SECURE` makes screenshots black, so read the screen with `adb shell uiautomator dump` instead. If `adb shell input text` stops reaching a text field, check whether Gboard is showing its full-screen "Try out your stylus" tutorial (`uiautomator dump --windows` lists its window) and tap Cancel.
+
+`tools/a11y-probe` (Gradle module `:a11y-probe`, never shipped) logs what accessibility apps can read from Pass The Key. See its README.
 
 ## Module layout
 
@@ -221,4 +228,5 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] Compose's text field keeps its own immutable copies of what's typed (and the keyboard sees it). We clear the field and its undo history, but can't wipe those copies. Every Android password manager has the same limit
 - [ ] Reproducible Rust builds for F-Droid (pinned toolchain, path remapping)
 - [ ] KDBX 3: wrong-key detection relies on padding plus the stream start bytes, which is standard. KDBX 4 uses the header HMAC
+- [ ] Android 8–13 have no way to hide a window from non-tool accessibility apps. There, only the master password is masked; entry names and usernames on screen are readable by any accessibility app the user enabled. Fields that show secrets (MVP feature 3) must mask them for accessibility the same way
 - [ ] App icon

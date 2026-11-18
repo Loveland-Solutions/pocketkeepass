@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import mn.lls.passthekey.R
+import mn.lls.passthekey.security.AccessibleToToolsOnly
 import mn.lls.passthekey.security.AutoLockSettings
 
 /** Chooses when the open database locks itself. Changes apply straight away. */
@@ -35,6 +36,7 @@ fun AutoLockDialog(settings: AutoLockSettings, onChange: (AutoLockSettings) -> U
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.done)) } },
         title = { Text(stringResource(R.string.auto_lock)) },
         text = {
+            AccessibleToToolsOnly() // a dialog is a window of its own
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(stringResource(R.string.auto_lock_timeout), style = MaterialTheme.typography.bodyMedium)
                 Column(Modifier.selectableGroup()) {
