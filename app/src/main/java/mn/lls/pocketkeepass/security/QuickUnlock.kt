@@ -46,7 +46,21 @@ enum class QuickUnlockSetting {
  */
 class QuickUnlock(context: Context) {
     private val prefs = context.getSharedPreferences("quick_unlock", Context.MODE_PRIVATE)
+
+    // Kept apart from [prefs], which [disable] clears: turning quick unlock off isn't a reason to ask again.
+    private val offers = context.getSharedPreferences("quick_unlock_offer", Context.MODE_PRIVATE)
     private val biometrics = BiometricManager.from(context)
+
+    /**
+     * Whether to ask, right after the user unlocked [database] with the master password, if
+     * they'd like to use biometrics next time: they can, it's off, and they haven't been asked
+     * about this database yet.
+     */
+    fun shouldOffer(database: Uri): Boolean =
+        setting(database) == QuickUnlockSetting.Off && offers.getString(OFFERED, null) != database.toString()
+
+    /** Remembers that the user answered [shouldOffer]'s question for [database], whatever they chose. */
+    fun offered(database: Uri) = offers.edit { putString(OFFERED, database.toString()) }
 
     /** Whether strong biometrics are set up on this device right now. */
     val isAvailable: Boolean
@@ -163,5 +177,7 @@ class QuickUnlock(context: Context) {
         const val DATABASE = "database"
         const val IV = "iv"
         const val SEALED = "sealed_key_hash"
+
+        const val OFFERED = "database"
     }
 }

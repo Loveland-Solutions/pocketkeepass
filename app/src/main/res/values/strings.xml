@@ -163,6 +163,9 @@
     <string name="biometric_unlock_explained">Anyone whose fingerprint or face is set up on this phone can then open it. Adding or removing one turns this off, and your master password is always needed to turn it back on.</string>
     <string name="biometric_unlock_unavailable">Set up a fingerprint (or a face unlock that Android rates as strong) in your phone\'s settings to use this.</string>
     <string name="biometric_enable_title">Turn on biometric unlock</string>
+    <string name="biometric_offer_title">Unlock with your fingerprint?</string>
+    <string name="biometric_offer_explained">Next time, open %1$s with a fingerprint or face instead of typing your master password. You can change this any time in settings.</string>
+    <string name="biometric_offer_turn_on">Turn on</string>
     <string name="cancel">Cancel</string>
     <string name="autofill">Autofill</string>
     <string name="autofill_switch">Fill in usernames and passwords in other apps</string>

@@ -125,6 +125,32 @@ fun SettingsDialog(
 }
 
 /**
+ * Asked once per database, right after it's first unlocked with the master password: whether to
+ * unlock it with biometrics from now on. "Turn on" goes on to Android's biometric prompt, as the
+ * switch in settings does.
+ */
+@Composable
+fun QuickUnlockOfferDialog(databaseName: String, onTurnOn: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.biometric_offer_title)) },
+        text = {
+            AccessibleToToolsOnly() // a dialog is a window of its own
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.biometric_offer_explained, databaseName))
+                Text(
+                    stringResource(R.string.biometric_unlock_explained),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = onTurnOn) { Text(stringResource(R.string.biometric_offer_turn_on)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.not_now)) } },
+    )
+}
+
+/**
  * Opens the privacy policy in the browser. PocketKeePass itself has no internet access, so the
  * browser fetches the page. If the phone has no browser, the button does nothing.
  */

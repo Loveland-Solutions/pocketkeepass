@@ -43,6 +43,7 @@ import mn.lls.pocketkeepass.ui.GeneratorDialog
 import mn.lls.pocketkeepass.ui.GroupDialog
 import mn.lls.pocketkeepass.ui.LockUnsavedDialog
 import mn.lls.pocketkeepass.ui.MoveDialog
+import mn.lls.pocketkeepass.ui.QuickUnlockOfferDialog
 import mn.lls.pocketkeepass.ui.SaveProblemDialog
 import mn.lls.pocketkeepass.ui.UpgradeDialog
 import mn.lls.pocketkeepass.ui.rememberJustSaved
@@ -256,6 +257,13 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                         saveCopy.launch(current.database.name.substringBeforeLast('.') + " (copy).kdbx")
                     },
                     onDismiss = dismiss,
+                )
+            }
+            if (current.offerQuickUnlock) {
+                QuickUnlockOfferDialog(
+                    databaseName = databaseName,
+                    onTurnOn = { viewModel.answerQuickUnlockOffer(turnOn = true) },
+                    onDismiss = { viewModel.answerQuickUnlockOffer(turnOn = false) },
                 )
             }
             if (confirmLock) {

@@ -91,6 +91,11 @@ sealed interface DatabaseState {
         val entry: EntryDetails? = null,
         /** Quick unlock's switch in the settings dialog. */
         val quickUnlock: QuickUnlockSetting = QuickUnlockSetting.Unavailable,
+        /**
+         * Ask whether to turn quick unlock on: the database was just unlocked with the master
+         * password, for the first time since it was picked, on a phone with biometrics set up.
+         */
+        val offerQuickUnlock: Boolean = false,
     ) : DatabaseState
 }
 
@@ -402,6 +407,15 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         prompt(BiometricPurpose.Enable(unlocked.database.uri), cipher, R.string.biometric_enable_title, R.string.cancel)
     }
 
+    /** The answer to [DatabaseState.Unlocked.offerQuickUnlock]. Either way, it isn't asked again for this database. */
+    fun answerQuickUnlockOffer(turnOn: Boolean) {
+        val unlocked = _state.value as? DatabaseState.Unlocked ?: return
+        if (!unlocked.offerQuickUnlock) return
+        quickUnlock.offered(unlocked.database.uri)
+        _state.value = unlocked.copy(offerQuickUnlock = false)
+        if (turnOn) setQuickUnlock(true)
+    }
+
     /**
      * Re-checks what may have changed while this screen was away: whether quick unlock can be
      * used (biometrics may have been set up or removed), and, on the unlock screen, which
@@ -564,6 +578,11 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
             val open = Session.Open(opened, locked.database, locked.keyFile, unlocked.summary, unlocked.root, unlocked.fingerprint)
             session.start(open)
             follow(open)
+            // Only the app's own screen asks. Autofill's and passkeys' screens ignore this, so
+            // after unlocking there the question waits for the next unlock in the app.
+            if (!viaQuickUnlock && quickUnlock.shouldOffer(locked.database.uri)) {
+                _state.update { (it as? DatabaseState.Unlocked)?.copy(offerQuickUnlock = true) ?: it }
+            }
         }
     }
 
