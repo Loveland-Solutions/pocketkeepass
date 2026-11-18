@@ -144,6 +144,31 @@ impl UnlockedDatabase {
         }))
     }
 
+    /// Decrypts a whole `.kdbx` file with a composite key hash from `key_hash`, for quick
+    /// unlock. Fails with `WrongKey` if the hash doesn't open the file (the master key changed
+    /// since it was stored) or isn't 32 bytes. Like `open`, this runs the key derivation.
+    ///
+    /// This side's copy of `key_hash` is wiped before this returns. The caller should wipe its own.
+    #[uniffi::constructor]
+    pub fn open_with_key_hash(file: Vec<u8>, key_hash: Vec<u8>) -> Result<Arc<Self>> {
+        let key_hash = Zeroizing::new(key_hash);
+        let key_hash: &[u8; 32] = key_hash
+            .as_slice()
+            .try_into()
+            .map_err(|_| Error::WrongKey)?;
+        let db = Database::open_with_key_hash(&file, key_hash)?;
+        Ok(Arc::new(Self {
+            db: RwLock::new(Some(db)),
+        }))
+    }
+
+    /// The composite key hash this database was opened with, for quick unlock to store
+    /// (encrypted). It opens the database as well as the password and key file do, so the
+    /// caller must wipe it as soon as it's encrypted.
+    pub fn key_hash(&self) -> Result<Vec<u8>> {
+        self.with(|db| Ok(db.key_hash().to_vec()))
+    }
+
     pub fn summary(&self) -> Result<DatabaseSummary> {
         fn count(group: Group<'_>, groups: &mut u32, entries: &mut u32) {
             *entries += group.entries().count() as u32;
@@ -407,6 +432,37 @@ mod tests {
         assert_eq!(summary.format_version, "4.0");
         assert!(!summary.needs_upgrade);
         assert_eq!(summary.entry_count, 2);
+    }
+
+    #[test]
+    fn the_key_hash_opens_the_database_and_survives_a_save() {
+        let file = fixture("keyfile-only.kdbx");
+        let db = UnlockedDatabase::open(file.clone(), None, Some(fixture("keyfile.keyx"))).unwrap();
+        let hash = db.key_hash().unwrap();
+        assert_eq!(hash.len(), 32);
+        let again = UnlockedDatabase::open_with_key_hash(file, hash.clone()).unwrap();
+        assert_eq!(again.summary().unwrap().entry_count, 1);
+
+        // A save makes fresh key derivation salts, and the hash still opens the result.
+        let db = open("kdbx4-argon2id-chacha20.kdbx");
+        let hash = db.key_hash().unwrap();
+        let saved = db.save().unwrap();
+        let reopened = UnlockedDatabase::open_with_key_hash(saved, hash).unwrap();
+        assert!(!reopened.is_locked());
+
+        db.lock();
+        assert!(matches!(db.key_hash(), Err(Error::Locked)));
+    }
+
+    #[test]
+    fn a_wrong_or_malformed_key_hash_is_a_wrong_key() {
+        let file = fixture("pw-only.kdbx");
+        for bad in [vec![0u8; 32], vec![0u8; 31], Vec::new()] {
+            assert!(matches!(
+                UnlockedDatabase::open_with_key_hash(file.clone(), bad),
+                Err(Error::WrongKey)
+            ));
+        }
     }
 
     #[test]

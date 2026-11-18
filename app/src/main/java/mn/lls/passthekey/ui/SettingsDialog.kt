@@ -28,14 +28,20 @@ import mn.lls.passthekey.R
 import mn.lls.passthekey.security.AccessibleToToolsOnly
 import mn.lls.passthekey.security.AutoLockSettings
 import mn.lls.passthekey.security.Clipboard
+import mn.lls.passthekey.security.QuickUnlockSetting
 
-/** Chooses when the open database locks itself, and when the clipboard is cleared. Changes apply straight away. */
+/**
+ * Chooses when the open database locks itself, when the clipboard is cleared, and whether
+ * biometrics can unlock the database. Changes apply straight away.
+ */
 @Composable
 fun SettingsDialog(
     settings: AutoLockSettings,
     onChange: (AutoLockSettings) -> Unit,
     clipboardTimeoutSeconds: Int,
     onChangeClipboardTimeout: (Int) -> Unit,
+    quickUnlock: QuickUnlockSetting,
+    onChangeQuickUnlock: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
@@ -45,6 +51,25 @@ fun SettingsDialog(
         text = {
             AccessibleToToolsOnly() // a dialog is a window of its own
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.biometric_unlock), style = MaterialTheme.typography.titleSmall)
+                val available = quickUnlock != QuickUnlockSetting.Unavailable
+                val on = quickUnlock == QuickUnlockSetting.On
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .toggleable(on, enabled = available, role = Role.Switch, onValueChange = onChangeQuickUnlock)
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(R.string.biometric_unlock_switch), Modifier.weight(1f))
+                    Switch(checked = on, onCheckedChange = null, enabled = available)
+                }
+                Text(
+                    stringResource(if (available) R.string.biometric_unlock_explained else R.string.biometric_unlock_unavailable),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 Text(stringResource(R.string.auto_lock), style = MaterialTheme.typography.titleSmall)
                 Text(stringResource(R.string.auto_lock_timeout), style = MaterialTheme.typography.bodyMedium)
                 Choices(AutoLockSettings.TIMEOUTS, settings.timeoutSeconds) { onChange(settings.copy(timeoutSeconds = it)) }

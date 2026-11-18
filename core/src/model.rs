@@ -20,7 +20,15 @@ impl Database {
     /// Decrypts a whole `.kdbx` file. This is slow on purpose (key derivation), so call it off
     /// the UI thread.
     pub fn open(file: &[u8], key: &CompositeKey) -> Result<Self> {
-        let key = key.hash();
+        Self::open_with_key_hash(file, &key.hash())
+    }
+
+    /// Like [`open`](Self::open), with the composite key hash from [`key_hash`](Self::key_hash)
+    /// instead of the password and key file. This is what quick unlock stores: it keeps working
+    /// after the database is saved (by us or any other app), and stops only when the master key
+    /// changes. Key derivation still runs, so this is no faster than [`open`](Self::open).
+    pub fn open_with_key_hash(file: &[u8], key_hash: &[u8; 32]) -> Result<Self> {
+        let key = Zeroizing::new(*key_hash);
         let inner = kdbx::decrypt(file, &key)?;
         // Make sure the basic shape is there, so the views below can rely on it.
         inner
@@ -42,6 +50,12 @@ impl Database {
     /// [`upgrade_to_kdbx4`](Self::upgrade_to_kdbx4) has been called.
     pub fn save(&self) -> Result<Vec<u8>> {
         kdbx::encrypt(&self.inner, &self.key)
+    }
+
+    /// The composite key hash this database was opened with. It's as good as the password and
+    /// key file for opening the database, so treat it like them: never log it, and wipe copies.
+    pub fn key_hash(&self) -> &[u8; 32] {
+        &self.key
     }
 
     /// Whether this is a KDBX 3 database, which has to be upgraded before it can be saved.
