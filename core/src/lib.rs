@@ -18,8 +18,10 @@ mod generator;
 mod kdbx;
 mod key;
 mod model;
+mod passkey;
 mod totp;
 mod util;
+mod webauthn;
 pub mod xml;
 
 pub use autofill::FillTarget;
@@ -30,6 +32,11 @@ pub use generator::{PasswordOptions, Symbols};
 pub use kdbx::FormatVersion;
 pub use key::CompositeKey;
 pub use model::{Database, Entry, Field, Group, uuid_from_hex, uuid_to_hex};
+pub use passkey::{
+    AppTrust, CreatedPasskey, CreationSummary, PasskeyHit, PasskeyStatus, PasskeyTarget,
+    has_passkey, is_passkey_field,
+};
 pub use totp::{OTP_FIELD, Totp, TotpAlgorithm};
+pub use webauthn::Client;
 
 uniffi::setup_scaffolding!();

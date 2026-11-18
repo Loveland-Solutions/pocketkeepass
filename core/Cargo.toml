@@ -31,8 +31,12 @@ chacha20 = "0.10"
 flate2 = "1"
 getrandom = "0.4"
 hmac = "0.13"
+# P-256 ECDSA keys and signatures for passkeys (ES256), with PKCS#8 PEM for the KeePassXC format.
+p256 = "0.14"
 quick-xml = "0.42"
 salsa20 = "0.11"
+# Passkey requests and responses are WebAuthn JSON from other apps, so the parser has to be robust.
+serde_json = "1"
 # SHA-1 only for TOTP codes, where RFC 6238 and nearly every service still use it.
 sha1 = { version = "0.11", default-features = false }
 sha2 = "0.11"

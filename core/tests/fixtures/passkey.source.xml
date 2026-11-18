@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KeePassFile>
+	<Meta>
+		<Generator>PocketKeePass test fixture</Generator>
+		<DatabaseName>Passkey Test</DatabaseName>
+		<MemoryProtection>
+			<ProtectTitle>False</ProtectTitle>
+			<ProtectUserName>False</ProtectUserName>
+			<ProtectPassword>True</ProtectPassword>
+			<ProtectURL>False</ProtectURL>
+			<ProtectNotes>False</ProtectNotes>
+		</MemoryProtection>
+		<RecycleBinEnabled>True</RecycleBinEnabled>
+		<RecycleBinUUID>BAQEBAQEBAQEBAQEBAQEBA==</RecycleBinUUID>
+	</Meta>
+	<Root>
+		<Group>
+			<UUID>AQEBAQEBAQEBAQEBAQEBAQ==</UUID>
+			<Name>Root</Name>
+			<IconID>48</IconID>
+			<Entry>
+				<UUID>MTExMTExMTExMTExMTExMQ==</UUID>
+				<IconID>0</IconID>
+				<Tags>Passkey</Tags>
+				<String><Key>Title</Key><Value>Example (Passkey)</Value></String>
+				<String><Key>UserName</Key><Value>alice@example.com</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+				<String><Key>URL</Key><Value>https://example.com</Value></String>
+				<String><Key>KPEX_PASSKEY_USERNAME</Key><Value>alice@example.com</Value></String>
+				<String><Key>KPEX_PASSKEY_CREDENTIAL_ID</Key><Value ProtectInMemory="True">MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTE</Value></String>
+				<String><Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key><Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg59dCWC83H0ZnKEti
+89+g/3WziEn+xNy6HBWxyjGssKKhRANCAAR1Z22yCZ4QAAdPh1bgcT0o1X/oZIdY
+69/q4/cejDiAHZDgBPJ37vICzK8VXSJ46xakkjwodLtBj8Gm6urqJi0w
+-----END PRIVATE KEY-----</Value></String>
+				<String><Key>KPEX_PASSKEY_RELYING_PARTY</Key><Value>example.com</Value></String>
+				<String><Key>KPEX_PASSKEY_USER_HANDLE</Key><Value ProtectInMemory="True">YWxpY2U</Value></String>
+				<String><Key>KPEX_PASSKEY_FLAG_BE</Key><Value>1</Value></String>
+				<String><Key>KPEX_PASSKEY_FLAG_BS</Key><Value>1</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>MjIyMjIyMjIyMjIyMjIyMg==</UUID>
+				<IconID>0</IconID>
+				<Tags>Passkey</Tags>
+				<String><Key>Title</Key><Value>Example (Bob)</Value></String>
+				<String><Key>UserName</Key><Value>bob</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+				<String><Key>URL</Key><Value>https://example.com</Value></String>
+				<String><Key>KPEX_PASSKEY_USERNAME</Key><Value>bob</Value></String>
+				<String><Key>KPEX_PASSKEY_CREDENTIAL_ID</Key><Value ProtectInMemory="True">MjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjI</Value></String>
+				<String><Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key><Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgZqTleaQwOV+KEDWc
+pr1KD8XCE7zeqergLLaT4l/xNhahRANCAASZD4pJrWuEq6upiyvTJ8Q3oxTLSmS4
+kNHdbkEgA0sTqD9mLuKRPNhr7xex87skdtlg1PggdjTflZ4C2x6T+yce
+-----END PRIVATE KEY-----</Value></String>
+				<String><Key>KPEX_PASSKEY_RELYING_PARTY</Key><Value>Example.com</Value></String>
+				<String><Key>KPEX_PASSKEY_USER_HANDLE</Key><Value ProtectInMemory="True">Ym9i</Value></String>
+				<String><Key>KPEX_PASSKEY_FLAG_BE</Key><Value>0</Value></String>
+				<String><Key>KPEX_PASSKEY_FLAG_BS</Key><Value>0</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>MzMzMzMzMzMzMzMzMzMzMw==</UUID>
+				<IconID>0</IconID>
+				<Tags>Passkey</Tags>
+				<String><Key>Title</Key><Value>StrongBox Import</Value></String>
+				<String><Key>UserName</Key><Value></Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+				<String><Key>URL</Key><Value></Value></String>
+				<String><Key>KPEX_PASSKEY_USERNAME</Key><Value>ignored</Value></String>
+				<String><Key>KPEX_PASSKEY_CREDENTIAL_ID</Key><Value ProtectInMemory="True">AAAAAAAAAAAAAAAAAAAAAA</Value></String>
+				<String><Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key><Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgz8Mo6QxRMMIHk4Hc
+yWsFgjB+CVz9eIgAydrbLQ2AL/uhRANCAARpExtPvCXxNE2QQvIV1nic1qiASFWQ
+X19aQKEnRYPe2AJzMQH3EOQPbDC+CY/nKLrr1pfHeAmUYGbK9+xf0BM6
+-----END PRIVATE KEY-----</Value></String>
+				<String><Key>KPEX_PASSKEY_RELYING_PARTY</Key><Value>strongbox.example</Value></String>
+				<String><Key>KPEX_PASSKEY_USER_HANDLE</Key><Value ProtectInMemory="True">c2I</Value></String>
+				<String><Key>KPEX_PASSKEY_GENERATED_USER_ID</Key><Value ProtectInMemory="True">MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM</Value></String>
+				<String><Key>KPXC_PASSKEY_USERNAME</Key><Value>sb-user</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>NDQ0NDQ0NDQ0NDQ0NDQ0NA==</UUID>
+				<IconID>0</IconID>
+				<Tags>Passkey</Tags>
+				<String><Key>Title</Key><Value>Unwrapped PEM</Value></String>
+				<String><Key>UserName</Key><Value></Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+				<String><Key>URL</Key><Value></Value></String>
+				<String><Key>KPEX_PASSKEY_USERNAME</Key><Value>unwrapped</Value></String>
+				<String><Key>KPEX_PASSKEY_CREDENTIAL_ID</Key><Value ProtectInMemory="True">NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ=</Value></String>
+				<String><Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key><Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg1e64LgIK6yEZr1wop/v8llnuWfPy4yPxlN+aYourQEOhRANCAASa6WsiP3oPOz54BqZbVbFq/zVG15F+q9ploR6uf/D90YGfO9g4L6QuSSrhZBzHDbL2VByZVsmlrSTRFpmuewqq-----END PRIVATE KEY-----</Value></String>
+				<String><Key>KPEX_PASSKEY_RELYING_PARTY</Key><Value>unwrapped.example</Value></String>
+				<String><Key>KPEX_PASSKEY_USER_HANDLE</Key><Value ProtectInMemory="True">dW53cmFwcGVk</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>NTU1NTU1NTU1NTU1NTU1NQ==</UUID>
+				<IconID>0</IconID>
+				<Tags>Passkey</Tags>
+				<String><Key>Title</Key><Value>Ed25519</Value></String>
+				<String><Key>UserName</Key><Value></Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+				<String><Key>URL</Key><Value></Value></String>
+				<String><Key>KPEX_PASSKEY_USERNAME</Key><Value>ed</Value></String>
+				<String><Key>KPEX_PASSKEY_CREDENTIAL_ID</Key><Value ProtectInMemory="True">NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU</Value></String>
+				<String><Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key><Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEINuzZJ14EZU12hwOFpLvkKhbGUI70YlNcBhwzMJsJEs+
+-----END PRIVATE KEY-----</Value></String>
+				<String><Key>KPEX_PASSKEY_RELYING_PARTY</Key><Value>ed.example</Value></String>
+				<String><Key>KPEX_PASSKEY_USER_HANDLE</Key><Value ProtectInMemory="True">ZWQ</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>NjY2NjY2NjY2NjY2NjY2Ng==</UUID>
+				<IconID>0</IconID>
+				<Tags>Passkey</Tags>
+				<String><Key>Title</Key><Value>Linked App</Value></String>
+				<String><Key>UserName</Key><Value></Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+				<String><Key>URL</Key><Value></Value></String>
+				<String><Key>KPEX_PASSKEY_USERNAME</Key><Value>app-user</Value></String>
+				<String><Key>KPEX_PASSKEY_CREDENTIAL_ID</Key><Value ProtectInMemory="True">NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY</Value></String>
+				<String><Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key><Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkw4HMiMohA7QbdYw
+0mJu/sBYTiKEJlWmaf8pOPH1P3ahRANCAATNNo5sXa/ku3sBNsRvjeF+AKf2rgzq
+0It4Wf2bKURrIGIm1oBXb0UUvoBNBnC6rc9ZSd0MbsKngTC8CdVD0BUn
+-----END PRIVATE KEY-----</Value></String>
+				<String><Key>KPEX_PASSKEY_RELYING_PARTY</Key><Value>app.example</Value></String>
+				<String><Key>KPEX_PASSKEY_USER_HANDLE</Key><Value ProtectInMemory="True">YXBw</Value></String>
+				<String><Key>AndroidApp</Key><Value>com.example.app</Value></String>
+				<String><Key>AndroidApp Signature</Key><Value ProtectInMemory="True">AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA</Value></String>
+				<String><Key>AndroidApp_1</Key><Value>com.example.other</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>Nzc3Nzc3Nzc3Nzc3Nzc3Nw==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Example Password</Value></String>
+				<String><Key>UserName</Key><Value>carol</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+				<String><Key>URL</Key><Value>https://example.com/login</Value></String>
+			</Entry>
+			<Group>
+				<UUID>AgICAgICAgICAgICAgICAg==</UUID>
+				<Name>Hidden</Name>
+				<IconID>48</IconID>
+				<EnableSearching>false</EnableSearching>
+				<Entry>
+					<UUID>ODg4ODg4ODg4ODg4ODg4OA==</UUID>
+					<IconID>0</IconID>
+					<Tags>Passkey</Tags>
+					<String><Key>Title</Key><Value>Hidden Passkey</Value></String>
+					<String><Key>UserName</Key><Value></Value></String>
+					<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+					<String><Key>URL</Key><Value></Value></String>
+					<String><Key>KPEX_PASSKEY_USERNAME</Key><Value>hidden</Value></String>
+					<String><Key>KPEX_PASSKEY_CREDENTIAL_ID</Key><Value ProtectInMemory="True">ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg</Value></String>
+					<String><Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key><Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+	MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQglqTHZyKd6B0AGH0+
+	A6bF4T4P3Fg/vacT8l4y2Cf/tjOhRANCAAQ2TNSdMnlfYsaAG0rok8SW9v+J/ENk
+	XwukA2PauRjzl5h+1TRjE3+A9qcckSTPviQhI5Z+pK3cPF5sfrXSIZ/d
+	-----END PRIVATE KEY-----</Value></String>
+					<String><Key>KPEX_PASSKEY_RELYING_PARTY</Key><Value>example.com</Value></String>
+					<String><Key>KPEX_PASSKEY_USER_HANDLE</Key><Value ProtectInMemory="True">aGlkZGVu</Value></String>
+				</Entry>
+			</Group>
+			<Group>
+				<UUID>BAQEBAQEBAQEBAQEBAQEBA==</UUID>
+				<Name>Recycle Bin</Name>
+				<IconID>48</IconID>
+				<Entry>
+					<UUID>OTk5OTk5OTk5OTk5OTk5OQ==</UUID>
+					<IconID>0</IconID>
+					<Tags>Passkey</Tags>
+					<String><Key>Title</Key><Value>Deleted Passkey</Value></String>
+					<String><Key>UserName</Key><Value></Value></String>
+					<String><Key>Password</Key><Value ProtectInMemory="True"></Value></String>
+					<String><Key>URL</Key><Value></Value></String>
+					<String><Key>KPEX_PASSKEY_USERNAME</Key><Value>deleted</Value></String>
+					<String><Key>KPEX_PASSKEY_CREDENTIAL_ID</Key><Value ProtectInMemory="True">OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk</Value></String>
+					<String><Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key><Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+	MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgRu+RN11SHoJMGFN3
+	hh2dd3sZUjmgXN+kkHABYaqfBEahRANCAAT0MGWISXpzWLdXO1KNRZChHliAsPNn
+	wwNZuItE9JyESIAf+FQH+fVyNdGDwnFJ/Z5Tn6WoT1DlPyM1nOmwTnUR
+	-----END PRIVATE KEY-----</Value></String>
+					<String><Key>KPEX_PASSKEY_RELYING_PARTY</Key><Value>example.com</Value></String>
+					<String><Key>KPEX_PASSKEY_USER_HANDLE</Key><Value ProtectInMemory="True">ZGVsZXRlZA</Value></String>
+				</Entry>
+			</Group>
+		</Group>
+	</Root>
+</KeePassFile>

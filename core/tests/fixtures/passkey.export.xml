@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KeePassFile>
+	<Meta>
+		<Generator>PocketKeePass test fixture</Generator>
+		<DatabaseName>Passkey Test</DatabaseName>
+		<DatabaseNameChanged>2026-11-18T10:27:29Z</DatabaseNameChanged>
+		<DatabaseDescription/>
+		<DatabaseDescriptionChanged>2026-11-18T10:27:29Z</DatabaseDescriptionChanged>
+		<DefaultUserName/>
+		<DefaultUserNameChanged>2026-11-18T10:27:29Z</DefaultUserNameChanged>
+		<MaintenanceHistoryDays>365</MaintenanceHistoryDays>
+		<Color/>
+		<MasterKeyChanged>2026-11-18T10:27:29Z</MasterKeyChanged>
+		<MasterKeyChangeRec>-1</MasterKeyChangeRec>
+		<MasterKeyChangeForce>-1</MasterKeyChangeForce>
+		<MemoryProtection>
+			<ProtectTitle>False</ProtectTitle>
+			<ProtectUserName>False</ProtectUserName>
+			<ProtectPassword>True</ProtectPassword>
+			<ProtectURL>False</ProtectURL>
+			<ProtectNotes>False</ProtectNotes>
+		</MemoryProtection>
+		<CustomIcons/>
+		<RecycleBinEnabled>True</RecycleBinEnabled>
+		<RecycleBinUUID>BAQEBAQEBAQEBAQEBAQEBA==</RecycleBinUUID>
+		<RecycleBinChanged>2026-11-18T10:27:29Z</RecycleBinChanged>
+		<EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
+		<EntryTemplatesGroupChanged>2026-11-18T10:27:29Z</EntryTemplatesGroupChanged>
+		<LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
+		<LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
+		<HistoryMaxItems>10</HistoryMaxItems>
+		<HistoryMaxSize>6291456</HistoryMaxSize>
+		<Binaries/>
+		<CustomData>
+			<Item>
+				<Key>KPXC_RANDOM_SLUG</Key>
+				<Value>f5482e3ef48606100c3bb9c52324c8c99448d7d40db020426c7092ecea335d032366843111cca726cd4afdddb2ecb1bf4b757196b45e07b9e0ee982700ba583316b474b1d05bd7a7f5a2f042059cf655e410ae68aa8c3648e47abaa306bcc3f5c9e930c338ae18b338b9f40398df592e53cfff7ede5d5cb169d2f98d3d488780c15f8b1b0493c2db68fb1a70cc238cfb3f8be9bc1340bb57fc6686e66112bfc3e23178cb1ce9ee9eb3a3314dcffc192872ff820218e5fd9c9b61dd4af5f62a3ff2e915034802de9edc7647</Value>
+			</Item>
+			<Item>
+				<Key>_LAST_MODIFIED</Key>
+				<Value>Wed Nov 18 10:27:30 2026 GMT</Value>
+			</Item>
+		</CustomData>
+	</Meta>
+	<Root>
+		<Group>
+			<UUID>AQEBAQEBAQEBAQEBAQEBAQ==</UUID>
+			<Name>Root</Name>
+			<Notes/>
+			<IconID>48</IconID>
+			<Times>
+				<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+				<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+				<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+				<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+				<Expires>False</Expires>
+				<UsageCount>0</UsageCount>
+				<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+			</Times>
+			<IsExpanded>True</IsExpanded>
+			<DefaultAutoTypeSequence/>
+			<EnableAutoType>null</EnableAutoType>
+			<EnableSearching>null</EnableSearching>
+			<LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>
+			<Entry>
+				<UUID>MTExMTExMTExMTExMTExMQ==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags>Passkey</Tags>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+					<Value ProtectInMemory="True">MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTE</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_FLAG_BE</Key>
+					<Value>1</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_FLAG_BS</Key>
+					<Value>1</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+					<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg59dCWC83H0ZnKEti
+89+g/3WziEn+xNy6HBWxyjGssKKhRANCAAR1Z22yCZ4QAAdPh1bgcT0o1X/oZIdY
+69/q4/cejDiAHZDgBPJ37vICzK8VXSJ46xakkjwodLtBj8Gm6urqJi0w
+-----END PRIVATE KEY-----</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+					<Value>example.com</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USERNAME</Key>
+					<Value>alice@example.com</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+					<Value ProtectInMemory="True">YWxpY2U</Value>
+				</String>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>Example (Passkey)</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value>https://example.com</Value>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value>alice@example.com</Value>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Entry>
+				<UUID>MjIyMjIyMjIyMjIyMjIyMg==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags>Passkey</Tags>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+					<Value ProtectInMemory="True">MjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjI</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_FLAG_BE</Key>
+					<Value>0</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_FLAG_BS</Key>
+					<Value>0</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+					<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgZqTleaQwOV+KEDWc
+pr1KD8XCE7zeqergLLaT4l/xNhahRANCAASZD4pJrWuEq6upiyvTJ8Q3oxTLSmS4
+kNHdbkEgA0sTqD9mLuKRPNhr7xex87skdtlg1PggdjTflZ4C2x6T+yce
+-----END PRIVATE KEY-----</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+					<Value>Example.com</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USERNAME</Key>
+					<Value>bob</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+					<Value ProtectInMemory="True">Ym9i</Value>
+				</String>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>Example (Bob)</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value>https://example.com</Value>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value>bob</Value>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Entry>
+				<UUID>MzMzMzMzMzMzMzMzMzMzMw==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags>Passkey</Tags>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+					<Value ProtectInMemory="True">AAAAAAAAAAAAAAAAAAAAAA</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_GENERATED_USER_ID</Key>
+					<Value ProtectInMemory="True">MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+					<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgz8Mo6QxRMMIHk4Hc
+yWsFgjB+CVz9eIgAydrbLQ2AL/uhRANCAARpExtPvCXxNE2QQvIV1nic1qiASFWQ
+X19aQKEnRYPe2AJzMQH3EOQPbDC+CY/nKLrr1pfHeAmUYGbK9+xf0BM6
+-----END PRIVATE KEY-----</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+					<Value>strongbox.example</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USERNAME</Key>
+					<Value>ignored</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+					<Value ProtectInMemory="True">c2I</Value>
+				</String>
+				<String>
+					<Key>KPXC_PASSKEY_USERNAME</Key>
+					<Value>sb-user</Value>
+				</String>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>StrongBox Import</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value/>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Entry>
+				<UUID>NDQ0NDQ0NDQ0NDQ0NDQ0NA==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags>Passkey</Tags>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+					<Value ProtectInMemory="True">NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ=</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+					<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg1e64LgIK6yEZr1wop/v8llnuWfPy4yPxlN+aYourQEOhRANCAASa6WsiP3oPOz54BqZbVbFq/zVG15F+q9ploR6uf/D90YGfO9g4L6QuSSrhZBzHDbL2VByZVsmlrSTRFpmuewqq-----END PRIVATE KEY-----</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+					<Value>unwrapped.example</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USERNAME</Key>
+					<Value>unwrapped</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+					<Value ProtectInMemory="True">dW53cmFwcGVk</Value>
+				</String>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>Unwrapped PEM</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value/>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Entry>
+				<UUID>NTU1NTU1NTU1NTU1NTU1NQ==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags>Passkey</Tags>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+					<Value ProtectInMemory="True">NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+					<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEINuzZJ14EZU12hwOFpLvkKhbGUI70YlNcBhwzMJsJEs+
+-----END PRIVATE KEY-----</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+					<Value>ed.example</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USERNAME</Key>
+					<Value>ed</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+					<Value ProtectInMemory="True">ZWQ</Value>
+				</String>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>Ed25519</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value/>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Entry>
+				<UUID>NjY2NjY2NjY2NjY2NjY2Ng==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags>Passkey</Tags>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>AndroidApp</Key>
+					<Value>com.example.app</Value>
+				</String>
+				<String>
+					<Key>AndroidApp Signature</Key>
+					<Value ProtectInMemory="True">AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA</Value>
+				</String>
+				<String>
+					<Key>AndroidApp_1</Key>
+					<Value>com.example.other</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+					<Value ProtectInMemory="True">NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+					<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkw4HMiMohA7QbdYw
+0mJu/sBYTiKEJlWmaf8pOPH1P3ahRANCAATNNo5sXa/ku3sBNsRvjeF+AKf2rgzq
+0It4Wf2bKURrIGIm1oBXb0UUvoBNBnC6rc9ZSd0MbsKngTC8CdVD0BUn
+-----END PRIVATE KEY-----</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+					<Value>app.example</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USERNAME</Key>
+					<Value>app-user</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+					<Value ProtectInMemory="True">YXBw</Value>
+				</String>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>Linked App</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value/>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Entry>
+				<UUID>Nzc3Nzc3Nzc3Nzc3Nzc3Nw==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags/>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>Example Password</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value>https://example.com/login</Value>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value>carol</Value>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Group>
+				<UUID>AgICAgICAgICAgICAgICAg==</UUID>
+				<Name>Hidden</Name>
+				<Notes/>
+				<IconID>48</IconID>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<IsExpanded>True</IsExpanded>
+				<DefaultAutoTypeSequence/>
+				<EnableAutoType>null</EnableAutoType>
+				<EnableSearching>false</EnableSearching>
+				<LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>
+				<Entry>
+					<UUID>ODg4ODg4ODg4ODg4ODg4OA==</UUID>
+					<IconID>0</IconID>
+					<ForegroundColor/>
+					<BackgroundColor/>
+					<OverrideURL/>
+					<Tags>Passkey</Tags>
+					<Times>
+						<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+						<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+						<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+						<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+						<Expires>False</Expires>
+						<UsageCount>0</UsageCount>
+						<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					</Times>
+					<String>
+						<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+						<Value ProtectInMemory="True">ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg</Value>
+					</String>
+					<String>
+						<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+						<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+	MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQglqTHZyKd6B0AGH0+
+	A6bF4T4P3Fg/vacT8l4y2Cf/tjOhRANCAAQ2TNSdMnlfYsaAG0rok8SW9v+J/ENk
+	XwukA2PauRjzl5h+1TRjE3+A9qcckSTPviQhI5Z+pK3cPF5sfrXSIZ/d
+	-----END PRIVATE KEY-----</Value>
+					</String>
+					<String>
+						<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+						<Value>example.com</Value>
+					</String>
+					<String>
+						<Key>KPEX_PASSKEY_USERNAME</Key>
+						<Value>hidden</Value>
+					</String>
+					<String>
+						<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+						<Value ProtectInMemory="True">aGlkZGVu</Value>
+					</String>
+					<String>
+						<Key>Notes</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>Password</Key>
+						<Value ProtectInMemory="True"/>
+					</String>
+					<String>
+						<Key>Title</Key>
+						<Value>Hidden Passkey</Value>
+					</String>
+					<String>
+						<Key>URL</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>UserName</Key>
+						<Value/>
+					</String>
+					<AutoType>
+						<Enabled>True</Enabled>
+						<DataTransferObfuscation>0</DataTransferObfuscation>
+						<DefaultSequence/>
+					</AutoType>
+					<History/>
+				</Entry>
+			</Group>
+			<Group>
+				<UUID>BAQEBAQEBAQEBAQEBAQEBA==</UUID>
+				<Name>Recycle Bin</Name>
+				<Notes/>
+				<IconID>48</IconID>
+				<Times>
+					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				</Times>
+				<IsExpanded>True</IsExpanded>
+				<DefaultAutoTypeSequence/>
+				<EnableAutoType>null</EnableAutoType>
+				<EnableSearching>null</EnableSearching>
+				<LastTopVisibleEntry>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleEntry>
+				<Entry>
+					<UUID>OTk5OTk5OTk5OTk5OTk5OQ==</UUID>
+					<IconID>0</IconID>
+					<ForegroundColor/>
+					<BackgroundColor/>
+					<OverrideURL/>
+					<Tags>Passkey</Tags>
+					<Times>
+						<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
+						<CreationTime>2026-11-18T10:27:29Z</CreationTime>
+						<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
+						<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+						<Expires>False</Expires>
+						<UsageCount>0</UsageCount>
+						<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					</Times>
+					<String>
+						<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+						<Value ProtectInMemory="True">OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk</Value>
+					</String>
+					<String>
+						<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+						<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+	MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgRu+RN11SHoJMGFN3
+	hh2dd3sZUjmgXN+kkHABYaqfBEahRANCAAT0MGWISXpzWLdXO1KNRZChHliAsPNn
+	wwNZuItE9JyESIAf+FQH+fVyNdGDwnFJ/Z5Tn6WoT1DlPyM1nOmwTnUR
+	-----END PRIVATE KEY-----</Value>
+					</String>
+					<String>
+						<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+						<Value>example.com</Value>
+					</String>
+					<String>
+						<Key>KPEX_PASSKEY_USERNAME</Key>
+						<Value>deleted</Value>
+					</String>
+					<String>
+						<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+						<Value ProtectInMemory="True">ZGVsZXRlZA</Value>
+					</String>
+					<String>
+						<Key>Notes</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>Password</Key>
+						<Value ProtectInMemory="True"/>
+					</String>
+					<String>
+						<Key>Title</Key>
+						<Value>Deleted Passkey</Value>
+					</String>
+					<String>
+						<Key>URL</Key>
+						<Value/>
+					</String>
+					<String>
+						<Key>UserName</Key>
+						<Value/>
+					</String>
+					<AutoType>
+						<Enabled>True</Enabled>
+						<DataTransferObfuscation>0</DataTransferObfuscation>
+						<DefaultSequence/>
+					</AutoType>
+					<History/>
+				</Entry>
+			</Group>
+		</Group>
+		<DeletedObjects/>
+	</Root>
+</KeePassFile>

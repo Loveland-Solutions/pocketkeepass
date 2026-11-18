@@ -14,6 +14,8 @@ pub struct Database {
     pub(crate) inner: Decrypted,
     /// The composite key hash the database was opened with, kept so it can be saved again.
     key: Zeroizing<[u8; 32]>,
+    /// How to take back the passkey created last, if saving it fails (see `passkey.rs`).
+    pub(crate) passkey_undo: Option<crate::passkey::Undo>,
 }
 
 impl Database {
@@ -35,7 +37,11 @@ impl Database {
             .xml
             .path(&["Root", "Group"])
             .ok_or_else(|| corrupt("the database has no root group"))?;
-        Ok(Self { inner, key })
+        Ok(Self {
+            inner,
+            key,
+            passkey_undo: None,
+        })
     }
 
     /// Encrypts the database into a complete `.kdbx` file, locked with the key it was opened
