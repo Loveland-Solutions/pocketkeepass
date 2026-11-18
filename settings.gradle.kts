@@ -23,3 +23,5 @@ project(":a11y-probe").projectDir = file("tools/a11y-probe")
 // A test-only app with login forms for autofill to fill in, not shipped. See tools/autofill-probe/README.md.
 include(":autofill-probe")
 project(":autofill-probe").projectDir = file("tools/autofill-probe")
+include(":passkey-probe")
+project(":passkey-probe").projectDir = file("tools/passkey-probe")
