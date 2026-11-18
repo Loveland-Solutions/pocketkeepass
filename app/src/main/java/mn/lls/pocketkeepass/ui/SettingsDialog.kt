@@ -32,7 +32,7 @@ import mn.lls.pocketkeepass.security.QuickUnlockSetting
 
 /**
  * Chooses when the open database locks itself, when the clipboard is cleared, and whether
- * biometrics can unlock the database. Changes apply straight away.
+ * biometrics can unlock the database. Changes apply straight away. Ends with the credits.
  */
 @Composable
 fun SettingsDialog(
@@ -87,6 +87,15 @@ fun SettingsDialog(
                 Text(stringResource(R.string.clipboard), style = MaterialTheme.typography.titleSmall)
                 Text(stringResource(R.string.clipboard_timeout), style = MaterialTheme.typography.bodyMedium)
                 Choices(Clipboard.TIMEOUTS, clipboardTimeoutSeconds, onChangeClipboardTimeout)
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                Text(stringResource(R.string.about), style = MaterialTheme.typography.titleSmall)
+                for (text in listOf(R.string.about_keepass, R.string.about_claude, R.string.about_license)) {
+                    Text(
+                        stringResource(text),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         },
     )

@@ -24,6 +24,16 @@ Gradle builds the Rust engine for Android as part of the app build. That needs R
 rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
 ```
 
+## Credits
+
+**KeePass.** PocketKeePass reads and writes the KeePass database format (KDBX), created by Dominik Reichl for [KeePass Password Safe](https://keepass.info). Thank you for an open, documented format that lets apps like this one exist. PocketKeePass is an independent app: it isn't made, endorsed by, or affiliated with the KeePass project. It uses no KeePass code. The format is implemented from scratch in Rust, from the [KDBX specification](https://keepass.info/help/kb/kdbx.html).
+
+**KeePassXC.** [KeePassXC](https://keepassxc.org) is our test reference. Our tests check what we read and write against what it exports.
+
+**Claude.** PocketKeePass is written with [Claude](https://www.anthropic.com/claude), Anthropic's AI model, through Claude Code. Loveland Solutions directs the work and decides what ships. Commits Claude helped write carry a `Co-Authored-By: Claude` line, so the history shows which ones.
+
+**RustCrypto.** The cryptographic primitives (AES, ChaCha20, Salsa20, Twofish, Argon2, SHA-2, HMAC) come from the [RustCrypto](https://github.com/RustCrypto) project.
+
 ## License
 
 GPLv3. See [LICENSE](LICENSE).

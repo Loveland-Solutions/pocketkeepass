@@ -39,6 +39,12 @@ fun WelcomeScreen(engineVersion: String, onOpenDatabase: () -> Unit) {
                 textAlign = TextAlign.Center,
             )
             Text(
+                stringResource(R.string.home_credits),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            Text(
                 stringResource(R.string.engine_version, engineVersion),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

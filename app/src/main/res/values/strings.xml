@@ -3,6 +3,7 @@
     <string name="engine_version">Engine %1$s</string>
 
     <!-- Welcome (no database chosen yet) -->
+    <string name="home_credits">An independent app for KeePass databases. Written with Claude.</string>
     <string name="home_tagline">Your KeePass passwords, free and offline.</string>
     <string name="open_database">Open database</string>
     <string name="open_database_hint">Choose a .kdbx file from this phone or from any cloud storage app.</string>
@@ -76,6 +77,10 @@
     <string name="auto_lock_timeout">Lock after this long without use, even in the background:</string>
     <string name="auto_lock_screen_off">Lock when the screen turns off</string>
     <string name="done">Done</string>
+    <string name="about">About</string>
+    <string name="about_keepass">PocketKeePass opens and saves KeePass databases (.kdbx). KeePass and its file format were created by Dominik Reichl (keepass.info). PocketKeePass is an independent app. It isn\'t made or endorsed by the KeePass project and uses none of its code.</string>
+    <string name="about_claude">PocketKeePass is written with Claude, an AI model made by Anthropic.</string>
+    <string name="about_license">Free and open-source software, licensed under the GPLv3.</string>
     <plurals name="seconds">
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>
