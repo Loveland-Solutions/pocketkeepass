@@ -178,6 +178,7 @@
     <string name="about_keepass">PocketKeePass opens and saves KeePass databases (.kdbx). KeePass and its file format were created by Dominik Reichl (keepass.info). PocketKeePass is an independent app. It isn\'t made or endorsed by the KeePass project and uses none of its code.</string>
     <string name="about_claude">PocketKeePass is written with Claude, an AI model made by Anthropic.</string>
     <string name="about_license">Free and open-source software, licensed under the GPLv3.</string>
+    <string name="privacy_policy">Privacy policy</string>
     <plurals name="seconds">
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>

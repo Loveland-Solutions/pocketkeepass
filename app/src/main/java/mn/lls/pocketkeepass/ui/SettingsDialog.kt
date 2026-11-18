@@ -118,10 +118,33 @@ fun SettingsDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                PrivacyPolicyLink()
             }
         },
     )
 }
+
+/**
+ * Opens the privacy policy in the browser. PocketKeePass itself has no internet access, so the
+ * browser fetches the page. If the phone has no browser, the button does nothing.
+ */
+@Composable
+private fun PrivacyPolicyLink() {
+    val context = LocalContext.current
+    TextButton(onClick = {
+        val intent = Intent(Intent.ACTION_VIEW, PRIVACY_POLICY_URL.toUri())
+        try {
+            context.startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            // No browser installed. The address is also on the store listing.
+        }
+    }) {
+        Text(stringResource(R.string.privacy_policy))
+    }
+}
+
+/** Also linked from Google Play. The text is PRIVACY.md in the repository. */
+private const val PRIVACY_POLICY_URL = "https://lls.mn/en/pocketkeepass/privacy/"
 
 /**
  * Whether PocketKeePass is the phone's autofill service. Android owns that choice, so turning it
