@@ -13,7 +13,10 @@ use zeroize::{Zeroize, Zeroizing};
 
 use crate::error::{Error, Result};
 use crate::model::{uuid_from_hex, uuid_to_hex};
-use crate::{CompositeKey, Database, Entry, EntryEdit, FieldValue, Group, SearchHit};
+use crate::{
+    CompositeKey, Database, Entry, EntryEdit, FieldValue, Group, PasswordOptions, SearchHit,
+    Symbols,
+};
 
 /// A database that has been opened with the right key and is held decrypted in memory.
 ///
@@ -629,6 +632,40 @@ fn search_result(hit: &SearchHit<'_>) -> SearchResult {
         entry: entry_item(&hit.entry),
         group_path: hit.path.iter().map(|g| g.name().to_owned()).collect(),
     }
+}
+
+/// Makes a random password. It's ASCII, so the bytes are also its UTF-8. The caller wipes them.
+///
+/// Fails with `Invalid` (a sentence for the user) if no kind of character is chosen or the
+/// length is out of range. It doesn't touch any database, and it's fast enough for the main
+/// thread.
+#[uniffi::export]
+pub fn generate_password(options: PasswordOptions) -> Result<Vec<u8>> {
+    let password = options.generate()?;
+    Ok(password.to_vec())
+}
+
+/// How many bits of randomness a password made with these options has. Fails as
+/// `generate_password` does.
+#[uniffi::export]
+pub fn password_strength_bits(options: PasswordOptions) -> Result<f64> {
+    options.strength_bits()
+}
+
+/// The symbols each choice allows, for the generator to show.
+#[uniffi::export]
+pub fn password_symbols(symbols: Symbols) -> String {
+    match symbols {
+        Symbols::None => String::new(),
+        Symbols::Common => crate::generator::COMMON_SYMBOLS.to_owned(),
+        Symbols::All => crate::generator::ALL_SYMBOLS.to_owned(),
+    }
+}
+
+/// The characters `avoid_lookalikes` leaves out, for the generator to show.
+#[uniffi::export]
+pub fn password_lookalikes() -> String {
+    crate::generator::LOOKALIKES.to_owned()
 }
 
 /// The engine's version, for the app's About screen.

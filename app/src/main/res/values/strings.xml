@@ -174,4 +174,34 @@
         <item quantity="one">%d hour</item>
         <item quantity="other">%d hours</item>
     </plurals>
+
+    <!-- Password generator -->
+    <string name="generate_password">Generate password</string>
+    <string name="generate_again">Generate another</string>
+    <string name="use_password">Use</string>
+    <!-- %1$d is a number of characters -->
+    <string name="password_length">Length: %1$d</string>
+    <string name="chars_lowercase">a–z</string>
+    <string name="chars_uppercase">A–Z</string>
+    <string name="chars_digits">0–9</string>
+    <string name="chars_lowercase_description">Lowercase letters</string>
+    <string name="chars_uppercase_description">Uppercase letters</string>
+    <string name="chars_digits_description">Digits</string>
+    <string name="symbols">Symbols</string>
+    <string name="symbols_none">None</string>
+    <string name="symbols_common">Common</string>
+    <string name="symbols_all">All</string>
+    <!-- %1$s is the list of symbols -->
+    <string name="symbols_common_explained">Only symbols that sites commonly accept: %1$s</string>
+    <string name="symbols_all_explained">Every symbol on the keyboard: %1$s. Some sites reject a few of these; switch to Common if one does.</string>
+    <string name="symbols_none_explained">No symbols. Use this only if a site rejects all of them; make the password longer to make up for it.</string>
+    <!-- %1$s is the list of characters, e.g. "0 O o 1 I l |" -->
+    <string name="avoid_lookalikes">Avoid look-alike characters (%1$s)</string>
+    <string name="every_kind_explained">Every kind you choose appears at least once.</string>
+    <!-- %1$s is a rating such as "Very strong", %2$d a number of bits -->
+    <string name="password_strength">%1$s (%2$d bits)</string>
+    <string name="strength_weak">Weak</string>
+    <string name="strength_fair">Fair</string>
+    <string name="strength_strong">Strong</string>
+    <string name="strength_very_strong">Very strong</string>
 </resources>
