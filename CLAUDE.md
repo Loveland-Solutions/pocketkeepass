@@ -232,6 +232,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - Crypto and parsing code needs tests, including round-trip tests against real sample databases created by KeePassXC and KeePass 2.x. Store them in `core/tests/fixtures/`, with their passwords documented next to them.
 - Never write crypto primitives ourselves; use RustCrypto. Everything else is fair game to write ourselves.
 - Small, focused commits.
+- **Credits stay visible:** the README's Credits section and the app's About section (end of the settings dialog, plus one line on the welcome screen) say that the app is written with Claude, credit KeePass and Dominik Reichl for the format, and say we're independent of the KeePass project. Keep them when changing those screens, and put the same in store listings.
 
 ## Open items
 
