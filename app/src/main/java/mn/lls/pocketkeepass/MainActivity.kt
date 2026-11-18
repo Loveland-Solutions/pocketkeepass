@@ -18,8 +18,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -276,7 +277,9 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
  */
 @Composable
 private fun EditEvents(editor: EditViewModel, viewModel: DatabaseViewModel, snackbar: SnackbarHostState) {
-    val context = LocalContext.current
+    // Read through rememberUpdatedState, so a message after a language or configuration change
+    // comes from the current resources without restarting the collection (and missing events).
+    val resources by rememberUpdatedState(LocalResources.current)
     LaunchedEffect(editor) {
         editor.events.collect { event ->
             val message = when (event) {
@@ -286,12 +289,12 @@ private fun EditEvents(editor: EditViewModel, viewModel: DatabaseViewModel, snac
                 }
                 is EditEvent.Deleted -> {
                     viewModel.leave(event.item)
-                    context.getString(
+                    resources.getString(
                         if (event.deletion == Deletion.MOVED_TO_RECYCLE_BIN) R.string.moved_to_recycle_bin else R.string.deleted,
                     )
                 }
-                is EditEvent.Moved -> context.getString(R.string.moved)
-                is EditEvent.CopySaved -> context.getString(if (event.problem == null) R.string.copy_saved else R.string.copy_failed)
+                is EditEvent.Moved -> resources.getString(R.string.moved)
+                is EditEvent.CopySaved -> resources.getString(if (event.problem == null) R.string.copy_saved else R.string.copy_failed)
                 is EditEvent.Failed -> event.message
             }
             if (message != null) {

@@ -1,9 +1,15 @@
 package mn.lls.pocketkeepass.ui
 
+import android.app.PendingIntent
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.credentials.CredentialManager
+import android.os.Build
 import android.provider.Settings
 import android.view.autofill.AutofillManager
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import mn.lls.pocketkeepass.R
+import mn.lls.pocketkeepass.passkey.PocketPasskeyService
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
 import mn.lls.pocketkeepass.security.AutoLockSettings
 import mn.lls.pocketkeepass.security.Clipboard
@@ -43,7 +50,7 @@ import mn.lls.pocketkeepass.security.QuickUnlockSetting
 
 /**
  * Chooses when the open database locks itself, when the clipboard is cleared, whether
- * biometrics can unlock the database, and whether PocketKeePass fills in other apps' logins. Changes apply straight away. Ends with the credits.
+ * biometrics can unlock the database, and whether PocketKeePass fills in other apps' logins and provides passkeys. Changes apply straight away. Ends with the credits.
  */
 @Composable
 fun SettingsDialog(
@@ -82,6 +89,8 @@ fun SettingsDialog(
                 )
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 AutofillSetting()
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                PasskeySetting()
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 Text(stringResource(R.string.auto_lock), style = MaterialTheme.typography.titleSmall)
                 Text(stringResource(R.string.auto_lock_timeout), style = MaterialTheme.typography.bodyMedium)
@@ -157,6 +166,55 @@ private fun AutofillSetting() {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+/**
+ * Whether PocketKeePass provides passkeys (Android 14+). Like autofill, Android owns that choice:
+ * the switch opens Android's own screen for it, and re-reads the answer when the app comes back.
+ */
+@Composable
+private fun PasskeySetting() {
+    val context = LocalContext.current
+    val supported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+    var on by remember { mutableStateOf(false) }
+    LifecycleResumeEffect(context) {
+        on = supported && passkeysEnabled(context)
+        onPauseOrDispose {}
+    }
+    Text(stringResource(R.string.passkeys), style = MaterialTheme.typography.titleSmall)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .toggleable(on, enabled = supported, role = Role.Switch) {
+                // On or off, it's changed in Android's settings.
+                if (supported) openPasskeySettings(context)
+            }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(stringResource(R.string.passkeys_switch), Modifier.weight(1f))
+        Switch(checked = on, onCheckedChange = null, enabled = supported)
+    }
+    Text(
+        stringResource(if (supported) R.string.passkeys_explained else R.string.passkeys_unsupported),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+private fun openPasskeySettings(context: Context) {
+    try {
+        androidx.credentials.CredentialManager.create(context).createSettingsPendingIntent().send()
+    } catch (_: PendingIntent.CanceledException) {
+        // A phone without that screen. Nothing changes.
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+private fun passkeysEnabled(context: Context): Boolean {
+    val manager = context.getSystemService(CredentialManager::class.java) ?: return false
+    return manager.isEnabledCredentialProviderService(ComponentName(context, PocketPasskeyService::class.java))
 }
 
 /** Radio buttons for a list of durations, in seconds. */

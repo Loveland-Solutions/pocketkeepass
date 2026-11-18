@@ -39,6 +39,16 @@ pub enum Error {
     #[error("That group or entry isn't in the database anymore.")]
     NotFound,
 
+    /// The site already has one of the passkeys in this database for this account (WebAuthn's
+    /// `InvalidStateError`).
+    #[error("A passkey for this account is already in the database.")]
+    PasskeyExists,
+
+    /// A passkey can't be made or used, with a sentence saying why (a key type we can't make or
+    /// use yet).
+    #[error("{0}")]
+    PasskeyUnsupported(String),
+
     /// A change the engine refused, with a sentence saying why (an empty field name, a
     /// character a KeePass file can't hold, a group moved into itself, and so on).
     #[error("{0}")]

@@ -220,4 +220,36 @@
     <string name="strength_fair">Fair</string>
     <string name="strength_strong">Strong</string>
     <string name="strength_very_strong">Very strong</string>
+    <!-- Passkeys -->
+    <string name="passkey">Passkey</string>
+    <string name="passkey_for">For %1$s</string>
+    <string name="passkey_create_description">Save the passkey in this KeePass database</string>
+    <string name="passkey_create_for">Create a passkey for</string>
+    <string name="passkey_create">Create</string>
+    <string name="passkey_account">Account: %1$s</string>
+    <string name="passkey_create_browser">Asked by %1$s, in a browser PocketKeePass has verified.</string>
+    <string name="passkey_create_app">Asked by the app %1$s. PocketKeePass can\'t check whether it belongs to %2$s, so only continue if you trust it. It will be allowed to use this passkey from now on.</string>
+    <string name="passkey_save_in">Save it in</string>
+    <string name="passkey_new_entry">A new entry</string>
+    <string name="passkey_in_group">In %1$s</string>
+    <string name="passkey_change_group">Change group</string>
+    <string name="passkey_choose_group">Put the new entry in</string>
+    <string name="passkey_link_label">Allow an app to use a passkey</string>
+    <string name="passkey_link_explained">%1$s wants to sign in to %2$s with the passkey in “%3$s”.
+
+PocketKeePass can\'t check whether this app belongs to %2$s. Only allow it if you trust it: it will be able to use this passkey from now on.</string>
+    <string name="passkey_allow">Allow</string>
+    <string name="passkey_verify_title">Use your passkey</string>
+    <string name="passkey_needs_screen_lock">Passkeys need a screen lock, so PocketKeePass can check it\'s you before each use. Set one in Android\'s settings first.</string>
+    <string name="passkey_saving">Saving the passkey…</string>
+    <string name="passkey_not_saved">The passkey couldn\'t be saved. %1$s</string>
+    <string name="passkey_save_conflict">Another app or device changed the database file since PocketKeePass opened it. Open PocketKeePass to sort that out, then try again.</string>
+    <string name="passkey_gone">That passkey isn\'t in the database anymore.</string>
+    <string name="passkey_other_signer">%1$s isn\'t the app this passkey belongs to: an app with that name is linked to it, but signed by someone else. PocketKeePass won\'t let it sign in.</string>
+    <string name="passkey_unknown_caller">PocketKeePass couldn\'t tell which app is asking.</string>
+    <string name="passkey_bad_request">The sign-in request couldn\'t be read.</string>
+    <string name="passkeys">Passkeys</string>
+    <string name="passkeys_switch">Sign in with passkeys kept in PocketKeePass</string>
+    <string name="passkeys_explained">Android\'s settings decide which apps provide passkeys. Turn PocketKeePass on under Passwords, passkeys &amp; accounts. Passkeys are kept in the database like KeePassXC and KeePassDX keep them, so they work there too.</string>
+    <string name="passkeys_unsupported">Passkeys from other apps need Android 14 or later.</string>
 </resources>

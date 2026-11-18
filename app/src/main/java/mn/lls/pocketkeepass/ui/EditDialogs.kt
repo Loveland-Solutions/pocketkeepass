@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import mn.lls.pocketkeepass.R
+import mn.lls.pocketkeepass.core.GroupChoice
 import mn.lls.pocketkeepass.SaveProblem
 import mn.lls.pocketkeepass.SaveState
 import mn.lls.pocketkeepass.edit.GroupForm
@@ -120,13 +121,28 @@ fun MoveDialog(choice: MoveChoice, databaseName: String, onPick: (groupId: Strin
     val name = choice.item.name.ifEmpty {
         stringResource(if (choice.item is Item.Entry) R.string.untitled_entry else R.string.untitled_group)
     }
+    GroupPickerDialog(stringResource(R.string.move_to, name), choice.groups, databaseName, onPick, onDismiss)
+}
+
+/**
+ * Picks a group from [groups], shown as a tree (they must be in tree order, as `all_groups`
+ * lists them). The root group is shown with the database's name.
+ */
+@Composable
+fun GroupPickerDialog(
+    title: String,
+    groups: List<GroupChoice>,
+    databaseName: String,
+    onPick: (groupId: String) -> Unit,
+    onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.move_to, name), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        title = { Text(title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         text = {
             AccessibleToToolsOnly()
             LazyColumn(Modifier.heightIn(max = 400.dp)) {
-                items(choice.groups, key = { it.id }) { group ->
+                items(groups, key = { it.id }) { group ->
                     Row(
                         Modifier
                             .fillMaxWidth()
@@ -140,11 +156,7 @@ fun MoveDialog(choice: MoveChoice, databaseName: String, onPick: (groupId: Strin
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
-                        Text(
-                            if (group.depth == 0u) databaseName else group.name.ifEmpty { stringResource(R.string.untitled_group) },
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Text(groupName(group, databaseName), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -153,6 +165,11 @@ fun MoveDialog(choice: MoveChoice, databaseName: String, onPick: (groupId: Strin
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
+
+/** A group's name as pickers show it: the database's name for the root group. */
+@Composable
+fun groupName(group: GroupChoice, databaseName: String): String =
+    if (group.depth == 0u) databaseName else group.name.ifEmpty { stringResource(R.string.untitled_group) }
 
 /** Asks to convert a KDBX 3 database to KDBX 4, which is the only format PocketKeePass saves. */
 @Composable

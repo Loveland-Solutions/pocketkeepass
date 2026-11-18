@@ -199,6 +199,30 @@ impl Database {
         Ok(true)
     }
 
+    /// A copy of an entry as it is now, history included, for [`restore_entry`](Self::restore_entry).
+    pub(crate) fn entry_snapshot(&self, uuid: &[u8; 16]) -> Option<Element> {
+        let path = self.locate(uuid, Kind::Entry)?;
+        Some(at(&self.inner.xml, &path).clone())
+    }
+
+    /// Puts an entry back exactly as a snapshot had it. With no snapshot, removes the entry
+    /// outright, without a `DeletedObjects` record: this takes back an entry that was never
+    /// saved, not a deletion other apps need to hear about.
+    pub(crate) fn restore_entry(
+        &mut self,
+        uuid: &[u8; 16],
+        snapshot: Option<Element>,
+    ) -> Result<()> {
+        let path = self.locate(uuid, Kind::Entry).ok_or(Error::NotFound)?;
+        match snapshot {
+            Some(entry) => *at_mut(&mut self.inner.xml, &path) = entry,
+            None => {
+                remove_at(&mut self.inner.xml, &path);
+            }
+        }
+        Ok(())
+    }
+
     /// Adds a group inside `parent` and returns its new UUID.
     pub fn create_group(&mut self, parent: &[u8; 16], name: &str, notes: &str) -> Result<[u8; 16]> {
         let parent_path = self.locate(parent, Kind::Group).ok_or(Error::NotFound)?;

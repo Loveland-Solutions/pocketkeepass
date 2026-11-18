@@ -148,7 +148,9 @@ fun EntryScreen(
         // Fields holding TOTP settings are left out when the code can be shown instead. Unusable
         // ones stay, so the user can see what's there.
         val totpFields = (totp as? TotpStatus.Ready)?.fields.orEmpty()
-        val fields = entry.fields.filter { !it.isEmpty && it.key !in totpFields }
+        // A passkey's fields (its key, IDs, app certificates) are shown as one row instead.
+        val passkeyFields = entry.passkey?.fields.orEmpty()
+        val fields = entry.fields.filter { !it.isEmpty && it.key !in totpFields && it.key !in passkeyFields }
         // The code goes right after the password, or first if there's none.
         val totpAfter = fields.indexOfFirst { it.key == "Password" }
         val totpLabel = stringResource(R.string.totp)
@@ -178,7 +180,7 @@ fun EntryScreen(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            if (fields.isEmpty() && entry.tags.isEmpty() && totp is TotpStatus.None) {
+            if (fields.isEmpty() && entry.tags.isEmpty() && totp is TotpStatus.None && entry.passkey == null) {
                 Box(Modifier.padding(32.dp)) {
                     Text(
                         stringResource(R.string.entry_empty),
@@ -202,6 +204,21 @@ fun EntryScreen(
                     onCopy = { copy(field, label) },
                 )
                 if (index == totpAfter) totpRow()
+            }
+            entry.passkey?.let { passkey ->
+                ListItem(
+                    overlineContent = { Text(stringResource(R.string.passkey)) },
+                    headlineContent = { Text(stringResource(R.string.passkey_for, passkey.rpId)) },
+                    supportingContent = {
+                        // The engine's own sentence when it can't be used, e.g. another key type.
+                        val reason = passkey.unusableReason
+                        if (reason != null) {
+                            Text(reason, color = MaterialTheme.colorScheme.error)
+                        } else if (passkey.username.isNotEmpty()) {
+                            Text(passkey.username)
+                        }
+                    },
+                )
             }
             if (entry.tags.isNotEmpty()) {
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -390,6 +407,7 @@ private fun EntryScreenPreview() {
                 ),
                 tags = listOf("personal"),
                 totp = TotpStatus.Ready(periodSeconds = 30u, length = 6u, fields = listOf("otp")),
+                passkey = null,
             ),
             databaseName = "Passwords",
             clipboardTimeoutSeconds = 30,

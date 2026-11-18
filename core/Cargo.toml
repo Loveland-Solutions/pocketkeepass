@@ -31,8 +31,17 @@ chacha20 = "0.10"
 flate2 = "1"
 getrandom = "0.4"
 hmac = "0.13"
+# Ed25519 passkeys made by KeePassXC and KeePassDX. From dalek-cryptography, not RustCrypto: RustCrypto
+# has no Ed25519 signer of its own and points to this one (the owner agreed to it, 2026-11-18).
+ed25519-dalek = { version = "3", features = ["pkcs8", "pem", "zeroize"] }
+# P-256 ECDSA keys and signatures for passkeys (ES256), with PKCS#8 PEM for the KeePassXC format.
+p256 = "0.14"
 quick-xml = "0.42"
+# RSA passkeys (RS256) made by KeePassXC. 0.10 fixes the Marvin timing advisory (RUSTSEC-2023-0071).
+rsa = { version = "0.10", features = ["pkcs1v15"] }
 salsa20 = "0.11"
+# Passkey requests and responses are WebAuthn JSON from other apps, so the parser has to be robust.
+serde_json = "1"
 # SHA-1 only for TOTP codes, where RFC 6238 and nearly every service still use it.
 sha1 = { version = "0.11", default-features = false }
 sha2 = "0.11"

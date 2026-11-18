@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.credentials)
     implementation(libs.jna) { artifact { type = "aar" } }
 
     implementation(platform(libs.compose.bom))

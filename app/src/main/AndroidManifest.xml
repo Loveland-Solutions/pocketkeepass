@@ -20,6 +20,11 @@
         </intent>
     </queries>
 
+    <!--
+        CredentialDependency (lint) is ignored on purpose: credentials-play-services-auth is for
+        apps that use Google Password Manager. A passkey provider doesn't need it, and F-Droid
+        doesn't allow Google Play Services.
+    -->
     <application
         android:name=".PocketKeePassApp"
         android:allowBackup="false"
@@ -30,6 +35,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.PocketKeePass"
+        tools:ignore="CredentialDependency"
         tools:targetApi="36">
 
         <activity
@@ -64,6 +70,35 @@
         <!-- Opened by a tap on an autofill suggestion, on top of the app being filled in. -->
         <activity
             android:name=".autofill.AutofillActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PocketKeePass.Autofill"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!--
+            The passkey provider (Android 14+, off below that). Only Android itself can connect to
+            it (BIND_CREDENTIAL_PROVIDER_SERVICE), once the user turns PocketKeePass on under
+            Passwords, passkeys & accounts.
+        -->
+        <service
+            android:name=".passkey.PocketPasskeyService"
+            android:enabled="@bool/passkeys_supported"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_CREDENTIAL_PROVIDER_SERVICE"
+            tools:targetApi="34">
+            <intent-filter>
+                <action android:name="android.service.credentials.CredentialProviderService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.credentials.provider"
+                android:resource="@xml/credential_provider" />
+        </service>
+
+        <!-- Opened by Android's passkey sheet, on top of the site or app asking for a passkey. -->
+        <activity
+            android:name=".passkey.PasskeyActivity"
+            android:enabled="@bool/passkeys_supported"
             android:exported="false"
             android:theme="@style/Theme.PocketKeePass.Autofill"
             android:windowSoftInputMode="adjustResize" />

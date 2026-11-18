@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.pm.PackageInfoCompat
 import mn.lls.pocketkeepass.R
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * The browsers PocketKeePass believes when they say which website a login form belongs to.
@@ -20,6 +22,13 @@ class TrustedBrowsers(private val context: Context) {
     private val browsers: Map<String, List<ByteArray>> by lazy {
         context.resources.openRawResource(R.raw.trusted_browsers).bufferedReader().useLines(::parseTrustedBrowsers)
     }
+
+    /**
+     * The browser's entry in the "privileged apps" form Credential Manager's
+     * `CallingAppInfo.getOrigin` wants, or null if it isn't on the list. Passkeys use the same
+     * list as autofill, so there's one list to keep up to date.
+     */
+    fun privilegedAllowlist(packageName: String): String? = browsers[packageName]?.let { privilegedAllowlist(packageName, it) }
 
     fun isTrusted(packageName: String): Boolean {
         val certificates = browsers[packageName] ?: return false
@@ -53,4 +62,19 @@ fun parseTrustedBrowsers(lines: Sequence<String>): Map<String, List<ByteArray>> 
         if (certificates.any { it == null }) continue
         put(words[0], certificates.filterNotNull())
     }
+}
+
+/**
+ * One browser in the JSON form of Google's privileged apps list
+ * (`gstatic.com/gpm-passkeys-privileged-apps/apps.json`), which `CallingAppInfo.getOrigin` reads.
+ */
+fun privilegedAllowlist(packageName: String, certificates: List<ByteArray>): String {
+    val signatures = JSONArray()
+    for (certificate in certificates) {
+        val fingerprint = certificate.joinToString(":") { "%02X".format(it) }
+        signatures.put(JSONObject().put("build", "release").put("cert_fingerprint_sha256", fingerprint))
+    }
+    val info = JSONObject().put("package_name", packageName).put("signatures", signatures)
+    val app = JSONObject().put("type", "android").put("info", info)
+    return JSONObject().put("apps", JSONArray().put(app)).toString()
 }
