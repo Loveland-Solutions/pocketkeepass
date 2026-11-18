@@ -7,12 +7,20 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.biometric.AuthenticationResult
+import androidx.biometric.AuthenticationResultCallback
+import androidx.biometric.registerForAuthenticationResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import mn.lls.passthekey.core.engineVersion
 import mn.lls.passthekey.security.AccessibleToToolsOnly
 import mn.lls.passthekey.ui.BrowseScreen
@@ -22,11 +30,26 @@ import mn.lls.passthekey.ui.WelcomeScreen
 import mn.lls.passthekey.ui.theme.PassTheKeyTheme
 
 class MainActivity : ComponentActivity() {
+    private val viewModel: DatabaseViewModel by viewModels()
+
+    // Registered before the activity starts, like any activity result. The result carries the
+    // cipher the user unlocked, so it still works if the activity was recreated meanwhile.
+    private val biometricPrompt = registerForAuthenticationResult(
+        object : AuthenticationResultCallback {
+            override fun onAuthResult(result: AuthenticationResult) = viewModel.onBiometricResult(result)
+        },
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // No screenshots, screen recording, or previews in the recent-apps list.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.biometricPrompts.collect(biometricPrompt::launch)
+            }
+        }
         setContent {
             AccessibleToToolsOnly()
             PassTheKeyTheme { App() }
@@ -44,6 +67,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         autoLock.onAppVisible()
+        viewModel.refreshQuickUnlock() // biometrics may have been set up or removed meanwhile
     }
 
     override fun onStop() {
@@ -82,6 +106,8 @@ private fun App(viewModel: DatabaseViewModel = viewModel()) {
             onChangeDatabase = { pickDatabase.launch(ANY_FILE) },
             onAddKeyFile = { pickKeyFile.launch(ANY_FILE) },
             onRemoveKeyFile = viewModel::removeKeyFile,
+            onQuickUnlock = viewModel::quickUnlock,
+            onOfferQuickUnlock = viewModel::offerQuickUnlock,
         )
         is DatabaseState.Unlocked -> {
             val databaseName = current.summary.name.ifEmpty { current.database.name.substringBeforeLast('.') }
@@ -111,6 +137,8 @@ private fun App(viewModel: DatabaseViewModel = viewModel()) {
                         onChangeAutoLock = viewModel::setAutoLock,
                         clipboardTimeoutSeconds = clipboardTimeout,
                         onChangeClipboardTimeout = viewModel::setClipboardTimeout,
+                        onChangeQuickUnlock = viewModel::setQuickUnlock,
+                        onOpenSettings = viewModel::refreshQuickUnlock,
                     )
                 }
             }

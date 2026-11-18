@@ -18,6 +18,11 @@
     <string name="unlock">Unlock</string>
     <string name="unlocking">Unlocking… This can take a few seconds.</string>
     <string name="cant_read_database">Pass The Key can\'t open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.</string>
+    <string name="unlock_with_biometrics">Unlock with biometrics</string>
+    <string name="biometric_unlock_title">Unlock database</string>
+    <string name="use_master_password">Use master password</string>
+    <string name="biometric_invalidated">Biometric unlock was turned off because the fingerprints, face, or screen lock on this device changed. Unlock with your master password, then turn it back on in settings.</string>
+    <string name="biometric_outdated">Biometric unlock was turned off because this database\'s master password or key file changed. Unlock with the new one, then turn it back on in settings.</string>
     <string name="cant_read_key_file">Pass The Key can\'t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.</string>
 
     <!-- Browse and search -->
@@ -59,6 +64,12 @@
 
     <!-- Settings -->
     <string name="settings">Settings</string>
+    <string name="biometric_unlock">Biometric unlock</string>
+    <string name="biometric_unlock_switch">Unlock this database with a fingerprint or face</string>
+    <string name="biometric_unlock_explained">Anyone whose fingerprint or face is set up on this phone can then open it. Adding or removing one turns this off, and your master password is always needed to turn it back on.</string>
+    <string name="biometric_unlock_unavailable">Set up a fingerprint (or a face unlock that Android rates as strong) in your phone\'s settings to use this.</string>
+    <string name="biometric_enable_title">Turn on biometric unlock</string>
+    <string name="cancel">Cancel</string>
     <string name="clipboard">Clipboard</string>
     <string name="clipboard_timeout">Clear copied fields after:</string>
     <string name="auto_lock">Auto-lock</string>

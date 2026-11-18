@@ -19,6 +19,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -56,8 +57,14 @@ fun UnlockScreen(
     onChangeDatabase: () -> Unit,
     onAddKeyFile: () -> Unit,
     onRemoveKeyFile: () -> Unit,
+    onQuickUnlock: () -> Unit,
+    onOfferQuickUnlock: () -> Unit,
 ) {
     val enabled = !state.unlocking
+    // Ask for biometrics straight away, once per lock; the ViewModel keeps track of "once".
+    LaunchedEffect(state.database, state.quickUnlock) {
+        if (state.quickUnlock) onOfferQuickUnlock()
+    }
     var showPassword by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
     // The field is disabled while unlocking, which takes its focus away. Give it back afterwards,
@@ -143,6 +150,11 @@ fun UnlockScreen(
                     Text(stringResource(R.string.unlock))
                 }
             }
+            if (state.quickUnlock) {
+                OutlinedButton(onClick = onQuickUnlock, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.unlock_with_biometrics))
+                }
+            }
             if (state.unlocking) {
                 Text(
                     stringResource(R.string.unlocking),
@@ -158,6 +170,9 @@ fun UnlockScreen(
 private fun UnlockError.message(): String = when (this) {
     is UnlockError.Engine -> message
     is UnlockError.CantRead -> stringResource(if (keyFile) R.string.cant_read_key_file else R.string.cant_read_database)
+    is UnlockError.Biometric -> message
+    UnlockError.QuickUnlockInvalidated -> stringResource(R.string.biometric_invalidated)
+    UnlockError.QuickUnlockOutdated -> stringResource(R.string.biometric_outdated)
 }
 
 @Preview(showBackground = true)
@@ -175,6 +190,8 @@ private fun UnlockScreenPreview() {
             onChangeDatabase = {},
             onAddKeyFile = {},
             onRemoveKeyFile = {},
+            onQuickUnlock = {},
+            onOfferQuickUnlock = {},
         )
     }
 }

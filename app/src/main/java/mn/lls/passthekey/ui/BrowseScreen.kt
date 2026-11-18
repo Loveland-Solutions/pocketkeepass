@@ -84,6 +84,8 @@ fun BrowseScreen(
     onChangeAutoLock: (AutoLockSettings) -> Unit,
     clipboardTimeoutSeconds: Int,
     onChangeClipboardTimeout: (Int) -> Unit,
+    onChangeQuickUnlock: (Boolean) -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val listing = state.listing
     var showSettings by remember { mutableStateOf(false) }
@@ -93,6 +95,8 @@ fun BrowseScreen(
             onChangeAutoLock,
             clipboardTimeoutSeconds,
             onChangeClipboardTimeout,
+            quickUnlock = state.quickUnlock,
+            onChangeQuickUnlock = onChangeQuickUnlock,
             onDismiss = { showSettings = false },
         )
     }
@@ -120,7 +124,10 @@ fun BrowseScreen(
                         IconButton(onClick = onOpenSearch) {
                             Icon(painterResource(R.drawable.ic_search), stringResource(R.string.search))
                         }
-                        IconButton(onClick = { showSettings = true }) {
+                        IconButton(onClick = {
+                            onOpenSettings()
+                            showSettings = true
+                        }) {
                             Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings))
                         }
                         IconButton(onClick = onLock) {
@@ -348,6 +355,8 @@ private fun BrowseScreenPreview() {
             onChangeAutoLock = {},
             clipboardTimeoutSeconds = 30,
             onChangeClipboardTimeout = {},
+            onChangeQuickUnlock = {},
+            onOpenSettings = {},
         )
     }
 }
