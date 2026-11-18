@@ -140,6 +140,17 @@ class BridgeTest {
     }
 
     @Test
+    fun `the key hash crosses as bytes and opens the database again`() {
+        val file = fixture("kdbx41-keepassxc.kdbx")
+        val hash = UnlockedDatabase.open(file, password, null).use { it.keyHash() }
+        assertEquals(32, hash.size)
+        UnlockedDatabase.openWithKeyHash(file, hash).use { db ->
+            assertEquals(3u, db.summary().entryCount)
+        }
+        assertThrows(KeePassException.WrongKey::class.java) { UnlockedDatabase.openWithKeyHash(file, ByteArray(32)) }
+    }
+
+    @Test
     fun `a locked database refuses everything`() {
         val db = UnlockedDatabase.open(fixture("pw-only.kdbx"), password, null)
         assertFalse(db.isLocked())
