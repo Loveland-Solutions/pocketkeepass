@@ -69,4 +69,23 @@ Hand-written XML gives every group and entry a fixed UUID (all 16 bytes the same
 | Banking (`07`) | "Crédit Union" (`08`): tags `money;bank`, and a **protected username** | Protected fields stay out of lists and search |
 | Archive (`09`), `EnableSearching` false | "Archived Email" (`0a`) | Unsearchable groups |
 
+## Autofill
+
+`autofill.kdbx` unlocks with password `test-password`. Like `browse.kdbx`, it's KDBX 3.1, **written by KeePassXC** from the hand-written `autofill.source.xml`, with the same two commands (`-t 100` is the lowest key derivation time KeePassXC accepts). Its UUIDs are fixed the same way: `01` to `04` for groups, `11` to `1d` for entries.
+
+| Group | Entries | What it tests |
+|---|---|---|
+| Root (`01`) | "Example" (`11`): `https://example.com/account`, a **protected username**, and a history item for `old.example.com` | Paths are ignored, history is never matched, suggestions never carry a protected username |
+| | "Shop" (`12`): `http://www.shop.example.org:8443/cart` | `www.` and ports are ignored. Saved as `http`, so it's offered on plain-http pages too |
+| | "No Scheme" (`13`): `plain.example.net/path` | URLs without a scheme |
+| | "App Link" (`14`): `androidapp://com.example.app` | Apps linked by package name (Keepass2Android's convention) |
+| | "Site And App" (`15`): `https://both.example.com`, plus `KP2A_URL` (`androidapp://com.example.both`) and `KP2A_URL_1` (`https://other.example.com`) | Extra URLs in custom fields |
+| | "KeePassDX Style" (`16`): custom fields `AndroidApp` and `AndroidApp_1` | Apps linked the way KeePassDX does it |
+| | "Protected URL" (`17`): a **protected** `https://secret.example.com` | Protected URLs match nothing |
+| | "Command" (`18`): `cmd://ssh example.com` | Other schemes aren't websites |
+| | "No URL" (`19`) | |
+| Sites (`02`) | "Example Login" (`1a`): `https://login.example.com`, "Example Admin" (`1b`): `https://admin.example.com` | Exact matches come before parent domains. Subdomain entries aren't offered on the parent site |
+| Hidden (`03`), `EnableSearching` false | "Hidden Example" (`1c`): `https://example.com` | Groups hidden from search are hidden from autofill |
+| Recycle Bin (`04`) | "Deleted Example" (`1d`): `https://example.com` | Never offered |
+
 **Not yet covered:** files written by the original KeePass 2.x (Windows/.NET).

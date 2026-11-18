@@ -13,7 +13,7 @@ use zeroize::Zeroizing;
 
 use crate::error::{Error, Result};
 use crate::model::{uuid_from_hex, uuid_to_hex};
-use crate::{CompositeKey, Database, Entry, Group};
+use crate::{CompositeKey, Database, Entry, Group, SearchHit};
 
 /// A database that has been opened with the right key and is held decrypted in memory.
 ///
@@ -85,6 +85,22 @@ pub struct SearchResult {
     pub entry: EntryItem,
     /// Group names from below the root down to the entry's group. Empty for root entries.
     pub group_path: Vec<String>,
+}
+
+/// What is asking autofill for a username and password.
+#[derive(uniffi::Enum)]
+pub enum FillTarget {
+    /// An Android app, by package name.
+    App { package: String },
+    /// A web page. Only build this from what a browser the app has verified reports: any other
+    /// app could claim to be showing any site.
+    Web {
+        /// The page's host name, e.g. "login.example.com".
+        domain: String,
+        /// The page was loaded over plain `http`. Entries saved with an `https` URL aren't
+        /// offered then.
+        plain_http: bool,
+    },
 }
 
 /// Everything the entry screen shows, except protected values: those cross the bridge only when
@@ -213,14 +229,26 @@ impl UnlockedDatabase {
     /// Searches every entry's title, username, URL, notes, and tags. See the engine's
     /// `Database::search` for exactly what's searched and what isn't (passwords never are).
     pub fn search(&self, query: String) -> Result<Vec<SearchResult>> {
+        self.with(|db| Ok(db.search(&query).iter().map(search_result).collect()))
+    }
+
+    /// The entries linked to the app or web page asking for autofill, best matches first. See
+    /// the engine's `Database::autofill_matches` for the rules. Like every list, the results
+    /// carry no protected values: fetch the chosen entry's username and password with
+    /// `reveal_field`.
+    pub fn autofill_matches(&self, target: FillTarget) -> Result<Vec<SearchResult>> {
         self.with(|db| {
+            let target = match &target {
+                FillTarget::App { package } => crate::FillTarget::App { package },
+                FillTarget::Web { domain, plain_http } => crate::FillTarget::Web {
+                    domain,
+                    plain_http: *plain_http,
+                },
+            };
             Ok(db
-                .search(&query)
+                .autofill_matches(target)
                 .iter()
-                .map(|hit| SearchResult {
-                    entry: entry_item(&hit.entry),
-                    group_path: hit.path.iter().map(|g| g.name().to_owned()).collect(),
-                })
+                .map(search_result)
                 .collect())
         })
     }
@@ -359,6 +387,13 @@ fn entry_item(entry: &Entry<'_>) -> EntryItem {
         title: entry.unprotected_field("Title").to_owned(),
         username: entry.unprotected_field("UserName").to_owned(),
         url: entry.unprotected_field("URL").to_owned(),
+    }
+}
+
+fn search_result(hit: &SearchHit<'_>) -> SearchResult {
+    SearchResult {
+        entry: entry_item(&hit.entry),
+        group_path: hit.path.iter().map(|g| g.name().to_owned()).collect(),
     }
 }
 
@@ -504,6 +539,33 @@ mod tests {
         assert!(db.search("hunter2".to_owned()).unwrap().is_empty());
     }
 
+    #[test]
+    fn autofill_matches_cross_the_bridge_without_protected_values() {
+        let db = open("autofill.kdbx");
+        let web = FillTarget::Web {
+            domain: "login.example.com".to_owned(),
+            plain_http: false,
+        };
+        let results = db.autofill_matches(web).unwrap();
+        let titles: Vec<_> = results.iter().map(|r| r.entry.title.as_str()).collect();
+        assert_eq!(titles, ["Example Login", "Example"]);
+        assert_eq!(results[0].group_path, ["Sites"]);
+        // "Example"'s username is protected, so the suggestion can't show it.
+        assert_eq!(results[1].entry.username, "");
+        assert_eq!(
+            db.reveal_field(results[1].entry.id.clone(), "UserName".to_owned())
+                .unwrap(),
+            b"jo-protected"
+        );
+
+        let app = FillTarget::App {
+            package: "com.example.app".to_owned(),
+        };
+        let results = db.autofill_matches(app).unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].entry.title, "App Link");
+    }
+
     fn field<'a>(details: &'a EntryDetails, key: &str) -> &'a EntryField {
         details.fields.iter().find(|f| f.key == key).unwrap()
     }
@@ -580,6 +642,10 @@ mod tests {
         assert!(matches!(db.upgrade_to_kdbx4(), Err(Error::Locked)));
         assert!(matches!(db.list_group(None), Err(Error::Locked)));
         assert!(matches!(db.search("x".to_owned()), Err(Error::Locked)));
+        let app = |package: &str| FillTarget::App {
+            package: package.to_owned(),
+        };
+        assert!(matches!(db.autofill_matches(app("x")), Err(Error::Locked)));
         assert!(matches!(db.entry("02".repeat(16)), Err(Error::Locked)));
         assert!(matches!(
             db.reveal_field("02".repeat(16), "Password".to_owned()),
