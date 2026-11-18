@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.SaveProblem
 import mn.lls.pocketkeepass.core.EntryItem
+import mn.lls.pocketkeepass.core.GroupChoice
 import mn.lls.pocketkeepass.core.PasskeyCreation
 import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
@@ -51,19 +52,25 @@ import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
  * Asking before a passkey is made: for which site and account, who is asking, and which entry
  * it goes into. The site is always at the top, since that's what the user has to check.
  *
- * [onCreate] gets the chosen entry's id, or null for a new entry.
+ * [onCreate] gets the chosen entry's id, or null for a new entry in the chosen group.
  */
 @Composable
 fun PasskeyCreateScreen(
     creation: PasskeyCreation,
+    /** Where a new entry can go, in tree order. */
+    groups: List<GroupChoice>,
+    initialGroup: String,
+    databaseName: String,
     /** The website, or the app's name and package. */
     caller: String,
     callerIsApp: Boolean,
     needsUpgrade: Boolean,
-    onCreate: (entryId: String?) -> Unit,
+    onCreate: (entryId: String?, groupId: String) -> Unit,
     onCancel: () -> Unit,
 ) {
     var chosen by rememberSaveable { mutableStateOf<String?>(null) }
+    var group by rememberSaveable { mutableStateOf(initialGroup) }
+    var pickingGroup by rememberSaveable { mutableStateOf(false) }
     val site = creation.rpName.ifEmpty { creation.rpId }
     PasskeyFrame(
         label = stringResource(R.string.passkey_create_for),
@@ -72,9 +79,21 @@ fun PasskeyCreateScreen(
         onCancel = onCancel,
         buttons = {
             TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
-            Button(onClick = { onCreate(chosen) }) { Text(stringResource(R.string.passkey_create)) }
+            Button(onClick = { onCreate(chosen, group) }) { Text(stringResource(R.string.passkey_create)) }
         },
     ) { padding ->
+        if (pickingGroup) {
+            GroupPickerDialog(
+                title = stringResource(R.string.passkey_choose_group),
+                groups = groups,
+                databaseName = databaseName,
+                onPick = {
+                    group = it
+                    pickingGroup = false
+                },
+                onDismiss = { pickingGroup = false },
+            )
+        }
         LazyColumn(Modifier.fillMaxSize().padding(padding).selectableGroup(), contentPadding = PaddingValues(bottom = 16.dp)) {
             item(key = "about") {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -93,7 +112,24 @@ fun PasskeyCreateScreen(
             }
             item(key = "new") {
                 Choice(selected = chosen == null, onSelect = { chosen = null }) {
-                    Text(stringResource(R.string.passkey_new_entry))
+                    Column {
+                        Text(stringResource(R.string.passkey_new_entry))
+                        val current = groups.firstOrNull { it.id == group }
+                        if (current != null) {
+                            Text(
+                                stringResource(R.string.passkey_in_group, groupName(current, databaseName)),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+                if (chosen == null && groups.size > 1) {
+                    TextButton(onClick = { pickingGroup = true }, modifier = Modifier.padding(start = 56.dp)) {
+                        Text(stringResource(R.string.passkey_change_group))
+                    }
                 }
             }
             items(creation.candidates, key = { it.entry.id }) { result ->
@@ -260,10 +296,13 @@ private fun PasskeyCreateScreenPreview() {
                 userDisplayName = "Me",
                 candidates = listOf(SearchResult(EntryItem("01", "Example", "me@example.com", "https://example.com"), listOf("Sites"))),
             ),
+            groups = listOf(GroupChoice("01", "Root", 0u, false, false), GroupChoice("02", "Sites", 1u, false, false)),
+            initialGroup = "02",
+            databaseName = "Passwords",
             caller = "example.com",
             callerIsApp = false,
             needsUpgrade = false,
-            onCreate = {},
+            onCreate = { _, _ -> },
             onCancel = {},
         )
     }

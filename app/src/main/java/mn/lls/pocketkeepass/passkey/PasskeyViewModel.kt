@@ -31,6 +31,7 @@ import mn.lls.pocketkeepass.SaveProblem
 import mn.lls.pocketkeepass.SaveState
 import mn.lls.pocketkeepass.autofill.TrustedBrowsers
 import mn.lls.pocketkeepass.core.AppTrust
+import mn.lls.pocketkeepass.core.GroupChoice
 import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.PasskeyCreation
 import mn.lls.pocketkeepass.core.PasskeyTarget
@@ -55,6 +56,10 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
         /** Asking whether to create the passkey, and where. */
         data class Create(
             val creation: PasskeyCreation,
+            /** Every group a new entry can go in (not the recycle bin), in tree order. */
+            val groups: List<GroupChoice>,
+            /** The group offered first: the one used last, or the root group. */
+            val group: String,
             /** The website, or the app's name and package. */
             val caller: String,
             val callerIsApp: Boolean,
@@ -91,9 +96,17 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
 
     enum class ErrorKind { InvalidState, NotSupported, NotAllowed, Unknown }
 
+    /** Where the user chose to put a new passkey. */
+    sealed interface Placement {
+        data class NewEntry(val groupId: String) : Placement
+
+        data class InEntry(val entryId: String) : Placement
+    }
+
     private val pocket = app as PocketKeePassApp
     private val session = pocket.session
     private val browsers = TrustedBrowsers(app)
+    private val preferences = PasskeyPreferences(app)
 
     private val _step = MutableStateFlow<Step>(Step.Working)
     val step: StateFlow<Step> = _step.asStateFlow()
@@ -201,9 +214,16 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
             return fail(ErrorKind.Unknown, e.message.orEmpty())
         }
         val needsUpgrade = engine { it.summary().needsUpgrade }
-        val root = session.open.value?.root?.group?.id ?: throw Locked()
-        val chosen = ask<String?>(Step.Create(creation, caller.description, caller is Caller.App, needsUpgrade))
-        val target = if (chosen == null) PasskeyTarget.NewEntry(root) else PasskeyTarget.Entry(chosen)
+        val groups = engine { it.allGroups() }.filter { !it.isRecycleBin && !it.isInRecycleBin }
+        val group = groups.firstOrNull { it.id == preferences.lastGroup } ?: groups.first()
+        val step = Step.Create(creation, groups, group.id, caller.description, caller is Caller.App, needsUpgrade)
+        val target = when (val chosen = ask<Placement>(step)) {
+            is Placement.NewEntry -> {
+                preferences.lastGroup = chosen.groupId
+                PasskeyTarget.NewEntry(chosen.groupId)
+            }
+            is Placement.InEntry -> PasskeyTarget.Entry(chosen.entryId)
+        }
         if (!verify()) return Outcome.Cancelled
 
         // From here on nothing is cancelled halfway: the passkey is made, saved, or taken back.
@@ -252,7 +272,7 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
         return result as T
     }
 
-    /** The screen's answer: true/false for yes/no, or the chosen entry id (null for a new entry). */
+    /** The screen's answer: true/false for yes/no, or a [Placement] for a new passkey. */
     fun answer(value: Any?) {
         answer?.complete(value)
         answer = null

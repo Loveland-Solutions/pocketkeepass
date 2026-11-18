@@ -120,7 +120,7 @@ class PasskeyActivity : ComponentActivity() {
                     is DatabaseState.Unlocked -> {
                         LaunchedEffect(Unit) { passkeys.start(request) }
                         val step by passkeys.step.collectAsStateWithLifecycle()
-                        Steps(step)
+                        Steps(step, databaseName = current.database.name)
                     }
                 }
             }
@@ -128,15 +128,22 @@ class PasskeyActivity : ComponentActivity() {
     }
 
     @androidx.compose.runtime.Composable
-    private fun Steps(step: Step) {
+    private fun Steps(step: Step, databaseName: String) {
         when (step) {
             Step.Working -> Box(Modifier.fillMaxSize())
             is Step.Create -> PasskeyCreateScreen(
                 creation = step.creation,
+                groups = step.groups,
+                initialGroup = step.group,
+                databaseName = databaseName,
                 caller = step.caller,
                 callerIsApp = step.callerIsApp,
                 needsUpgrade = step.needsUpgrade,
-                onCreate = passkeys::answer,
+                onCreate = { entryId, groupId ->
+                    passkeys.answer(
+                        if (entryId != null) PasskeyViewModel.Placement.InEntry(entryId) else PasskeyViewModel.Placement.NewEntry(groupId),
+                    )
+                },
                 onCancel = passkeys::cancel,
             )
             is Step.Link -> PasskeyLinkScreen(

@@ -33,7 +33,7 @@ rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-and
 
 **Claude.** PocketKeePass is written with [Claude](https://www.anthropic.com/claude), Anthropic's AI model, through Claude Code. Loveland Solutions directs the work and decides what ships. Commits Claude helped write carry a `Co-Authored-By: Claude` line, so the history shows which ones.
 
-**RustCrypto.** The cryptographic primitives (AES, ChaCha20, Salsa20, Twofish, Argon2, SHA-1, SHA-2, HMAC, and P-256 ECDSA for passkeys) come from the [RustCrypto](https://github.com/RustCrypto) project.
+**RustCrypto.** The cryptographic primitives (AES, ChaCha20, Salsa20, Twofish, Argon2, SHA-1, SHA-2, HMAC, and P-256 ECDSA and RSA for passkeys) come from the [RustCrypto](https://github.com/RustCrypto) project. Ed25519 passkeys are signed with [ed25519-dalek](https://github.com/dalek-cryptography/curve25519-dalek).
 
 ## License
 
