@@ -82,7 +82,8 @@ class Documents(context: Context) {
      *
      * Android's file picker gives access to one file, not its folder, so there is no way to
      * write a temporary file beside it and swap. The database is only written once the engine
-     * has proven the new bytes open correctly, and the read-back proves they arrived.
+     * has proven the new bytes open correctly, and the read-back proves they arrived. If the
+     * write is cut short, [Backups] still has the file from before.
      */
     fun write(uri: Uri, bytes: ByteArray) {
         // "wt": truncate. Plain "w" leaves the old file's tail behind on some providers.

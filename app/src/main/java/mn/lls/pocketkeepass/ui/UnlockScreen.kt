@@ -1,6 +1,7 @@
 package mn.lls.pocketkeepass.ui
 
 import android.net.Uri
+import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,10 +15,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedSecureTextField
@@ -34,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -44,7 +48,9 @@ import androidx.compose.ui.unit.dp
 import mn.lls.pocketkeepass.DatabaseState
 import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.UnlockError
+import mn.lls.pocketkeepass.files.Backup
 import mn.lls.pocketkeepass.files.Document
+import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
 import mn.lls.pocketkeepass.security.hideTextFromAccessibility
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
@@ -52,7 +58,8 @@ import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
  * Asks for the master password and/or key file of the chosen database.
  *
  * Without [onChangeDatabase], [onAddKeyFile], or [onRemoveKeyFile], that choice isn't offered:
- * the screen autofill shows on top of another app only unlocks.
+ * the screen autofill shows on top of another app only unlocks. The same goes for restoring the
+ * backup ([onRestoreBackup], [onSaveBackupAs]) when the file is missing or damaged.
  */
 @Composable
 fun UnlockScreen(
@@ -64,8 +71,11 @@ fun UnlockScreen(
     onRemoveKeyFile: (() -> Unit)?,
     onQuickUnlock: () -> Unit,
     onOfferQuickUnlock: () -> Unit,
+    onRestoreBackup: (() -> Unit)? = null,
+    onSaveBackupAs: (() -> Unit)? = null,
 ) {
-    val enabled = !state.unlocking
+    val enabled = !state.unlocking && !state.restoring
+    var confirmRestore by remember { mutableStateOf(false) }
     // Ask for biometrics straight away, once per lock; the ViewModel keeps track of "once".
     LaunchedEffect(state.database, state.quickUnlock) {
         if (state.quickUnlock) onOfferQuickUnlock()
@@ -154,6 +164,29 @@ fun UnlockScreen(
                 Text(error.message(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
+            val backup = state.backup
+            if (backup != null && onRestoreBackup != null && onSaveBackupAs != null) {
+                Text(
+                    stringResource(
+                        if (backup.unfinished) R.string.backup_unfinished_available else R.string.backup_available,
+                        backupTime(backup),
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { confirmRestore = true }, enabled = enabled) {
+                        Text(stringResource(R.string.restore_backup))
+                    }
+                    TextButton(onClick = onSaveBackupAs, enabled = enabled) {
+                        Text(stringResource(R.string.save_backup_as))
+                    }
+                }
+                if (state.restoring) LinearProgressIndicator(Modifier.fillMaxWidth())
+            }
+            if (state.restored) {
+                Text(stringResource(R.string.backup_restored), style = MaterialTheme.typography.bodyMedium)
+            }
+
             Button(onClick = onUnlock, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
                 if (state.unlocking) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -175,6 +208,33 @@ fun UnlockScreen(
             }
         }
     }
+
+    val backup = state.backup
+    if (confirmRestore && backup != null && onRestoreBackup != null) {
+        AlertDialog(
+            onDismissRequest = { confirmRestore = false },
+            title = { Text(stringResource(R.string.restore_backup_title)) },
+            text = {
+                AccessibleToToolsOnly() // a dialog is a window of its own
+                Text(stringResource(R.string.restore_backup_message, state.database.name, backupTime(backup)))
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmRestore = false; onRestoreBackup() }) {
+                    Text(stringResource(R.string.restore_backup_confirm))
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirmRestore = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+}
+
+/** When the backup was taken, as the phone writes dates and times. */
+@Composable
+private fun backupTime(backup: Backup): String {
+    val context = LocalContext.current
+    return remember(backup) {
+        DateUtils.formatDateTime(context, backup.savedAt, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME)
+    }
 }
 
 @Composable
@@ -184,6 +244,8 @@ private fun UnlockError.message(): String = when (this) {
     is UnlockError.Biometric -> message
     UnlockError.QuickUnlockInvalidated -> stringResource(R.string.biometric_invalidated)
     UnlockError.QuickUnlockOutdated -> stringResource(R.string.biometric_outdated)
+    UnlockError.CantRestore -> stringResource(R.string.cant_restore_backup)
+    UnlockError.CantSaveBackup -> stringResource(R.string.cant_save_backup)
 }
 
 @Preview(showBackground = true)

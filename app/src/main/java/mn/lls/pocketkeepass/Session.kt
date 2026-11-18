@@ -16,6 +16,7 @@ import mn.lls.pocketkeepass.core.DatabaseSummary
 import mn.lls.pocketkeepass.core.GroupListing
 import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.UnlockedDatabase
+import mn.lls.pocketkeepass.files.Backups
 import mn.lls.pocketkeepass.files.Document
 import mn.lls.pocketkeepass.files.Documents
 import mn.lls.pocketkeepass.files.WriteCheckException
@@ -62,9 +63,10 @@ sealed interface SaveProblem {
  *
  * Every change to the database is saved straight away ([changed]). Saves run in the app's own
  * scope, not a screen's, and can't be cancelled halfway: a file half-written because the user
- * left a screen is the worst outcome there is.
+ * left a screen is the worst outcome there is. Before each one, the file as it was and the new
+ * bytes are copied to [Backups], in case the write itself is cut short.
  */
-class Session(private val autoLock: AutoLock, private val documents: Documents) {
+class Session(private val autoLock: AutoLock, private val documents: Documents, private val backups: Backups) {
     /** An unlocked database, with what the app shows straight after unlocking it. */
     class Open(
         val database: UnlockedDatabase,
@@ -102,6 +104,8 @@ class Session(private val autoLock: AutoLock, private val documents: Documents) 
     /** A database was just unlocked. Any other one is locked first. */
     fun start(open: Open) {
         lock()
+        // The file opened, so it isn't damaged: a save to it that was cut short is no longer needed.
+        backups.finished(open.document.uri.toString())
         _saveState.value = SaveState.Saved
         _open.value = open
         autoLock.arm(::lock)
@@ -220,15 +224,60 @@ class Session(private val autoLock: AutoLock, private val documents: Documents) 
             return SaveProblem.Engine(e.message.orEmpty())
         }
         val uri = open.document.uri
-        if (!overwrite) {
-            val current = try {
-                documents.read(uri)
-            } catch (e: Exception) {
-                return problemFor(e) ?: throw e
-            }
-            if (!fingerprint(current).contentEquals(open.fileFingerprint)) return SaveProblem.Conflict
+        val current = try {
+            documents.read(uri)
+        } catch (e: Exception) {
+            // Replacing it anyway: the write itself will say if the file is really out of reach.
+            if (overwrite) null else return problemFor(e) ?: throw e
         }
-        return writeChecked(uri, bytes).also { if (it == null) open.fileFingerprint = fingerprint(bytes) }
+        if (current != null) {
+            val known = fingerprint(current).contentEquals(open.fileFingerprint)
+            if (!overwrite && !known) return SaveProblem.Conflict
+            // Replacing another app's version: keep it only if it's a database our key opens, so
+            // a damaged or foreign file never pushes out a backup that works.
+            if (known || opensWithOurKey(open, current)) keepBackup { backups.keep(uri.toString(), current) }
+        }
+        keepBackup { backups.keepUnfinished(uri.toString(), bytes) }
+        return writeChecked(uri, bytes).also {
+            if (it == null) {
+                open.fileFingerprint = fingerprint(bytes)
+                backups.finished(uri.toString())
+            }
+        }
+    }
+
+    /**
+     * Keeps a copy in [backups] before the file is overwritten. If that fails (the phone's
+     * storage is full), the save goes ahead: older copies are still there, and refusing would
+     * leave the changes to be lost at the next lock.
+     */
+    private inline fun keepBackup(keep: () -> Unit) {
+        try {
+            keep()
+        } catch (_: IOException) {
+        }
+    }
+
+    /** Whether [file] opens with the open database's master key. Runs key derivation, so it's slow. */
+    private suspend fun opensWithOurKey(open: Open, file: ByteArray): Boolean = withContext(Dispatchers.Default) {
+        val keyHash = try {
+            open.database.keyHash()
+        } catch (_: KeePassException) {
+            return@withContext false
+        } catch (_: IllegalStateException) {
+            return@withContext false
+        }
+        try {
+            UnlockedDatabase.openWithKeyHash(file, keyHash).let {
+                it.lock()
+                it.close()
+            }
+            true
+        } catch (_: KeePassException) {
+            false
+        } finally {
+            keyHash.wipe()
+        }
     }
 
     private fun writeChecked(uri: Uri, bytes: ByteArray): SaveProblem? = try {
