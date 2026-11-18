@@ -38,6 +38,7 @@ import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
 import mn.lls.pocketkeepass.ui.BrowseScreen
 import mn.lls.pocketkeepass.ui.DeleteDialog
 import mn.lls.pocketkeepass.ui.EntryEditScreen
+import mn.lls.pocketkeepass.ui.GeneratorDialog
 import mn.lls.pocketkeepass.ui.GroupDialog
 import mn.lls.pocketkeepass.ui.LockUnsavedDialog
 import mn.lls.pocketkeepass.ui.MoveDialog
@@ -165,6 +166,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                     onSave = editor::saveEntry,
                     onClose = editor::closeEntryForm,
                     onBeginEditing = editor::beginEditing,
+                    onGenerate = editor::openGenerator,
                 )
                 entry != null -> EntryScreen(
                     entry = entry,
@@ -209,6 +211,15 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                 }
             }
 
+            edit.generator?.let { generator ->
+                GeneratorDialog(
+                    state = generator,
+                    onChangeOptions = editor::setGeneratorOptions,
+                    onGenerateAgain = editor::generateAgain,
+                    onUse = editor::useGenerated,
+                    onDismiss = editor::closeGenerator,
+                )
+            }
             edit.groupForm?.let { form ->
                 GroupDialog(form, edit.busy, edit.error, onSave = editor::saveGroup, onDismiss = editor::closeGroupForm)
             }

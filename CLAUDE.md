@@ -104,10 +104,17 @@ Update this section as milestones land.
   - a changed database says "PocketKeePass" in `Meta/Generator`, as every KeePass app does with its own name.
 
   KeePassXC reads our edited KDBX 4.0, 4.1, and upgraded 3.1 files and exports exactly our entries, history included (`keepassxc_oracle.rs`). Checked by hand on the emulator (API 37): a new entry with a protected custom field and tags (KeePassXC shows it all), renaming without touching the password (kept, old version in history), a conflict after the file was replaced behind the app (dialog, "Not now" banner, reload), a new group deleted into a newly created recycle bin, a move, and a KDBX 3.1 file upgraded on its first new entry.
+- **Done:** MVP feature 7, the password generator (`core/src/generator.rs`, `ui/GeneratorDialog.kt`, `edit/GeneratorPreferences.kt`), opened from "Generate password" under the password field (and any protected custom field) in the entry editor:
+  - **generation is in Rust** (`PasswordOptions::generate`): 4 to 256 characters (the slider offers 4 to 64) from lowercase, uppercase, digits, and symbols. Symbols are **None, Common, or All**. Common is `!@#$%^*-`, the short set sites commonly accept: it leaves out quotes, `<>&`, `\`, `;`, spaces, brackets, and `_` (which a `\W` check doesn't count as a symbol). All is every printable ASCII symbol. "Avoid look-alike characters" leaves out `0Oo1Il|`;
+  - every chosen kind appears at least once. Passwords are drawn **uniformly** from just those passwords (draw from the whole pool, reject any missing a kind), not by placing one of each and shuffling, which favors some passwords. So the strength shown is exact: log2 of how many passwords are possible, by inclusion-exclusion (`strength_bits`). Each character is an unbiased pick (rejection sampling on `getrandom` words);
+  - the password crosses the bridge as bytes and goes into the field as a `CharArray`, wiped after. The dialog shows it as a `String` (Compose needs one), held only while the dialog is open. "Use" replaces the field's value, so an existing password is never fetched to replace it;
+  - the options (never a password) are remembered in SharedPreferences (`password_generator`). The default is 20 characters, every kind, Common symbols (about 122 bits).
+
+  Checked by hand on the emulator (API 37): generating for an existing entry without fetching its password, then saving and revealing it (they match); Common, All, and None; look-alikes; every kind turned off (the engine's message, "Use" does nothing); the strength in bits against an independent calculation; the options remembered for the next entry; rotation with the dialog open; and that an accessibility dump of the filled field shows only dots.
 - **Done:** the app icon (`art/icon`): an adaptive icon with a themed (monochrome) layer.
-- **Tests:** 111 in Rust (`cargo test --release`), 34 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Tests:** 120 in Rust (`cargo test --release`), 35 in Kotlin (`./gradlew :app:testDebugUnitTest`).
 - **Not built yet:** changing the master key or database settings, restoring from history, entry dates and attachments (not shown, but kept).
-- **Next:** MVP feature 7 (password generator), then 8 (TOTP). The entry editor is where the generator goes.
+- **Next:** MVP feature 8 (TOTP).
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
 - **Renamed** from Pass The Key to PocketKeePass on 2026-11-18, application ID included (`mn.lls.passthekey` → `mn.lls.pocketkeepass`). Nothing had been published. The test fixtures `browse.*.xml` keep their old `Generator` text, because `browse.kdbx` contains it.
 
@@ -249,6 +256,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - Inline autofill suggestions in the keyboard (Android 11+)
 - Passkeys via Credential Manager
 - Multiple databases, entry history browsing, recycle bin management
+- Passphrases (random words) in the generator. Needs a word list bundled with the app (the EFF's long list is the usual choice; check its license)
 
 ### Non-goals
 - Our own sync server or cloud accounts

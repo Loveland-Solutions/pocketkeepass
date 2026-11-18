@@ -27,6 +27,29 @@ class BridgeTest {
     }
 
     @Test
+    fun `the generator makes passwords as bytes, rates them, and refuses impossible options`() {
+        val options = PasswordOptions(
+            length = 24u,
+            lowercase = true,
+            uppercase = true,
+            digits = true,
+            symbols = Symbols.COMMON,
+            avoidLookalikes = true,
+        )
+        val allowed = ('a'..'z') + ('A'..'Z') + ('0'..'9') + passwordSymbols(Symbols.COMMON).toList() -
+            passwordLookalikes().toSet()
+        val password = generatePassword(options)
+        assertEquals(24, password.size)
+        assertTrue(password.all { it.toInt().toChar() in allowed })
+        assertTrue(passwordStrengthBits(options) > 100.0)
+        assertEquals("", passwordSymbols(Symbols.NONE))
+
+        val nothing = options.copy(lowercase = false, uppercase = false, digits = false, symbols = Symbols.NONE)
+        val e = assertThrows(KeePassException.Invalid::class.java) { generatePassword(nothing) }
+        assertEquals("Choose at least one kind of character.", e.message)
+    }
+
+    @Test
     fun `a database opens with its password and describes itself`() {
         UnlockedDatabase.open(fixture("kdbx41-keepassxc.kdbx"), password, null).use { db ->
             val summary = db.summary()

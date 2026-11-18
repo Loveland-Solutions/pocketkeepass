@@ -65,6 +65,7 @@ fun EntryEditScreen(
     onSave: () -> Unit,
     onClose: () -> Unit,
     onBeginEditing: (FormField) -> Unit,
+    onGenerate: (FormField) -> Unit,
 ) {
     var confirmDiscard by remember { mutableStateOf(false) }
     val close = { if (form.isModified()) confirmDiscard = true else onClose() }
@@ -114,7 +115,12 @@ fun EntryEditScreen(
             }
             for (field in form.fields) {
                 key(field) {
-                    FieldEditor(field, onBeginEditing = { onBeginEditing(field) }, onRemove = { form.removeField(field) })
+                    FieldEditor(
+                        field,
+                        onBeginEditing = { onBeginEditing(field) },
+                        onGenerate = { onGenerate(field) },
+                        onRemove = { form.removeField(field) },
+                    )
                 }
             }
             TextButton(onClick = { form.addField() }) {
@@ -133,9 +139,12 @@ fun EntryEditScreen(
     }
 }
 
-/** One field: its value, and for custom fields, its name, a "protect" switch, and "remove". */
+/**
+ * One field: its value, and for custom fields, its name, a "protect" switch, and "remove".
+ * The password, and any other protected field, can be filled in by the generator.
+ */
 @Composable
-private fun FieldEditor(field: FormField, onBeginEditing: () -> Unit, onRemove: () -> Unit) {
+private fun FieldEditor(field: FormField, onBeginEditing: () -> Unit, onGenerate: () -> Unit, onRemove: () -> Unit) {
     val isCustom = field.standardKey == null
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (isCustom) {
@@ -162,6 +171,13 @@ private fun FieldEditor(field: FormField, onBeginEditing: () -> Unit, onRemove: 
                     TextFieldLineLimits.SingleLine
                 },
             )
+        }
+        if (field.protected || field.standardKey == EntryForm.PASSWORD) {
+            TextButton(onClick = onGenerate) {
+                Icon(painterResource(R.drawable.ic_refresh), contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.generate_password))
+            }
         }
         if (isCustom) {
             Row(verticalAlignment = Alignment.CenterVertically) {

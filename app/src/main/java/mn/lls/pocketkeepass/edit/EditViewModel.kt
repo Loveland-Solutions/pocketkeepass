@@ -22,7 +22,10 @@ import mn.lls.pocketkeepass.core.Deletion
 import mn.lls.pocketkeepass.core.EntryDetails
 import mn.lls.pocketkeepass.core.GroupChoice
 import mn.lls.pocketkeepass.core.KeePassException
+import mn.lls.pocketkeepass.core.PasswordOptions
 import mn.lls.pocketkeepass.core.UnlockedDatabase
+import mn.lls.pocketkeepass.core.generatePassword
+import mn.lls.pocketkeepass.core.passwordStrengthBits
 import mn.lls.pocketkeepass.security.decodeUtf8
 import mn.lls.pocketkeepass.security.wipe
 
@@ -54,12 +57,29 @@ sealed interface PendingEdit {
     data class Move(val item: Item) : PendingEdit
 }
 
+/**
+ * The password generator, open for [field] of the entry editor. [password] is what it made,
+ * for showing, or null with [error] when the options make no password (no kind chosen).
+ *
+ * It has to be a `String` for Compose to draw it, so it lives only while the dialog is open.
+ * The copy that goes into the field is a `CharArray`, wiped once it's there.
+ */
+data class GeneratorState(
+    val field: FormField,
+    val options: PasswordOptions,
+    val password: String?,
+    val strengthBits: Double?,
+    val error: String?,
+)
+
 /** Choosing where to move [item]: [groups] are the places it can go, drawn as a tree. */
 data class MoveChoice(val item: Item, val groups: List<GroupChoice>)
 
 data class EditState(
     /** The entry editor, while it's open. */
     val entryForm: EntryForm? = null,
+    /** The password generator, while it's open over the entry editor. */
+    val generator: GeneratorState? = null,
     /** The group dialog, while it's open. */
     val groupForm: GroupForm? = null,
     /** Asking whether to delete this. */
@@ -104,6 +124,11 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
     val saveState = session.saveState
 
     private val database: UnlockedDatabase? get() = session.open.value?.database
+
+    private val generatorPreferences = GeneratorPreferences(app)
+
+    /** The generator's current password, for putting into the field. Wiped when replaced. */
+    private var generated: CharArray? = null
 
     init {
         // Locking closes every form and dialog, and wipes what was typed.
@@ -169,7 +194,8 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun openEntryForm(form: EntryForm) {
         _state.value.entryForm?.wipe()
-        _state.update { it.copy(entryForm = form, error = null) }
+        wipeGenerated()
+        _state.update { it.copy(entryForm = form, generator = null, error = null) }
     }
 
     private fun openGroupForm(form: GroupForm) {
@@ -198,11 +224,71 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
                 bytes.wipe()
             }
             try {
-                if (_state.value.entryForm === form) field.beginEditing(CharBuffer.wrap(chars))
+                // Unless the generator filled the field in meanwhile.
+                if (_state.value.entryForm === form && field.value == null) field.beginEditing(CharBuffer.wrap(chars))
             } finally {
                 chars.wipe()
             }
         }
+    }
+
+    /**
+     * Opens the generator for [field], with the options it was last used with. Using its
+     * password replaces the field's value, so an existing password is never fetched.
+     */
+    fun openGenerator(field: FormField) {
+        if (_state.value.entryForm == null) return
+        generate(field, generatorPreferences.load())
+    }
+
+    fun setGeneratorOptions(options: PasswordOptions) {
+        val generator = _state.value.generator ?: return
+        generatorPreferences.save(options)
+        generate(generator.field, options)
+    }
+
+    fun generateAgain() {
+        val generator = _state.value.generator ?: return
+        generate(generator.field, generator.options)
+    }
+
+    /** Puts the generated password into the field and closes the generator. */
+    fun useGenerated() {
+        val generator = _state.value.generator ?: return
+        val chars = generated ?: return
+        generator.field.beginEditing(CharBuffer.wrap(chars))
+        closeGenerator()
+    }
+
+    fun closeGenerator() {
+        wipeGenerated()
+        _state.update { it.copy(generator = null) }
+    }
+
+    /**
+     * Makes a new password. On the main thread: the engine only draws random characters, which
+     * takes microseconds, and the slider then follows the finger without lagging behind.
+     */
+    private fun generate(field: FormField, options: PasswordOptions) {
+        wipeGenerated()
+        val state = try {
+            val bytes = generatePassword(options)
+            val chars = try {
+                bytes.decodeUtf8()
+            } finally {
+                bytes.wipe()
+            }
+            generated = chars
+            GeneratorState(field, options, String(chars), passwordStrengthBits(options), error = null)
+        } catch (e: KeePassException) {
+            GeneratorState(field, options, password = null, strengthBits = null, error = e.message.orEmpty())
+        }
+        _state.update { it.copy(generator = state) }
+    }
+
+    private fun wipeGenerated() {
+        generated?.wipe()
+        generated = null
     }
 
     fun saveEntry() {
@@ -227,7 +313,8 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
 
     fun closeEntryForm() {
         _state.value.entryForm?.wipe()
-        _state.update { it.copy(entryForm = null, error = null) }
+        wipeGenerated()
+        _state.update { it.copy(entryForm = null, generator = null, error = null) }
     }
 
     fun saveGroup() {
@@ -369,6 +456,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
         val current = _state.value
         current.entryForm?.wipe()
         current.groupForm?.wipe()
+        wipeGenerated()
         _state.value = EditState()
     }
 
@@ -376,6 +464,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
         val current = _state.value
         current.entryForm?.wipe()
         current.groupForm?.wipe()
+        wipeGenerated()
     }
 }
 

@@ -145,8 +145,12 @@ class FormField(
 
     val key: String get() = standardKey ?: name.text.toString()
 
-    /** Starts editing a protected value: with [current] (the revealed value) or empty. */
+    /**
+     * Starts editing a protected value with [current] (the revealed value, a generated
+     * password, or empty), replacing what the field held, which is wiped.
+     */
     fun beginEditing(current: CharSequence) {
+        value?.wipeText()
         value = TextFieldState().apply { edit { append(current) } }
     }
 
