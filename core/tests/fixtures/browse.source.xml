@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KeePassFile>
+	<Meta>
+		<Generator>Pass The Key test fixture</Generator>
+		<DatabaseName>Browse Test</DatabaseName>
+		<MemoryProtection>
+			<ProtectTitle>False</ProtectTitle>
+			<ProtectUserName>False</ProtectUserName>
+			<ProtectPassword>True</ProtectPassword>
+			<ProtectURL>False</ProtectURL>
+			<ProtectNotes>False</ProtectNotes>
+		</MemoryProtection>
+		<RecycleBinEnabled>True</RecycleBinEnabled>
+		<RecycleBinUUID>CwsLCwsLCwsLCwsLCwsLCw==</RecycleBinUUID>
+	</Meta>
+	<Root>
+		<Group>
+			<UUID>AQEBAQEBAQEBAQEBAQEBAQ==</UUID>
+			<Name>Root</Name>
+			<IconID>48</IconID>
+			<Entry>
+				<UUID>AgICAgICAgICAgICAgICAg==</UUID>
+				<IconID>19</IconID>
+				<Tags>personal</Tags>
+				<String><Key>Title</Key><Value>Email</Value></String>
+				<String><Key>UserName</Key><Value>me@example.com</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">hunter2-mailbox</Value></String>
+				<String><Key>URL</Key><Value>https://mail.example.com</Value></String>
+				<String><Key>Notes</Key><Value>Personal inbox</Value></String>
+				<History>
+					<Entry>
+						<UUID>AgICAgICAgICAgICAgICAg==</UUID>
+						<IconID>0</IconID>
+						<String><Key>Title</Key><Value>Old Mail Title</Value></String>
+						<String><Key>UserName</Key><Value>me@example.com</Value></String>
+						<String><Key>Password</Key><Value ProtectInMemory="True">old-password</Value></String>
+					</Entry>
+				</History>
+			</Entry>
+			<Group>
+				<UUID>AwMDAwMDAwMDAwMDAwMDAw==</UUID>
+				<Name>Work</Name>
+				<IconID>48</IconID>
+				<Entry>
+					<UUID>BAQEBAQEBAQEBAQEBAQEBA==</UUID>
+					<IconID>0</IconID>
+					<String><Key>Title</Key><Value>VPN</Value></String>
+					<String><Key>UserName</Key><Value>jo.work</Value></String>
+					<String><Key>Password</Key><Value ProtectInMemory="True">correct horse</Value></String>
+					<String><Key>URL</Key><Value>vpn.example.org</Value></String>
+					<String><Key>Account ID</Key><Value>W-1234</Value></String>
+				</Entry>
+				<Group>
+					<UUID>BQUFBQUFBQUFBQUFBQUFBQ==</UUID>
+					<Name>Servers</Name>
+					<IconID>48</IconID>
+					<Entry>
+						<UUID>BgYGBgYGBgYGBgYGBgYGBg==</UUID>
+						<IconID>0</IconID>
+						<String><Key>Title</Key><Value>Database Server</Value></String>
+						<String><Key>UserName</Key><Value>admin</Value></String>
+						<String><Key>Notes</Key><Value>Rack 4, row B</Value></String>
+					</Entry>
+				</Group>
+			</Group>
+			<Group>
+				<UUID>CwsLCwsLCwsLCwsLCwsLCw==</UUID>
+				<Name>Recycle Bin</Name>
+				<IconID>43</IconID>
+				<Entry>
+					<UUID>DAwMDAwMDAwMDAwMDAwMDA==</UUID>
+					<IconID>0</IconID>
+					<String><Key>Title</Key><Value>Deleted Email</Value></String>
+					<String><Key>UserName</Key><Value>me@example.com</Value></String>
+				</Entry>
+			</Group>
+			<Group>
+				<UUID>BwcHBwcHBwcHBwcHBwcHBw==</UUID>
+				<Name>Banking</Name>
+				<IconID>48</IconID>
+				<Entry>
+					<UUID>CAgICAgICAgICAgICAgICA==</UUID>
+					<IconID>0</IconID>
+					<Tags>money;bank</Tags>
+					<String><Key>Title</Key><Value>Crédit Union</Value></String>
+					<String><Key>UserName</Key><Value ProtectInMemory="True">jo-secret-user</Value></String>
+					<String><Key>Password</Key><Value ProtectInMemory="True">p4ss</Value></String>
+					<String><Key>URL</Key><Value>https://cu.example.com</Value></String>
+				</Entry>
+			</Group>
+			<Group>
+				<UUID>CQkJCQkJCQkJCQkJCQkJCQ==</UUID>
+				<Name>Archive</Name>
+				<IconID>48</IconID>
+				<EnableSearching>false</EnableSearching>
+				<Entry>
+					<UUID>CgoKCgoKCgoKCgoKCgoKCg==</UUID>
+					<IconID>0</IconID>
+					<String><Key>Title</Key><Value>Archived Email</Value></String>
+					<String><Key>UserName</Key><Value>me@example.com</Value></String>
+				</Entry>
+			</Group>
+		</Group>
+	</Root>
+</KeePassFile>

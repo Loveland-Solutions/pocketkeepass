@@ -35,6 +35,9 @@ pub enum Error {
 
     #[error("The database is locked.")]
     Locked,
+
+    #[error("That group or entry isn't in the database anymore.")]
+    NotFound,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

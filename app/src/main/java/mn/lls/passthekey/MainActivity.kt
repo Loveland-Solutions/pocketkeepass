@@ -13,8 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import mn.lls.passthekey.core.engineVersion
+import mn.lls.passthekey.ui.BrowseScreen
 import mn.lls.passthekey.ui.UnlockScreen
-import mn.lls.passthekey.ui.UnlockedScreen
 import mn.lls.passthekey.ui.WelcomeScreen
 import mn.lls.passthekey.ui.theme.PassTheKeyTheme
 
@@ -57,6 +57,14 @@ private fun App(viewModel: DatabaseViewModel = viewModel()) {
             onAddKeyFile = { pickKeyFile.launch(ANY_FILE) },
             onRemoveKeyFile = viewModel::removeKeyFile,
         )
-        is DatabaseState.Unlocked -> UnlockedScreen(state = current, onLock = viewModel::lock)
+        is DatabaseState.Unlocked -> BrowseScreen(
+            state = current,
+            searchQuery = viewModel.searchQuery,
+            onOpenGroup = viewModel::openGroup,
+            onUp = { viewModel.goUp() },
+            onOpenSearch = viewModel::openSearch,
+            onCloseSearch = viewModel::closeSearch,
+            onLock = viewModel::lock,
+        )
     }
 }

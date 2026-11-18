@@ -20,11 +20,26 @@
     <string name="cant_read_database">Pass The Key can\'t open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.</string>
     <string name="cant_read_key_file">Pass The Key can\'t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.</string>
 
-    <!-- Unlocked (temporary until browsing exists) -->
-    <string name="unlocked_file">File: %1$s</string>
-    <string name="unlocked_format">Format: KDBX %1$s</string>
-    <string name="unlocked_groups">Groups: %1$d</string>
-    <string name="unlocked_entries">Entries: %1$d</string>
-    <string name="browsing_coming">Browsing entries is coming next.</string>
+    <!-- Browse and search -->
     <string name="lock">Lock</string>
+    <string name="back">Back</string>
+    <string name="search">Search</string>
+    <string name="search_hint">Search entries</string>
+    <string name="clear_search">Clear search</string>
+    <string name="search_explained">Searches titles, usernames, URLs, notes, and tags. Passwords and other protected fields are never searched.</string>
+    <string name="search_no_results">No matching entries.</string>
+    <string name="group_empty">This group is empty.</string>
+    <string name="untitled_group">(no name)</string>
+    <string name="untitled_entry">(no title)</string>
+    <string name="entry_details_coming">Entry details are coming next.</string>
+    <!-- e.g. "2 groups, 5 entries" -->
+    <string name="groups_and_entries">%1$s, %2$s</string>
+    <plurals name="group_count">
+        <item quantity="one">%d group</item>
+        <item quantity="other">%d groups</item>
+    </plurals>
+    <plurals name="entry_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
 </resources>
