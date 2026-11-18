@@ -1,0 +1,11 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autofill Probe page</title>
+<h3>Probe login page</h3>
+<form onsubmit="return false">
+  <p><input id="user" name="username" type="text" autocomplete="username" placeholder="Username"></p>
+  <p><input id="pass" name="password" type="password" autocomplete="current-password" placeholder="Password"></p>
+  <p><button type="button" onclick="document.getElementById('out').textContent =
+      'filled: ' + document.getElementById('user').value + ' | ' + document.getElementById('pass').value">Show</button></p>
+</form>
+<p id="out">filled: (tap Show)</p>
