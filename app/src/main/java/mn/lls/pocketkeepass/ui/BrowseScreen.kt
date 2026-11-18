@@ -66,7 +66,7 @@ import mn.lls.pocketkeepass.security.AutoLockSettings
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
 /** Separates group names in a path, e.g. "Work › Servers". */
-private const val PATH_SEPARATOR = " › "
+internal const val PATH_SEPARATOR = " › "
 
 /** An open database: one group's subgroups and entries, or search results across the database. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -198,9 +198,9 @@ private fun SearchBar(query: TextFieldState, onClose: () -> Unit, onLock: () -> 
 }
 
 @Composable
-private fun SearchField(query: TextFieldState, modifier: Modifier) {
+internal fun SearchField(query: TextFieldState, modifier: Modifier, focusAtOnce: Boolean = true) {
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    LaunchedEffect(Unit) { if (focusAtOnce) focus.requestFocus() }
     val style = MaterialTheme.typography.titleLarge
     BasicTextField(
         state = query,
@@ -284,7 +284,7 @@ private fun GroupRow(group: GroupItem, onClick: () -> Unit) {
 
 /** An entry: its title, then its username (and, in search results, where it lives). */
 @Composable
-private fun EntryRow(entry: EntryItem, location: String?, onClick: () -> Unit) {
+internal fun EntryRow(entry: EntryItem, location: String?, onClick: () -> Unit) {
     val title = entry.title.ifEmpty { stringResource(R.string.untitled_entry) }
     val details = listOf(entry.username, location.orEmpty()).filter { it.isNotEmpty() }
     ListItem(

@@ -33,6 +33,7 @@ import kotlinx.coroutines.withContext
 import mn.lls.pocketkeepass.core.DatabaseSummary
 import mn.lls.pocketkeepass.core.EntryDetails
 import mn.lls.pocketkeepass.core.EntryField
+import mn.lls.pocketkeepass.core.FillTarget
 import mn.lls.pocketkeepass.core.GroupListing
 import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.SearchResult
@@ -80,6 +81,14 @@ sealed interface DatabaseState {
     ) : DatabaseState
 }
 
+/** An entry's username and password, on their way into another app's login form. */
+class Credentials(val username: CharArray, val password: CharArray) {
+    fun wipe() {
+        username.wipe()
+        password.wipe()
+    }
+}
+
 /** Why an unlock failed. */
 sealed interface UnlockError {
     /** The engine refused: wrong key, not a KeePass file, damaged, and so on. Its message is user-facing. */
@@ -110,11 +119,11 @@ private sealed interface BiometricPurpose {
 }
 
 /**
- * Owns the open database for the whole app: choosing the file, unlocking it, and locking it.
+ * What a screen shows of the database: choosing the file, unlocking it, browsing it, and locking
+ * it. The app's own screen and the one autofill shows on top of other apps each have one.
  *
- * The decrypted database lives only here. It's locked (wiped) when the user locks it, when
- * auto-lock says so (timeout, screen off), and when this ViewModel is cleared, which happens
- * when the activity finishes for good.
+ * The decrypted database itself lives in the app-wide [Session], so every ViewModel sees the
+ * same one: unlocking or locking in one place shows everywhere.
  */
 class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     private companion object {
@@ -123,6 +132,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     private val documents = Documents(app)
     private val recent = RecentDatabase(app)
+    private val session = (app as PocketKeePassApp).session
     private val autoLock = (app as PocketKeePassApp).autoLock
     private val clipboard = (app as PocketKeePassApp).clipboard
     private val quickUnlock = QuickUnlock(app)
@@ -155,7 +165,10 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
      */
     val searchQuery = TextFieldState()
 
-    private var database: UnlockedDatabase? = null
+    private val database: UnlockedDatabase? get() = session.open.value?.database
+
+    /** The open database [state] was last brought in line with. Null when that was "locked". */
+    private var shown: Session.Open? = session.open.value
 
     /** The group listing being read from the engine, if any. Opening another group cancels it. */
     private var groupJob: Job? = null
@@ -167,11 +180,13 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     private var entryJob: Job? = null
 
     private val _state = MutableStateFlow(
-        recent.database?.let { locked(it, recent.keyFile) } ?: DatabaseState.NoDatabase,
+        shown?.let(::unlocked) ?: recent.database?.let { locked(it, recent.keyFile) } ?: DatabaseState.NoDatabase,
     )
     val state: StateFlow<DatabaseState> = _state.asStateFlow()
 
     init {
+        // Follow the session: another screen, the autofill service, or auto-lock may unlock or lock it.
+        viewModelScope.launch { session.open.collect(::follow) }
         // Search as the user types, once they pause for a moment.
         viewModelScope.launch {
             snapshotFlow { searchQuery.text.toString() }.collectLatest { query ->
@@ -183,6 +198,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     /** The user picked a database file. It replaces the previous one, and its key file. */
     fun onDatabasePicked(uri: Uri) {
+        session.lock()
         viewModelScope.launch {
             val previous = recent.database
             val previousKeyFile = recent.keyFile
@@ -284,8 +300,22 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         prompt(BiometricPurpose.Enable(unlocked.database.uri), cipher, R.string.biometric_enable_title, R.string.cancel)
     }
 
-    /** Re-checks whether quick unlock can be used: biometrics may have been set up or removed meanwhile. */
+    /**
+     * Re-checks what may have changed while this screen was away: whether quick unlock can be
+     * used (biometrics may have been set up or removed), and, on the unlock screen, which
+     * database is chosen (another screen may have picked a different one).
+     */
     fun refreshQuickUnlock() {
+        val shownNow = _state.value
+        if (shownNow !is DatabaseState.Unlocked && !(shownNow is DatabaseState.Locked && shownNow.unlocking)) {
+            val database = recent.database
+            val keyFile = recent.keyFile
+            val locked = shownNow as? DatabaseState.Locked
+            if (database != locked?.database || keyFile != locked?.keyFile) {
+                _state.value = database?.let { locked(it, keyFile) } ?: DatabaseState.NoDatabase
+                return
+            }
+        }
         _state.update { current ->
             when (current) {
                 is DatabaseState.Locked -> current.copy(quickUnlock = quickUnlockReady(current.database))
@@ -420,18 +450,40 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 opened.close()
                 return@launch
             }
-            database = opened
-            autoLock.arm(::lock)
-            clearPassword()
-            _state.value = DatabaseState.Unlocked(
-                locked.database,
-                locked.keyFile,
-                unlocked.summary,
-                unlocked.root,
-                quickUnlock = quickUnlock.setting(locked.database.uri),
-            )
+            val open = Session.Open(opened, locked.database, locked.keyFile, unlocked.summary, unlocked.root)
+            session.start(open)
+            follow(open)
         }
     }
+
+    /**
+     * Brings [state] in line with the session: unlocked at the root group when a database was
+     * just opened (here or elsewhere), back to the unlock screen when it was locked.
+     */
+    private fun follow(open: Session.Open?) {
+        if (open === shown) return
+        shown = open
+        groupJob?.cancel()
+        searchJob?.cancel()
+        entryJob?.cancel()
+        searchQuery.clearText()
+        if (open != null) {
+            clearPassword()
+            _state.value = unlocked(open)
+        } else {
+            quickUnlockOffered = false
+            val unlocked = _state.value as? DatabaseState.Unlocked ?: return
+            _state.value = locked(unlocked.database, unlocked.keyFile)
+        }
+    }
+
+    private fun unlocked(open: Session.Open) = DatabaseState.Unlocked(
+        open.document,
+        open.keyFile,
+        open.summary,
+        open.root,
+        quickUnlock = quickUnlock.setting(open.document.uri),
+    )
 
     /** Shows a group's contents. `id` comes from a [GroupListing]; null means the root group. */
     fun openGroup(id: String?) {
@@ -539,11 +591,45 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setClipboardTimeout(seconds: Int) = clipboard.setTimeout(seconds)
 
-    private suspend fun revealChars(entryId: String, field: EntryField): CharArray? {
+    /**
+     * The entries linked to the app or web page autofill is filling in, or null if the database
+     * was locked meanwhile. Like every list, they carry no protected values.
+     */
+    suspend fun autofillMatches(target: FillTarget): List<SearchResult>? {
+        val db = database ?: return null
+        return withContext(Dispatchers.Default) {
+            try {
+                db.autofillMatches(target)
+            } catch (_: KeePassException.Locked) {
+                null
+            } catch (_: IllegalStateException) {
+                null // closed by lock() before the call started
+            }
+        }
+    }
+
+    /**
+     * An entry's username and password for autofill to fill in, or null if the database was
+     * locked meanwhile or the entry is gone. The caller wipes them ([Credentials.wipe]).
+     */
+    suspend fun credentials(entryId: String): Credentials? {
+        val username = revealChars(entryId, "UserName") ?: return null
+        val password = revealChars(entryId, "Password")
+        if (password == null) {
+            username.wipe()
+            return null
+        }
+        autoLock.onUserInteraction() // filling in a password is using the app
+        return Credentials(username, password)
+    }
+
+    private suspend fun revealChars(entryId: String, field: EntryField): CharArray? = revealChars(entryId, field.key)
+
+    private suspend fun revealChars(entryId: String, key: String): CharArray? {
         val db = database ?: return null
         return withContext(Dispatchers.Default) {
             val bytes = try {
-                db.revealField(entryId, field.key)
+                db.revealField(entryId, key)
             } catch (_: KeePassException) {
                 return@withContext null // locked meanwhile, or (once editing exists) gone
             } catch (_: IllegalStateException) {
@@ -581,15 +667,13 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Wipes the decrypted database and goes back to the unlock screen. */
     fun lock() {
-        closeDatabase()
-        searchQuery.clearText()
-        quickUnlockOffered = false
-        val unlocked = _state.value as? DatabaseState.Unlocked ?: return
-        _state.value = locked(unlocked.database, unlocked.keyFile)
+        session.lock()
+        follow(null)
     }
 
+    // The database stays open in the session: this may be the screen autofill showed, closing
+    // after its job is done. The app's own screen locks when it's closed for good (MainActivity).
     override fun onCleared() {
-        closeDatabase()
         clearPassword()
         searchQuery.clearText()
     }
@@ -637,18 +721,6 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
             documents.keepAccess(uri, write)
         } catch (_: SecurityException) {
         }
-    }
-
-    private fun closeDatabase() {
-        autoLock.disarm()
-        groupJob?.cancel()
-        searchJob?.cancel()
-        entryJob?.cancel()
-        database?.let {
-            it.lock()
-            it.close()
-        }
-        database = null
     }
 
     /** Empties the password field, and its undo history, which holds earlier copies of the text. */

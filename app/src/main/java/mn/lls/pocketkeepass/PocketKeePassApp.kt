@@ -13,9 +13,14 @@ class PocketKeePassApp : Application() {
     lateinit var clipboard: Clipboard
         private set
 
+    /** The open database, shared by the app's screens and the autofill service. */
+    lateinit var session: Session
+        private set
+
     override fun onCreate() {
         super.onCreate()
         autoLock = AutoLock(this)
+        session = Session(autoLock)
         clipboard = Clipboard(this)
     }
 }

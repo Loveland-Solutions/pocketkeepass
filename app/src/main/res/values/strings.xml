@@ -63,6 +63,20 @@
     <string name="entry_in_recycle_bin">This entry is in the recycle bin.</string>
     <string name="entry_empty">This entry has no fields.</string>
 
+    <!-- Autofill: the suggestions Android shows under a login field in other apps -->
+    <string name="autofill_unlock">Unlock PocketKeePass</string>
+    <string name="autofill_search">Search PocketKeePass</string>
+    <string name="autofill_save_unsupported">PocketKeePass can\'t save new logins yet.</string>
+    <!-- Autofill: choosing an entry. "Fill in" is a small label above the website or app name. -->
+    <string name="autofill_fill_in">Fill in</string>
+    <!-- An app's name and its package name, e.g. "Example Bank (com.example.bank)" -->
+    <string name="autofill_app">%1$s (%2$s)</string>
+    <string name="autofill_linked">These entries are saved for this app or site. Search to use a different one.</string>
+    <string name="autofill_none_linked">No entry is saved for %1$s. Search for the one to use, and check first that this is the app or site you mean: its username and password will be filled in there.</string>
+    <string name="autofill_pick_explained">The entry you pick will be filled in to %1$s.</string>
+    <string name="autofill_unverified_browser">PocketKeePass can\'t verify this browser, so it can\'t tell which website is open. Check the address bar yourself, then search for the entry to use.</string>
+    <string name="autofill_nothing_to_fill">That entry has nothing to fill in here.</string>
+
     <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="biometric_unlock">Biometric unlock</string>
@@ -71,6 +85,10 @@
     <string name="biometric_unlock_unavailable">Set up a fingerprint (or a face unlock that Android rates as strong) in your phone\'s settings to use this.</string>
     <string name="biometric_enable_title">Turn on biometric unlock</string>
     <string name="cancel">Cancel</string>
+    <string name="autofill">Autofill</string>
+    <string name="autofill_switch">Fill in usernames and passwords in other apps</string>
+    <string name="autofill_explained">Android then offers your entries when you tap a login field, in apps and in browsers. Nothing is filled in until you pick an entry. In Chrome, also turn on Settings › Autofill services › Autofill using another service.</string>
+    <string name="autofill_unsupported">This phone doesn\'t support autofill.</string>
     <string name="clipboard">Clipboard</string>
     <string name="clipboard_timeout">Clear copied fields after:</string>
     <string name="auto_lock">Auto-lock</string>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Describes the autofill service to Android. Deliberately empty: no "compatibility" packages,
+    the mode where Android reads a browser's address bar through its accessibility tree. That
+    can be spoofed, and current browsers describe their pages to autofill directly.
+-->
+<autofill-service xmlns:android="http://schemas.android.com/apk/res/android" />

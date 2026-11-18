@@ -1,6 +1,7 @@
 package mn.lls.pocketkeepass
 
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,6 +45,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // No screenshots, screen recording, or previews in the recent-apps list.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        // Keep other autofill services away from the master password: they would offer to save it.
+        window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
         enableEdgeToEdge()
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -73,6 +76,13 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         autoLock.onAppHidden()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Closing the app for good (not a rotation) locks the database. The session would
+        // otherwise keep it open for autofill until auto-lock's timeout.
+        if (isFinishing) (application as PocketKeePassApp).session.lock()
     }
 }
 

@@ -1,5 +1,9 @@
 package mn.lls.pocketkeepass.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.provider.Settings
+import android.view.autofill.AutofillManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,12 +22,19 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
 import mn.lls.pocketkeepass.security.AutoLockSettings
@@ -31,8 +42,8 @@ import mn.lls.pocketkeepass.security.Clipboard
 import mn.lls.pocketkeepass.security.QuickUnlockSetting
 
 /**
- * Chooses when the open database locks itself, when the clipboard is cleared, and whether
- * biometrics can unlock the database. Changes apply straight away. Ends with the credits.
+ * Chooses when the open database locks itself, when the clipboard is cleared, whether
+ * biometrics can unlock the database, and whether PocketKeePass fills in other apps' logins. Changes apply straight away. Ends with the credits.
  */
 @Composable
 fun SettingsDialog(
@@ -70,6 +81,8 @@ fun SettingsDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                AutofillSetting()
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 Text(stringResource(R.string.auto_lock), style = MaterialTheme.typography.titleSmall)
                 Text(stringResource(R.string.auto_lock_timeout), style = MaterialTheme.typography.bodyMedium)
                 Choices(AutoLockSettings.TIMEOUTS, settings.timeoutSeconds) { onChange(settings.copy(timeoutSeconds = it)) }
@@ -98,6 +111,51 @@ fun SettingsDialog(
                 }
             }
         },
+    )
+}
+
+/**
+ * Whether PocketKeePass is the phone's autofill service. Android owns that choice, so turning it
+ * on opens Android's own screen for it. The switch re-reads the answer whenever the app comes
+ * back to the front.
+ */
+@Composable
+private fun AutofillSetting() {
+    val context = LocalContext.current
+    val autofill = remember(context) { context.getSystemService(AutofillManager::class.java) }
+    val supported = autofill?.isAutofillSupported == true
+    var on by remember { mutableStateOf(false) }
+    LifecycleResumeEffect(autofill) {
+        on = autofill?.hasEnabledAutofillServices() == true
+        onPauseOrDispose {}
+    }
+    Text(stringResource(R.string.autofill), style = MaterialTheme.typography.titleSmall)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .toggleable(on, enabled = supported, role = Role.Switch) { turnOn ->
+                if (turnOn) {
+                    val choose = Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE, "package:${context.packageName}".toUri())
+                    try {
+                        context.startActivity(choose)
+                    } catch (_: ActivityNotFoundException) {
+                        // A phone without that screen. The switch stays off.
+                    }
+                } else {
+                    autofill?.disableAutofillServices()
+                    on = false
+                }
+            }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(stringResource(R.string.autofill_switch), Modifier.weight(1f))
+        Switch(checked = on, onCheckedChange = null, enabled = supported)
+    }
+    Text(
+        stringResource(if (supported) R.string.autofill_explained else R.string.autofill_unsupported),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
