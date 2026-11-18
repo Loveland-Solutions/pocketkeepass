@@ -8,15 +8,17 @@
 //! authenticator data, and the small CBOR objects (the public key and the attestation object).
 //! We only ever *write* CBOR, in fixed shapes, so there's no CBOR parser.
 //!
-//! Only ES256 (ECDSA on P-256 with SHA-256) keys are made. Nearly every site accepts them.
+//! New passkeys are ES256 (ECDSA on P-256 with SHA-256): nearly every site accepts them. Signing
+//! also works with the other kinds KeePassXC and KeePassDX make: RS256 (RSA with PKCS#1 v1.5
+//! and SHA-256) and EdDSA (Ed25519).
 
 use base64::Engine;
 use base64::alphabet;
 use base64::engine::{DecodePaddingMode, GeneralPurpose, GeneralPurposeConfig};
-use p256::ecdsa::signature::Signer;
-use p256::ecdsa::{Signature, SigningKey};
+use p256::ecdsa::signature::{SignatureEncoding, Signer};
 use p256::pkcs8::EncodePublicKey;
 use serde_json::{Value, json};
+use sha2::Sha256;
 
 use crate::error::{Error, Result};
 use crate::util::sha256;
@@ -263,10 +265,39 @@ fn app_client_data_json(kind: &str, challenge: &[u8], origin: &str, package: &st
     )
 }
 
+/// A passkey's private key, of any kind PocketKeePass can sign with. Each wipes itself when
+/// dropped.
+pub(crate) enum PasskeyKey {
+    /// COSE -7: ECDSA on P-256 with SHA-256. The only kind we make.
+    Es256(p256::ecdsa::SigningKey),
+    /// COSE -257: RSA with PKCS#1 v1.5 padding and SHA-256.
+    Rs256(rsa::pkcs1v15::SigningKey<Sha256>),
+    /// COSE -8: Ed25519.
+    EdDsa(ed25519_dalek::SigningKey),
+}
+
+impl PasskeyKey {
+    /// A signature over `message`, encoded the way WebAuthn sends each kind: DER for ECDSA, the
+    /// raw bytes for RSA and Ed25519.
+    pub fn sign(&self, message: &[u8]) -> Result<Vec<u8>> {
+        match self {
+            PasskeyKey::Es256(key) => {
+                let signature: p256::ecdsa::Signature = key.sign(message);
+                Ok(signature.to_der().as_bytes().to_vec())
+            }
+            PasskeyKey::Rs256(key) => key
+                .try_sign(message)
+                .map(|signature| signature.to_vec())
+                .map_err(|_| Error::Invalid("The passkey couldn't sign the request.".into())),
+            PasskeyKey::EdDsa(key) => Ok(key.sign(message).to_bytes().to_vec()),
+        }
+    }
+}
+
 /// Everything the signing steps need about one passkey.
 pub(crate) struct Credential<'a> {
     pub id: &'a [u8],
-    pub key: &'a SigningKey,
+    pub key: &'a PasskeyKey,
     pub backup_eligible: bool,
     pub backed_up: bool,
 }
@@ -314,8 +345,13 @@ pub(crate) fn registration_response(
     credential: &Credential<'_>,
     client: &Client<'_>,
 ) -> Result<String> {
+    let PasskeyKey::Es256(key) = credential.key else {
+        return Err(Error::PasskeyUnsupported(
+            "New passkeys are always P-256 (ES256).".into(),
+        ));
+    };
     let client_data = client.client_data("webauthn.create", &request.challenge)?;
-    let public = p256::PublicKey::from(credential.key.verifying_key());
+    let public = p256::PublicKey::from(key.verifying_key());
     let cose_key = cose_es256_key(&public.to_sec1_bytes());
     let auth_data = authenticator_data(
         &request.rp_id,
@@ -361,7 +397,7 @@ pub(crate) fn assertion_response(
     let mut signed = Vec::with_capacity(auth_data.len() + 32);
     signed.extend_from_slice(&auth_data);
     signed.extend_from_slice(&client_data.hash);
-    let signature: Signature = credential.key.sign(&signed);
+    let signature = credential.key.sign(&signed)?;
     let id = B64URL.encode(credential.id);
     Ok(json!({
         "id": id,
@@ -371,7 +407,7 @@ pub(crate) fn assertion_response(
         "response": {
             "clientDataJSON": client_data.encoded,
             "authenticatorData": B64URL.encode(&auth_data),
-            "signature": B64URL.encode(signature.to_der().as_bytes()),
+            "signature": B64URL.encode(&signature),
             "userHandle": B64URL.encode(user_handle),
         },
         "clientExtensionResults": {},
@@ -463,8 +499,8 @@ fn attestation_object(auth_data: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use p256::ecdsa::VerifyingKey;
     use p256::ecdsa::signature::Verifier;
+    use p256::ecdsa::{Signature, SigningKey, VerifyingKey};
 
     fn key() -> SigningKey {
         SigningKey::from_slice(&[7; 32]).unwrap()
@@ -575,7 +611,7 @@ mod tests {
     #[test]
     fn registration_then_assertion_verify() {
         let request = CreationRequest::parse(CREATE).unwrap();
-        let key = key();
+        let key = PasskeyKey::Es256(key());
         let credential = Credential {
             id: &[9; 32],
             key: &key,

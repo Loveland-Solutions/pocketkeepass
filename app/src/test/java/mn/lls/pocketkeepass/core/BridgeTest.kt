@@ -267,10 +267,11 @@ class BridgeTest {
             val response = db.assertPasskey(choices[0].result.entry.id, signIn, app)
             assertTrue(response.contains("\"signature\""))
 
-            val ed = db.entry("35".repeat(16)).passkey!!
-            assertEquals("ed.example", ed.rpId)
-            assertTrue(ed.unusableReason!!.contains("Ed25519"))
-            assertTrue("KPEX_PASSKEY_PRIVATE_KEY_PEM" in ed.fields)
+            assertEquals(null, db.entry("35".repeat(16)).passkey!!.unusableReason) // Ed25519
+            val mlDsa = db.entry("3b".repeat(16)).passkey!!
+            assertEquals("mldsa.example", mlDsa.rpId)
+            assertTrue(mlDsa.unusableReason!!.contains("ML-DSA"))
+            assertTrue("KPEX_PASSKEY_PRIVATE_KEY_PEM" in mlDsa.fields)
             assertEquals(null, db.entry("37".repeat(16)).passkey)
 
             val create = """{"rp":{"id":"new.example","name":"New"},"user":{"id":"dQ","name":"u","displayName":"U"},""" +

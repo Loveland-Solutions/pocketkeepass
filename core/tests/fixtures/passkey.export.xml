@@ -3,14 +3,14 @@
 	<Meta>
 		<Generator>PocketKeePass test fixture</Generator>
 		<DatabaseName>Passkey Test</DatabaseName>
-		<DatabaseNameChanged>2026-11-18T10:27:29Z</DatabaseNameChanged>
+		<DatabaseNameChanged>2026-11-18T11:18:09Z</DatabaseNameChanged>
 		<DatabaseDescription/>
-		<DatabaseDescriptionChanged>2026-11-18T10:27:29Z</DatabaseDescriptionChanged>
+		<DatabaseDescriptionChanged>2026-11-18T11:18:09Z</DatabaseDescriptionChanged>
 		<DefaultUserName/>
-		<DefaultUserNameChanged>2026-11-18T10:27:29Z</DefaultUserNameChanged>
+		<DefaultUserNameChanged>2026-11-18T11:18:09Z</DefaultUserNameChanged>
 		<MaintenanceHistoryDays>365</MaintenanceHistoryDays>
 		<Color/>
-		<MasterKeyChanged>2026-11-18T10:27:29Z</MasterKeyChanged>
+		<MasterKeyChanged>2026-11-18T11:18:09Z</MasterKeyChanged>
 		<MasterKeyChangeRec>-1</MasterKeyChangeRec>
 		<MasterKeyChangeForce>-1</MasterKeyChangeForce>
 		<MemoryProtection>
@@ -23,9 +23,9 @@
 		<CustomIcons/>
 		<RecycleBinEnabled>True</RecycleBinEnabled>
 		<RecycleBinUUID>BAQEBAQEBAQEBAQEBAQEBA==</RecycleBinUUID>
-		<RecycleBinChanged>2026-11-18T10:27:29Z</RecycleBinChanged>
+		<RecycleBinChanged>2026-11-18T11:18:09Z</RecycleBinChanged>
 		<EntryTemplatesGroup>AAAAAAAAAAAAAAAAAAAAAA==</EntryTemplatesGroup>
-		<EntryTemplatesGroupChanged>2026-11-18T10:27:29Z</EntryTemplatesGroupChanged>
+		<EntryTemplatesGroupChanged>2026-11-18T11:18:09Z</EntryTemplatesGroupChanged>
 		<LastSelectedGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastSelectedGroup>
 		<LastTopVisibleGroup>AAAAAAAAAAAAAAAAAAAAAA==</LastTopVisibleGroup>
 		<HistoryMaxItems>10</HistoryMaxItems>
@@ -33,12 +33,12 @@
 		<Binaries/>
 		<CustomData>
 			<Item>
-				<Key>KPXC_RANDOM_SLUG</Key>
-				<Value>f5482e3ef48606100c3bb9c52324c8c99448d7d40db020426c7092ecea335d032366843111cca726cd4afdddb2ecb1bf4b757196b45e07b9e0ee982700ba583316b474b1d05bd7a7f5a2f042059cf655e410ae68aa8c3648e47abaa306bcc3f5c9e930c338ae18b338b9f40398df592e53cfff7ede5d5cb169d2f98d3d488780c15f8b1b0493c2db68fb1a70cc238cfb3f8be9bc1340bb57fc6686e66112bfc3e23178cb1ce9ee9eb3a3314dcffc192872ff820218e5fd9c9b61dd4af5f62a3ff2e915034802de9edc7647</Value>
+				<Key>_LAST_MODIFIED</Key>
+				<Value>Wed Nov 18 11:18:09 2026 GMT</Value>
 			</Item>
 			<Item>
-				<Key>_LAST_MODIFIED</Key>
-				<Value>Wed Nov 18 10:27:30 2026 GMT</Value>
+				<Key>KPXC_RANDOM_SLUG</Key>
+				<Value>1f7ac6607ac9edd95bb6f914bc257c3375215911c4079930256ae808da8c28fc056063e84de9c10f4ff90d1b9643f2ef9187315f340fee6cdbf7c9161f6486323bccb71c4b625bcf1c2762f5e052b832f0c508ce45d6a3a406e0240eb58dcdcbed469f92e111cc18c81e82530a541eb72bcaa7a4ac672ba2c8b25141c377a91cae0aa3a95963156bd72c6dda599a0299c14301c43c8fdf2ed5f9f58e29836687f5911107e5014cfbf63b10ca9ccb3f8b</Value>
 			</Item>
 		</CustomData>
 	</Meta>
@@ -49,13 +49,13 @@
 			<Notes/>
 			<IconID>48</IconID>
 			<Times>
-				<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-				<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-				<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-				<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+				<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+				<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+				<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+				<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 				<Expires>False</Expires>
 				<UsageCount>0</UsageCount>
-				<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+				<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 			</Times>
 			<IsExpanded>True</IsExpanded>
 			<DefaultAutoTypeSequence/>
@@ -70,13 +70,13 @@
 				<OverrideURL/>
 				<Tags>Passkey</Tags>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<String>
 					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
@@ -145,13 +145,13 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg59dCWC83H0ZnKEti
 				<OverrideURL/>
 				<Tags>Passkey</Tags>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<String>
 					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
@@ -220,13 +220,13 @@ kNHdbkEgA0sTqD9mLuKRPNhr7xex87skdtlg1PggdjTflZ4C2x6T+yce
 				<OverrideURL/>
 				<Tags>Passkey</Tags>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<String>
 					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
@@ -295,13 +295,13 @@ X19aQKEnRYPe2AJzMQH3EOQPbDC+CY/nKLrr1pfHeAmUYGbK9+xf0BM6
 				<OverrideURL/>
 				<Tags>Passkey</Tags>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<String>
 					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
@@ -358,13 +358,13 @@ X19aQKEnRYPe2AJzMQH3EOQPbDC+CY/nKLrr1pfHeAmUYGbK9+xf0BM6
 				<OverrideURL/>
 				<Tags>Passkey</Tags>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<String>
 					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
@@ -423,13 +423,13 @@ MC4CAQAwBQYDK2VwBCIEINuzZJ14EZU12hwOFpLvkKhbGUI70YlNcBhwzMJsJEs+
 				<OverrideURL/>
 				<Tags>Passkey</Tags>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<String>
 					<Key>AndroidApp</Key>
@@ -495,6 +495,215 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkw4HMiMohA7QbdYw
 				<History/>
 			</Entry>
 			<Entry>
+				<UUID>Ojo6Ojo6Ojo6Ojo6Ojo6Og==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags>Passkey</Tags>
+				<Times>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+					<Value ProtectInMemory="True">Ojo6Ojo6Ojo6Ojo6Ojo6Ojo6Ojo6Ojo6Ojo6Ojo6Ojo</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+					<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCePH7AIirl6QFi
+2JQLzFqpn9Jx9eAmYR1ZSET7XGfSQDk+nX6OtIzs64pZvwUHoAJo52nOEVWVL1z8
+cw4OxJx8R86NzDkYRGsCBa2YQji3NoHiMsHnfJ0KWiAYNtV1RLB5rBZgpzw5Fgr+
+czqZ+T1Z0lhqU6w1AKaFtb9GMD8vV+6ERBW2QEi1RXxGaXMj2HYLVOpq16Fn7Okm
+kgc0elDlWbT8/qEoilTmddAq9QBNcMwZu3biK0oqvF7gX1QouZLxHfclUerdS/Nc
+tW22InRYrGzsvF22Tss1amcTWPi2rNsMhBtR8S+ttZPw4uP4h7YqAzaRjBF+k5jj
++d8Z+tHvAgMBAAECggEAEVC2YAj9H76BF9NyU94vV5t1GGJa/mgnIYN+hPEGLWQ4
+v2jVlgEc4LofoBV+k+iHCvqzwch00IfnyXo/og8SvqjO6gZcgxLNkOGVLvGkKixN
+RzbdsBqbRqw5Ed1CO3xiQVY69qWmOer3FgP++CVleMRDR5NTZ1NkZYJPZXtXFrOB
+Bibq/yFmB6o6VLqs61KeDoox+2k2doqa1SfW0BwuVcCtJ5IcxocO40NLWUYLlbML
+I2T2lkiFMwy1/0zzaD4WJcnn3ljsRGF0JdPYu17Zv1IWq4RjAR2LOELYnpM7Jgz/
+wWSAR3MFFOpbeV/VKmzj1qISdCwW1FxgZEJqc+Y7SQKBgQDOxVJdL/8pcsSLH98k
+uHtS+RubcVF8qEytogeyJv2Knc5drFCPk+a8DWN1lucXsotvZ/7GkiY3GN8W6V3l
+8KH/yomQ2L1k/iMFUQ7R0qXi1UxpjsNmToYufG6OSTb92K/9GMrMWd6Im47c2Rbc
+ywqfnC6+Vxk5Xsj41ONhvZdmaQKBgQDD6P9HwZ87LCXzaziE//yCiWys7M8YNbn+
+BUZiZ7YfnPv8Xlw0E55jaoemUxuRVdqIrM6pqgaOeKgb5Y062CzDysiHfPmF6hfU
+fo8na30Zgxhn1QT+2R6Te+wFAMEXN93/At42gCgNQWXwMxyqciZIItmEhGSjBuK2
+KxTANbjalwKBgEXLoZPHIdBx5xo3NfGFPEuzvrfntmPnw4pQyVw/gRILVp+UDNWK
+TTZpJouI1pTPNfXzGrMYnkG26YcoWwPFCEn5qhn0r2mpx1SCGgiFnG1HJrXy9M5R
+70U9x2vMFv306OL8PWhhZZajO8Qcm3UILJvX8odZizAsaJZl9iMGBlcRAoGARf3a
+JlLAhq1xKZQm7y1dk21xjB5WprmbJ2vPB50x7f1x8Wns2xYfQjlvGTcb5EKd/rJu
+ayM5kHD+7miGmn1dEN5D4lP9+Z/2v44vqs+2NAUoFQB/9mSvjdV6Lxdj5N2qzE7E
+AQisRoAU4UoBdcuubZs1xyhdo/jzyk197mXDEyUCgYEAkwY66VAKsXhoegeuWpQd
+w9Jj/Z1iijzw19uOsCsI3PgTazQM8Ge4XMeQ7dd/GfQl4a3WnS0MUb+dW59ph6sR
+B1pOY4S2VV4CTRc/DB9M37I3ZQnQFRu6uZbqR2gsdwZ7A6f2CVTtqwIK1YTwVccY
+lZsS4/MGD3sJByL+URDq8qA=
+-----END PRIVATE KEY-----</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+					<Value>rsa.example</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USERNAME</Key>
+					<Value>rsa</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+					<Value ProtectInMemory="True">cnNh</Value>
+				</String>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>RSA</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value/>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Entry>
+				<UUID>Ozs7Ozs7Ozs7Ozs7Ozs7Ow==</UUID>
+				<IconID>0</IconID>
+				<ForegroundColor/>
+				<BackgroundColor/>
+				<OverrideURL/>
+				<Tags>Passkey</Tags>
+				<Times>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
+					<Expires>False</Expires>
+					<UsageCount>0</UsageCount>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
+				</Times>
+				<String>
+					<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
+					<Value ProtectInMemory="True">Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_PRIVATE_KEY_PEM</Key>
+					<Value ProtectInMemory="True">-----BEGIN PRIVATE KEY-----
+MIIKPgIBADALBglghkgBZQMEAxEEggoqMIIKJgQgOhL2SSngiDjfheFwpe+ENnz9
+oi2rxBe7CrcLBRryLkgEggoAFYEwlLUWI1dh1iuLWdG0HyXTXYEdRN/3CMZdyU6X
+S3cs0jO9HydSWuk+bfhfik+qRmkgsXwv85n+CwtF4CkXYqv/ja9rUqrjSNR2uPb/
+vGrE5zTcMV1vyN/F7OUR+RsA07vzOuWnLxqEsmK7dHwnkrA08Ymol/GFGBF4/wFT
+eB7AIIbgCEYKRyyjFjLIoIHMFIQJMpGQyEHUQjJhFHIZQg1IgGQBNxAEtIniEk4D
+ow3EOIaaglBaAClchjCIRCkQpiwgNiITRkLTsGQkmCTMkhEjuSCLBC4UBJALRQwZ
+QhKLqGkMNxAKkxHbQiAKNAyUAoogt2hLxhDisARZBpIBkBABNg2QtCzJwixiBjGU
+goxkBo5DRIDZMGqkMgKkJCiCJGxTNCjQJhEJhlAQJIECRQrMRJAcSI0cRoIalQ0R
+QGhiwpATFAgiwIxkBEqilG3ExpDCkgSEOCoDORIINQjCpFEbtRHEqE0Ds5GCQFIT
+ogVZpikSQCKcAlFiQGgIIERCgigiNQjaEIhUgkwkpmQagRGRECoKOURiQgAMRUlb
+omnIGEyDhg2bJokAKHBMOGGKMC7YlFDSKDGTuERYmCCLomzjGEnIEC0JM2BkAiWI
+JlGYACWLFipSJo2QmA2cGI3JBI4UFGwRtZAioSQLSUokE5BJQoLLJGILNmoJtwxL
+tjBUOIgBqG0ZImQJgBEBtk1TGA5gklFbIk4MGYDBAkDIGC4gBWocEW5KOCUIkTHD
+iE2bMlDMqARQQoKiSHLboJGaskESBSDBIhCiFFCRFCEIAxCRJI0SCExjMIpEooQj
+BimIGJIEJUAkqQUaOXDLFo4iOQjYKG0jkUTURGARA0kKFkjgGHLiRkhImCBQmGgJ
+mYiStlBhCJJLJgwTBkULOIZQlAghiICBgFFgAioSR4HkBE1YkAhcRIVEInDjNiFR
+qGEiI2ghg4WgREjBuIyQuDHLpC2YIgTcAlFjiEBaNnAJIiEKSCLcGAkCME7gxggT
+JwjIFgKDNBICRmQESTHRJG2aqG3jRlCECApZAAaBgoQcQkXEBgUDhTDEFC1RxhGA
+BAkZBjAQkIUKpIkBM2DhqGETRkpiNolBqAwUNDGQMAHcCCSgQihIGCkgom2TSG0B
+ESTYRAITJZKQFgSBlglRSEwZRgzQCA1UhmjaGFJDqEnCEk2TJDKbRo2Usi3ZIEjk
+BGJA2JAu+rMJPdRTtx7jOjKq5K38O8+DD7bm8GpIbWVmS5R4hL651gRXl7ssL/FI
+42aT1qhmk+2p2PMT9fsbNjxp7Bhq5SKp7A4Vx1XKDlMMMxpKRUG3rG7yKNhgMVFm
+r3DisHXiy4VPcUI77PbNUd0qLIhO9YqKFeUd5THm1sYgFdEBD0x9xWYmd5jrGdTt
+o2FrUh+bVFFN3nqMrBeo1Y4BCSeB3O5rZwCHjtiG/N+mqcaHsYsBalz4et4oMdGI
+ElE1b5vef4nkGscQ8I1/BzlDLh0BC/zYcVUM1kVsRKniy43SHGxpgRflMg8UnOx0
+fHPCVnFvsRNAFhXDBqf2d/6ooLAw9184WNjlqIftWwLXtJSRU/QaYzxqVJ/zk48X
+oIGTPgWXzNLeXjmh6+RkcWeJcT4zVgaL8DgZAGYKvXR0YSvx9MH6+rPzZogTexVT
+EPWwIqPl/ZfL8m6DHgJVBi8Si2JE7GL2MGMcT4oss4fr8FdZRpU+tO7Fy20egiML
+Jc/bttE3K/KM9r4M/T59nAu6hjoBkTo4bjfrxYTUT3Jf2aiTTQTHJdGJmXuaBw+F
+0LudmObOKfj48eBpDldJ6zJqprqCEVoowKfyqIDSFgnD2kJfppCQRor94w5BGFdQ
+KmfMVbxr/kH8rGp7LIv/kn6mnKRRPTRx09rqoj8R/BwqLt3JaRxuxC6DH4fb3/Cg
+WGPHdibbyqhx7jvuIm6Yr2hjxXxfDcT6Wmv3u3d4x/VwEZ0fCrQSTAGlCySUf10E
+eW5qTOc8yH8GH7H+MVOeuiEq8LBBM7SOjHk+usF+WNiHr6Ch92iQFSkAaSy4HMUi
+Idxot4BMbhyVknl9n6kin7cW1r/UcxlxXXNa23cv0FKPumhOa3DJr4CJsXOneEmc
+7lRcOaaO5OxcR3AjCYe4b1XlA+fPRTWiNM5aCzWuNpWy6YO7YwBVBnLwsXmMsqt5
+94xA/AmZo2Ru1ryPj1tUpeGGwEoojxes1bssv9/ZymBzgqX34JC4+RsOur6iXMpO
+hNn7TvtuZfwl21xKyxEJVDtW/hL7O5Wv7G1hQ8hBbSc0orxBXDM0uC2w2QCrVVZV
+VunQfBmCu0LqTX063+ifrePhKMASp13AbjDHluDH7bsC+3OeSY9CKYg2mn8HEhL2
+ZvnGWCwVmv79w5TWK+kYvgJGxW9B+I6+LdJ/oVMAUDis+4BhmUR39H2pb+O5oDbU
+pnO0hj6YXEsUVfmCCwkXuIh7Ahl9KOx5P4Ruv/4sNDDMyXBE72wI8C4pHr5lIlHg
+tMrEZtdMtGnLXmUHmrIGCovhAnwPI4uyCwW8Ss8+cDfwj5ptuiCaWWg+KRgXr8wt
+OrEHbYyvitMfmzRtUMymeC5pTb8dpKHe0s0RA9udgG4qz+v6WmqS6CS4FUHa0ghZ
+5w1Zqb/jjxc0/ULgepF7hGhJh/nBZ15fARTkGBPLacTn4ApbsTu30nfCW8qlYMql
+HJb1Glkr7CuCE4MNEvicp3FqneJr9na9yyaoYO6EogvrlhDjREVbqt90RqZHIeDQ
+FP0GleZ7JKRf8PIAlFpRgjjp20VqSK+9ho+CPfxL5wiUJydcqrwdRAPYF3ElRlyf
+l+AWA4Z6oz2q7xgnAokjoxdh75ifaVvy6CmMcX0pAIRqiJt7TsWwDGx1gydRO8FJ
+2bnJiS7sNJbyvmU4LDDR1cJLkFWnEnhhr5sb7a7msX/Cw+dgs9PTTC6BfFgc6MDa
+nY2of57AFeIzGJTB/uPf//ESwrg9k4e2TKiq31so2Z91emEfd2yZafS+UE1SDEmV
+GkKpE+gVABSPuYhbZPayfQeQugh5sG97q27RUZCWly96kqFirkRAwi7L6sAku0Zh
+GoYzxi+VC0RONeyZ/4jIgo9jHCdseZj7D8iS/LF0qSAxqOVkbzuYqGzlSe/0T2tN
+FkZss0RXuXwXqTkErKsRk7UmS7xZ4PaUF8v9G8eWG3wOP3MN08e47IvID8G/UyAf
+nR90Pl5YsQiKe3bOK0PXFg315H6SFSXIq73skj1oMbx6Q66o+5gNA1js2Le1oAa0
+GiIA8G8jPNjXB4rX9lFqBxixvpLlVmhbQ5GZDJZQIG21eIPAqWKloyoHeC2rrGy/
+8SdeQcdhJSSaiiSIrlE3a51qU8ffU+VqW9erE6M7wVAWD7V4QVnSlrOznnRRvi1L
+oPlYU6Z+BQtYPT9jrkYlyCiqfPl/WqberlDmyfj7vTpNjw==
+-----END PRIVATE KEY-----</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_RELYING_PARTY</Key>
+					<Value>mldsa.example</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USERNAME</Key>
+					<Value>mldsa</Value>
+				</String>
+				<String>
+					<Key>KPEX_PASSKEY_USER_HANDLE</Key>
+					<Value ProtectInMemory="True">bWxkc2E</Value>
+				</String>
+				<String>
+					<Key>Notes</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>Password</Key>
+					<Value ProtectInMemory="True"/>
+				</String>
+				<String>
+					<Key>Title</Key>
+					<Value>ML-DSA</Value>
+				</String>
+				<String>
+					<Key>URL</Key>
+					<Value/>
+				</String>
+				<String>
+					<Key>UserName</Key>
+					<Value/>
+				</String>
+				<AutoType>
+					<Enabled>True</Enabled>
+					<DataTransferObfuscation>0</DataTransferObfuscation>
+					<DefaultSequence/>
+				</AutoType>
+				<History/>
+			</Entry>
+			<Entry>
 				<UUID>Nzc3Nzc3Nzc3Nzc3Nzc3Nw==</UUID>
 				<IconID>0</IconID>
 				<ForegroundColor/>
@@ -502,13 +711,13 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkw4HMiMohA7QbdYw
 				<OverrideURL/>
 				<Tags/>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<String>
 					<Key>Notes</Key>
@@ -543,13 +752,13 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkw4HMiMohA7QbdYw
 				<Notes/>
 				<IconID>48</IconID>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<IsExpanded>True</IsExpanded>
 				<DefaultAutoTypeSequence/>
@@ -564,13 +773,13 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkw4HMiMohA7QbdYw
 					<OverrideURL/>
 					<Tags>Passkey</Tags>
 					<Times>
-						<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-						<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-						<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-						<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+						<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+						<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+						<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+						<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 						<Expires>False</Expires>
 						<UsageCount>0</UsageCount>
-						<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+						<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 					</Times>
 					<String>
 						<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>
@@ -630,13 +839,13 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkw4HMiMohA7QbdYw
 				<Notes/>
 				<IconID>48</IconID>
 				<Times>
-					<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-					<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-					<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-					<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+					<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+					<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+					<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+					<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 					<Expires>False</Expires>
 					<UsageCount>0</UsageCount>
-					<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+					<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 				</Times>
 				<IsExpanded>True</IsExpanded>
 				<DefaultAutoTypeSequence/>
@@ -651,13 +860,13 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkw4HMiMohA7QbdYw
 					<OverrideURL/>
 					<Tags>Passkey</Tags>
 					<Times>
-						<LastModificationTime>2026-11-18T10:27:29Z</LastModificationTime>
-						<CreationTime>2026-11-18T10:27:29Z</CreationTime>
-						<LastAccessTime>2026-11-18T10:27:29Z</LastAccessTime>
-						<ExpiryTime>2026-11-18T10:27:29Z</ExpiryTime>
+						<LastModificationTime>2026-11-18T11:18:09Z</LastModificationTime>
+						<CreationTime>2026-11-18T11:18:09Z</CreationTime>
+						<LastAccessTime>2026-11-18T11:18:09Z</LastAccessTime>
+						<ExpiryTime>2026-11-18T11:18:09Z</ExpiryTime>
 						<Expires>False</Expires>
 						<UsageCount>0</UsageCount>
-						<LocationChanged>2026-11-18T10:27:29Z</LocationChanged>
+						<LocationChanged>2026-11-18T11:18:09Z</LocationChanged>
 					</Times>
 					<String>
 						<Key>KPEX_PASSKEY_CREDENTIAL_ID</Key>

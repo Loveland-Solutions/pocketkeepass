@@ -21,6 +21,7 @@
 
 use p256::ecdsa::SigningKey;
 use p256::pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding, PrivateKeyInfoRef};
+use sha2::Sha256;
 use zeroize::Zeroizing;
 
 use crate::FillTarget;
@@ -30,8 +31,8 @@ use crate::error::{Error, Result};
 use crate::model::{Database, Entry, Group};
 use crate::util::random_bytes;
 use crate::webauthn::{
-    AssertionRequest, B64URL, Client, CreationRequest, Credential, assertion_response, decode_b64,
-    registration_response,
+    AssertionRequest, B64URL, Client, CreationRequest, Credential, PasskeyKey, assertion_response,
+    decode_b64, registration_response,
 };
 use crate::xml::Element;
 use base64::Engine;
@@ -214,12 +215,32 @@ fn normalize_pem(pem: &str) -> Option<Zeroizing<String>> {
     Some(out)
 }
 
+/// RSA keys shorter than this aren't used: 2048 bits is what KeePassXC makes, and the least any
+/// current guidance accepts.
+const MIN_RSA_BITS: usize = 2048;
+
 /// The signing key, or a sentence saying why it can't be used.
-fn load_key(pem: &str) -> std::result::Result<SigningKey, String> {
+fn load_key(pem: &str) -> std::result::Result<PasskeyKey, String> {
     let damaged = || "This passkey's key is damaged.".to_owned();
     let pem = normalize_pem(pem).ok_or_else(damaged)?;
     if let Ok(key) = SigningKey::from_pkcs8_pem(&pem) {
-        return Ok(key);
+        return Ok(PasskeyKey::Es256(key));
+    }
+    if let Ok(key) =
+        <ed25519_dalek::SigningKey as ed25519_dalek::pkcs8::DecodePrivateKey>::from_pkcs8_pem(&pem)
+    {
+        return Ok(PasskeyKey::EdDsa(key));
+    }
+    if let Ok(key) = <rsa::PrivateKey as rsa::pkcs8::DecodePrivateKey>::from_pkcs8_pem(&pem) {
+        let bits = rsa::traits::PublicKeyParts::size(&key) * 8;
+        if bits < MIN_RSA_BITS {
+            return Err(format!(
+                "This passkey's RSA key is too short ({bits} bits) to be safe."
+            ));
+        }
+        return Ok(PasskeyKey::Rs256(rsa::pkcs1v15::SigningKey::<Sha256>::new(
+            key,
+        )));
     }
     // Say which kind of key it is, if it's a kind we know of.
     let body: Zeroizing<String> = Zeroizing::new(
@@ -230,12 +251,11 @@ fn load_key(pem: &str) -> std::result::Result<SigningKey, String> {
     let der = Zeroizing::new(decode_b64(&body).ok_or_else(damaged)?);
     let info = PrivateKeyInfoRef::try_from(der.as_slice()).map_err(|_| damaged())?;
     let kind = match info.algorithm.oid.to_string().as_str() {
-        "1.3.101.112" => "Ed25519",
-        "1.2.840.113549.1.1.1" => "RSA",
         "1.2.840.10045.2.1" => "an elliptic curve other than P-256",
         "2.16.840.1.101.3.4.3.17" | "2.16.840.1.101.3.4.3.18" | "2.16.840.1.101.3.4.3.19" => {
             "ML-DSA"
         }
+        "1.3.101.113" => "Ed448",
         _ => return Err(damaged()),
     };
     Err(format!(
@@ -526,7 +546,11 @@ impl Database {
         let request = CreationRequest::parse(request_json)?;
         self.check_creation(&request)?;
 
-        let key = new_key()?;
+        let new = new_key()?;
+        let pem = new
+            .to_pkcs8_pem(LineEnding::LF)
+            .map_err(|_| Error::Invalid("The new passkey's key couldn't be encoded.".into()))?;
+        let key = PasskeyKey::Es256(new);
         let credential_id = random_bytes(32)?;
         let credential = Credential {
             id: &credential_id,
@@ -535,9 +559,6 @@ impl Database {
             backed_up: true,
         };
         let response_json = registration_response(&request, &credential, client)?;
-        let pem = key
-            .to_pkcs8_pem(LineEnding::LF)
-            .map_err(|_| Error::Invalid("The new passkey's key couldn't be encoded.".into()))?;
 
         let passkey_fields = [
             set(PASSKEY_USERNAME, request.user_name.as_str(), false),
@@ -737,15 +758,18 @@ mod tests {
     }
 
     #[test]
-    fn other_key_types_are_named() {
+    fn key_types_are_recognized() {
         // An Ed25519 PKCS#8 key (RFC 8410's example).
         let ed25519 = "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC\n-----END PRIVATE KEY-----";
+        assert!(matches!(load_key(ed25519), Ok(PasskeyKey::EdDsa(_))));
+        // An Ed448 key (RFC 8410's example) is named, not called damaged.
+        let ed448 = "-----BEGIN PRIVATE KEY-----\nMEcCAQAwBQYDK2VxBDsEOWyCpWLLgI0Q1jK+ichRPr9Bn1Cp4cXpGv/fhrQvl5Z8\nnCMR2pXzLqrlxomZ/ldwmJSNuhJsl6iEZw==\n-----END PRIVATE KEY-----";
         assert_eq!(
-            load_key(ed25519).unwrap_err(),
-            "This passkey uses Ed25519 keys, which PocketKeePass can't use yet."
+            load_key(ed448).err().unwrap(),
+            "This passkey uses Ed448 keys, which PocketKeePass can't use yet."
         );
         assert_eq!(
-            load_key("nonsense").unwrap_err(),
+            load_key("nonsense").err().unwrap(),
             "This passkey's key is damaged."
         );
     }

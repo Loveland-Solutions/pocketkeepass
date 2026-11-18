@@ -89,14 +89,22 @@ fn b64(value: &Value) -> Vec<u8> {
 
 /// The public key the fixture stores for an entry, as OpenSSL wrote it.
 fn public_key(db: &Database, entry: &[u8; 16]) -> VerifyingKey {
+    use p256::pkcs8::DecodePrivateKey;
+    *p256::ecdsa::SigningKey::from_pkcs8_pem(&private_pem(db, entry))
+        .unwrap()
+        .verifying_key()
+}
+
+/// The private key the fixture stores for an entry (as OpenSSL wrote it), with its line breaks
+/// put back if the entry left them out.
+fn private_pem(db: &Database, entry: &[u8; 16]) -> String {
     let pem = db
         .find_entry(entry)
         .unwrap()
         .entry
         .field("KPEX_PASSKEY_PRIVATE_KEY_PEM")
         .unwrap();
-    use p256::pkcs8::DecodePrivateKey;
-    let normalized: String = {
+    {
         let body: String = pem
             .replace("-----BEGIN PRIVATE KEY-----", "")
             .replace("-----END PRIVATE KEY-----", "")
@@ -111,10 +119,7 @@ fn public_key(db: &Database, entry: &[u8; 16]) -> VerifyingKey {
             "-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----\n",
             lines.join("\n")
         )
-    };
-    *p256::ecdsa::SigningKey::from_pkcs8_pem(&normalized)
-        .unwrap()
-        .verifying_key()
+    }
 }
 
 /// Checks a sign-in response's signature, and returns its authenticator data.
@@ -218,19 +223,97 @@ fn other_apps_formats_are_read() {
         .passkeys_for(&get("unwrapped.example", &[&[0x34; 32]]), &BROWSER)
         .unwrap();
     assert_eq!(hits[0].status, PasskeyStatus::Ready);
-    // Ed25519 is listed, with the reason it can't be used.
-    let hits = db.passkeys_for(&get("ed.example", &[]), &BROWSER).unwrap();
+    // Ed25519 and RSA keys (KeePassXC makes both) are used.
+    for rp in ["ed.example", "rsa.example"] {
+        let hits = db.passkeys_for(&get(rp, &[]), &BROWSER).unwrap();
+        assert_eq!(hits[0].status, PasskeyStatus::Ready, "{rp}");
+    }
+    // ML-DSA (KeePassDX) is listed, with the reason it can't be used.
+    let hits = db
+        .passkeys_for(&get("mldsa.example", &[]), &BROWSER)
+        .unwrap();
     assert_eq!(
         hits[0].status,
         PasskeyStatus::Unusable(
-            "This passkey uses Ed25519 keys, which PocketKeePass can't use yet.".into()
+            "This passkey uses ML-DSA keys, which PocketKeePass can't use yet.".into()
         )
     );
-    let entry = [0x35; 16];
+    let entry = [0x3b; 16];
     assert!(matches!(
-        db.assert_passkey(&entry, &get("ed.example", &[]), &BROWSER),
+        db.assert_passkey(&entry, &get("mldsa.example", &[]), &BROWSER),
         Err(Error::PasskeyUnsupported(_))
     ));
+}
+
+#[test]
+fn ed25519_and_rsa_passkeys_sign() {
+    let db = database();
+    for (entry, rp) in [([0x35; 16], "ed.example"), ([0x3a; 16], "rsa.example")] {
+        let response = db.assert_passkey(&entry, &get(rp, &[]), &BROWSER).unwrap();
+        let response: Value = serde_json::from_str(&response).unwrap();
+        let mut signed = b64(&response["response"]["authenticatorData"]);
+        signed.extend_from_slice(&HASH);
+        let signature = b64(&response["response"]["signature"]);
+        let pem = private_pem(&db, &entry);
+        if rp == "ed.example" {
+            use ed25519_dalek::Verifier;
+            use ed25519_dalek::pkcs8::DecodePrivateKey;
+            assert_eq!(signature.len(), 64);
+            let key = ed25519_dalek::SigningKey::from_pkcs8_pem(&pem).unwrap();
+            let signature = ed25519_dalek::Signature::from_slice(&signature).unwrap();
+            key.verifying_key()
+                .verify(&signed, &signature)
+                .expect("Ed25519 verifies");
+        } else {
+            use p256::ecdsa::signature::Verifier;
+            use rsa::pkcs8::DecodePrivateKey;
+            assert_eq!(signature.len(), 256); // 2048 bits
+            let key = rsa::PrivateKey::from_pkcs8_pem(&pem).unwrap();
+            let verifying = rsa::pkcs1v15::VerifyingKey::<sha2::Sha256>::new(key.to_public_key());
+            let parsed = rsa::pkcs1v15::Signature::try_from(signature.as_slice()).unwrap();
+            verifying.verify(&signed, &parsed).expect("RSA verifies");
+        }
+        verify_with_openssl_private_key(&pem, &signed, &signature, rp == "ed.example");
+    }
+}
+
+/// Checks a signature with OpenSSL, from the private key it made: `pkeyutl -rawin` for Ed25519
+/// (which signs the message itself), `dgst -sha256 -prverify` for RSA and ECDSA.
+fn verify_with_openssl_private_key(pem: &str, message: &[u8], signature: &[u8], ed25519: bool) {
+    if Command::new("openssl").arg("version").output().is_err() {
+        eprintln!("SKIPPED: openssl not found");
+        return;
+    }
+    let dir = std::env::temp_dir().join(format!(
+        "pocketkeepass-passkey-{}-{}",
+        std::process::id(),
+        rand_suffix()
+    ));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = |name: &str| -> PathBuf { dir.join(name) };
+    std::fs::write(path("key.pem"), pem).unwrap();
+    std::fs::write(path("message"), message).unwrap();
+    std::fs::write(path("signature"), signature).unwrap();
+    let mut command = Command::new("openssl");
+    if ed25519 {
+        command
+            .args(["pkeyutl", "-verify", "-rawin", "-inkey"])
+            .arg(path("key.pem"))
+            .arg("-in")
+            .arg(path("message"))
+            .arg("-sigfile")
+            .arg(path("signature"));
+    } else {
+        command
+            .args(["dgst", "-sha256", "-prverify"])
+            .arg(path("key.pem"))
+            .arg("-signature")
+            .arg(path("signature"))
+            .arg(path("message"));
+    }
+    let out = command.stderr(Stdio::inherit()).output().unwrap();
+    std::fs::remove_dir_all(&dir).unwrap();
+    assert!(out.status.success(), "OpenSSL rejects the signature");
 }
 
 #[test]
@@ -590,7 +673,7 @@ fn keepassxc_reads_passkeys_we_create() {
     };
     let db_path = path.to_str().unwrap();
     let info = run(&["db-info", "-q", db_path]);
-    assert!(info.contains("Number of passkeys: 8"), "{info}");
+    assert!(info.contains("Number of passkeys: 10"), "{info}");
     for (key, value) in &expected {
         let shown = run(&["show", "-q", "-s", "-a", key, db_path, "/Example Site"]);
         assert_eq!(shown.trim_end(), value.trim_end(), "{key}");

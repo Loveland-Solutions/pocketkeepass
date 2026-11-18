@@ -111,7 +111,7 @@ Hand-written XML gives every group and entry a fixed UUID (all 16 bytes the same
 
 ## Passkeys
 
-`passkey.kdbx` unlocks with password `test-password`. Like `autofill.kdbx`, it's KDBX 3.1, **written by KeePassXC** from the hand-written `passkey.source.xml` with the same two commands. Every private key was made by OpenSSL (`openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256`, and `-algorithm ed25519` for the Ed25519 one), so the keys come from an implementation independent of ours. Passkeys use KeePassXC's `KPEX_PASSKEY_*` fields. Credential IDs are 32 bytes of the entry's own UUID byte (`31` to `39`). KeePassXC's `db-info` counts 7 passkeys: it leaves out the recycle bin.
+`passkey.kdbx` unlocks with password `test-password`. Like `autofill.kdbx`, it's KDBX 3.1, **written by KeePassXC** from the hand-written `passkey.source.xml` with the same two commands. Every private key was made by OpenSSL (`openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256`; `-algorithm ed25519`, `-algorithm RSA -pkeyopt rsa_keygen_bits:2048`, and `-algorithm ML-DSA-44` for the other kinds), so the keys come from an implementation independent of ours. Passkeys use KeePassXC's `KPEX_PASSKEY_*` fields. Credential IDs are 32 bytes of the entry's own UUID byte (`31` to `3b`). KeePassXC's `db-info` counts 9 passkeys: it leaves out the recycle bin.
 
 | Group | Entries | What it tests |
 |---|---|---|
@@ -119,7 +119,9 @@ Hand-written XML gives every group and entry a fixed UUID (all 16 bytes the same
 | | "Example (Bob)" (`32`): rpId written `Example.com`, BE and BS `0` | rpIds compare ignoring case; the flags are read |
 | | "StrongBox Import" (`33`): `strongbox.example`, with `KPEX_PASSKEY_GENERATED_USER_ID` and `KPXC_PASSKEY_USERNAME` | KeePassXC's StrongBox fields take precedence. No flag fields, so both default to on |
 | | "Unwrapped PEM" (`34`): `unwrapped.example`, the PEM without line breaks, the credential ID padded | Other apps' lax encodings |
-| | "Ed25519" (`35`): `ed.example`, an Ed25519 key | Listed, but explained as unusable |
+| | "Ed25519" (`35`): `ed.example`, an Ed25519 key | EdDSA signing (KeePassXC makes these) |
+| | "RSA" (`3a`): `rsa.example`, a 2048-bit RSA key | RS256 signing (KeePassXC makes these) |
+| | "ML-DSA" (`3b`): `mldsa.example`, an ML-DSA-44 key | Listed, but explained as unusable (KeePassDX makes these; we don't sign with them yet) |
 | | "Linked App" (`36`): `app.example`, `AndroidApp` `com.example.app` with `AndroidApp Signature` `AA:AA:…` (32 times), and `AndroidApp_1` `com.example.other` without a signature | KeePassDX's app links |
 | | "Example Password" (`37`): `https://example.com/login`, no passkey | A place to add a passkey to |
 | Hidden (`02`), `EnableSearching` false | "Hidden Passkey" (`38`): `example.com` | Never offered |
