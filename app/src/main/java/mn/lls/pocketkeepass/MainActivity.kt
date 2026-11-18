@@ -124,6 +124,9 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
     val pickKeyFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(viewModel::onKeyFilePicked)
     }
+    val saveBackupAs = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        uri?.let(viewModel::saveBackupAs)
+    }
     val saveCopy = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
         uri?.let(editor::saveCopy)
     }
@@ -152,6 +155,8 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
             onRemoveKeyFile = viewModel::removeKeyFile,
             onQuickUnlock = viewModel::quickUnlock,
             onOfferQuickUnlock = viewModel::offerQuickUnlock,
+            onRestoreBackup = viewModel::restoreBackup,
+            onSaveBackupAs = { saveBackupAs.launch(current.database.name.substringBeforeLast('.') + " (restored).kdbx") },
         )
         is DatabaseState.Unlocked -> {
             val databaseName = current.summary.name.ifEmpty { current.database.name.substringBeforeLast('.') }

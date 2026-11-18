@@ -119,8 +119,14 @@ Update this section as milestones land.
   - the code is based on the phone's clock. Android keeps it in sync with the network by default.
 
   KeePassXC agrees on every code (`tests/totp.rs` runs `keepassxc-cli show --totp`), and the RFC 6238 and 4226 test vectors pass. Checked by hand on the emulator (API 37) with `totp.kdbx`: codes for the legacy, Steam, KeePass Base32, and default entries matched KeePassXC's at the same moment, the shown code rolled over by itself, a copy pasted as the plain code and Android's preview showed dots, the HOTP entry explained itself and listed its `otp` field, rotation hides the code again, and the editor still lists every `TimeOtp-*` field.
+- **Done:** backups around every save (`files/Backups.kt`, `Session.write`, the unlock screen):
+  - before the database's file is overwritten, two copies (both still encrypted) go to `noBackupFilesDir/backups/`, named by the SHA-256 of the file's location: the **previous version** (`<hash>.kdbx`, the file as it was) and the **unfinished save** (`<hash>.unfinished.kdbx`, the new bytes). The unfinished save is deleted once the write is read back and confirmed, or when the file next opens fine (`Session.start`), so it only outlives a save that was cut short, and then it has the latest changes. Each copy is written to a temporary file, synced, and renamed into place. If a copy can't be written (storage full), the save goes ahead anyway. The 3 most recently saved databases keep their copies; older ones are deleted;
+  - after a conflict, "replace it" backs up the other app's version only if our master key opens it (that costs one more key derivation), so a damaged or foreign file never pushes out a previous version that works;
+  - when the file is missing or won't open as a database (`NotKeePass`, `Corrupt`, `UnsupportedVersion`, or can't be read), the unlock screen offers the unfinished save if there is one, or else the previous version, with its time. "Restore backup" asks first, then writes it over the file (read back and compared, like a save). "Save as new file" (`CreateDocument`) writes it elsewhere instead, leaves the old file alone, and makes the new file the database with the same key file (the copies move with it). A wrong password never offers either.
+
+  Checked by hand on the emulator (API 37): the previous version matched the file byte for byte after a save, and no unfinished copy was left; a file truncated to 600 bytes was offered the previous version, restored, and unlocked; a deleted file was saved as a new file, which unlocked; a wrong password showed no backup; an unfinished save (put in place by hand, then the file truncated) was offered as "cut short", restored with its latest change, and then deleted; and "replace it" over random bytes kept the old previous version, while over a valid KeePassXC file with the same password it backed that file up.
 - **Done:** the app icon (`art/icon`): an adaptive icon with a themed (monochrome) layer.
-- **Tests:** 135 in Rust (`cargo test --release`), 36 in Kotlin (`./gradlew :app:testDebugUnitTest`).
+- **Tests:** 135 in Rust (`cargo test --release`), 42 in Kotlin (`./gradlew :app:testDebugUnitTest`).
 - **Not built yet:** changing the master key or database settings, restoring from history, entry dates and attachments (not shown, but kept), setting up TOTP from the app (today it means adding an `otp` field holding an `otpauth://` URI by hand).
 - **Next:** the MVP features are all in. Candidates: setting up TOTP in the editor, saving new logins from autofill, testing on a physical phone.
 - **History:** the first skeleton used the kotpass library and was replaced the same day (2026-11-17). See "Project decisions".
@@ -234,7 +240,7 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 
 ### Files and sync
 - Use the **Storage Access Framework** (`ACTION_OPEN_DOCUMENT`) with persisted URI permissions. Cloud sync then works through any provider (Google Drive, Dropbox, Nextcloud, Syncthing folders) without our own cloud code.
-- **Safe save:** write the full database to a temp location, verify it decrypts, then overwrite. Never leave a half-written file.
+- **Safe save:** build the full database in memory, verify it decrypts, back up the current file in app storage, then overwrite. A half-written file can always be replaced by the backup.
 - Detect when the file changed underneath us since it was opened, then offer to reload, overwrite, or merge (merge can come later).
 
 ### Security
@@ -287,7 +293,8 @@ To try the app without a phone, there is an emulator: `~/Library/Android/sdk/emu
 - [ ] `Meta/HistoryMaxSize` isn't enforced, only `HistoryMaxItems`. KeePass also drops old history once an entry's history passes the size (6 MiB by default), which matters for entries with attachments
 - [ ] No merge on conflict yet: the user picks one version or saves a copy. Merging (by UUID and modification time, using `DeletedObjects`) is on the "Later" list
 - [ ] Auto-lock throws away changes that couldn't be saved (security wins). Only the Lock button asks first. A save that's running when the database locks still finishes
-- [ ] The file picker gives access to one file, not its folder, so saving can't write a temporary file beside it and swap. The engine proves the new bytes open before anything is written, and the write is read back, but a crash halfway through the write itself could still damage the file. Keeping the previous version (encrypted) in app storage would cover that
+- [ ] The file picker gives access to one file, not its folder, so saving can't write a temporary file beside it and swap. A crash halfway through a write can still damage the file; the unlock screen then offers the save that was cut short (or the version before it) from app storage. Not covered: a cut short write to a cloud provider that then syncs the damaged file to other devices before PocketKeePass is opened again. They'll see it damaged until this phone restores it
+- [ ] An unfinished save is only offered when the file is damaged. If a save failed without damaging the file (a write error, not a crash) and the database was then locked, those changes are lost as before, and the copy is deleted at the next unlock. Recovering them would need a way to open the copy and merge it
 - [ ] Saving reads the whole file first to spot changes made elsewhere. Fine for local files; slow over a cloud provider that downloads on every read
 - [ ] Group icons and entry icons for new items are KeePass's defaults (key, folder); there's no way to choose one yet
 - [ ] Benchmark Argon2 unlock time on a low-end phone

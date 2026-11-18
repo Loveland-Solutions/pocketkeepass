@@ -1,6 +1,8 @@
 package mn.lls.pocketkeepass
 
 import android.app.Application
+import java.io.File
+import mn.lls.pocketkeepass.files.Backups
 import mn.lls.pocketkeepass.files.Documents
 import mn.lls.pocketkeepass.security.AutoLock
 import mn.lls.pocketkeepass.security.Clipboard
@@ -18,10 +20,15 @@ class PocketKeePassApp : Application() {
     lateinit var session: Session
         private set
 
+    /** The previous version of the database, from just before each save. */
+    lateinit var backups: Backups
+        private set
+
     override fun onCreate() {
         super.onCreate()
         autoLock = AutoLock(this)
-        session = Session(autoLock, Documents(this))
+        backups = Backups(File(noBackupFilesDir, "backups"))
+        session = Session(autoLock, Documents(this), backups)
         clipboard = Clipboard(this)
     }
 }

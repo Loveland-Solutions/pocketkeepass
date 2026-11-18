@@ -40,6 +40,7 @@ import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.core.UnlockedDatabase
 import mn.lls.pocketkeepass.edit.Item
+import mn.lls.pocketkeepass.files.Backup
 import mn.lls.pocketkeepass.files.Document
 import mn.lls.pocketkeepass.files.Documents
 import mn.lls.pocketkeepass.files.RecentDatabase
@@ -62,6 +63,15 @@ sealed interface DatabaseState {
         val quickUnlock: Boolean = false,
         val unlocking: Boolean = false,
         val error: UnlockError? = null,
+        /**
+         * The copy kept from just before the last save, offered when the file is missing or
+         * won't open as a database (a save cut short can leave it damaged). Null otherwise.
+         */
+        val backup: Backup? = null,
+        /** Restoring [backup] is running. */
+        val restoring: Boolean = false,
+        /** The backup was just restored, into the database's file or a new one. */
+        val restored: Boolean = false,
     ) : DatabaseState
 
     data class Unlocked(
@@ -111,6 +121,12 @@ sealed interface UnlockError {
 
     /** The stored key no longer opens the database: its master key changed. Quick unlock has been turned off. */
     data object QuickUnlockOutdated : UnlockError
+
+    /** The backup couldn't be written back: the file is gone, or may only be read. */
+    data object CantRestore : UnlockError
+
+    /** The backup couldn't be saved as a new file. */
+    data object CantSaveBackup : UnlockError
 }
 
 /** What a pending biometric prompt is for. */
@@ -134,6 +150,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private val documents = Documents(app)
+    private val backups = (app as PocketKeePassApp).backups
     private val recent = RecentDatabase(app)
     private val session = (app as PocketKeePassApp).session
     private val autoLock = (app as PocketKeePassApp).autoLock
@@ -222,6 +239,86 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /**
+     * Writes the backup over the database's file, which is missing or damaged. The user then
+     * unlocks it as usual.
+     */
+    fun restoreBackup() {
+        val locked = _state.value as? DatabaseState.Locked ?: return
+        if (locked.backup == null || locked.unlocking || locked.restoring) return
+        _state.value = locked.copy(restoring = true, error = null)
+        viewModelScope.launch {
+            val uri = locked.database.uri
+            val backup = locked.backup
+            val ok = withContext(Dispatchers.IO + NonCancellable) {
+                writeBackup(backup, from = uri, to = uri).also {
+                    // The file now holds the unfinished save; the previous version stays.
+                    if (it && backup.unfinished) backups.finished(uri.toString())
+                }
+            }
+            if (!stillShowing(locked)) return@launch
+            _state.value = if (ok) {
+                locked.copy(error = null, backup = null, restored = true)
+            } else {
+                locked.copy(error = UnlockError.CantRestore)
+            }
+        }
+    }
+
+    /**
+     * Writes the backup into a new file the user just created ([uri]), and makes that the
+     * database, with the same key file. For when the old file is gone or can't be written.
+     */
+    fun saveBackupAs(uri: Uri) {
+        val locked = _state.value as? DatabaseState.Locked ?: return
+        if (locked.backup == null || locked.unlocking || locked.restoring) return
+        _state.value = locked.copy(restoring = true, error = null)
+        viewModelScope.launch {
+            val old = locked.database.uri
+            val document = withContext(Dispatchers.IO + NonCancellable) {
+                remember(uri, write = true)
+                if (!writeBackup(locked.backup, from = old, to = uri)) {
+                    documents.releaseAccess(uri)
+                    return@withContext null
+                }
+                try {
+                    backups.move(old.toString(), uri.toString())
+                } catch (_: IOException) {
+                    // The new file is fine; its first save makes a backup of its own.
+                }
+                documents.releaseAccess(old)
+                Document(uri, documents.displayName(uri))
+            }
+            if (!stillShowing(locked)) return@launch
+            if (document == null) {
+                _state.value = locked.copy(error = UnlockError.CantSaveBackup)
+                return@launch
+            }
+            recent.database = document
+            // Quick unlock belongs to a database's location.
+            quickUnlock.disable()
+            _state.value = locked(document, locked.keyFile).copy(restored = true)
+        }
+    }
+
+    /** Whether the unlock screen for [locked]'s database is still showing, now restoring its backup. */
+    private fun stillShowing(locked: DatabaseState.Locked): Boolean =
+        (_state.value as? DatabaseState.Locked)?.let { it.restoring && it.database == locked.database } == true
+
+    /** Copies [backup], of the database at [from], into the file at [to]. Returns whether it worked. */
+    private fun writeBackup(backup: Backup, from: Uri, to: Uri): Boolean = try {
+        documents.write(to, backups.read(from.toString(), backup))
+        true
+    } catch (_: IOException) {
+        false
+    } catch (_: SecurityException) {
+        false
+    } catch (_: IllegalArgumentException) {
+        false
+    } catch (_: UnsupportedOperationException) {
+        false
+    }
+
     fun onKeyFilePicked(uri: Uri) {
         val locked = _state.value as? DatabaseState.Locked ?: return
         viewModelScope.launch {
@@ -234,7 +331,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
             recent.keyFile = document
             // The stored key was made without this key file; it would open the database anyway, confusingly.
             quickUnlock.disable()
-            _state.value = locked.copy(keyFile = document, quickUnlock = false, error = null)
+            _state.value = locked.copy(keyFile = document, quickUnlock = false, error = null, backup = null)
         }
     }
 
@@ -244,12 +341,12 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         recent.keyFile = null
         viewModelScope.launch(Dispatchers.IO) { documents.releaseAccess(keyFile.uri) }
         quickUnlock.disable()
-        _state.value = locked.copy(keyFile = null, quickUnlock = false, error = null)
+        _state.value = locked.copy(keyFile = null, quickUnlock = false, error = null, backup = null)
     }
 
     fun unlock() {
         val locked = _state.value as? DatabaseState.Locked ?: return
-        if (locked.unlocking) return
+        if (locked.unlocking || locked.restoring) return
 
         // An empty password with a key file means "key file only". An empty password on its
         // own is a real (if unwise) password: KeePass allows it.
@@ -278,7 +375,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     /** Asks for the user's fingerprint (or face) to unlock the database. */
     fun quickUnlock() {
         val locked = _state.value as? DatabaseState.Locked ?: return
-        if (locked.unlocking || !locked.quickUnlock) return
+        if (locked.unlocking || locked.restoring || !locked.quickUnlock) return
         val cipher = quickUnlock.decryptingCipher(locked.database.uri)
         if (cipher == null) {
             _state.value = locked.copy(quickUnlock = false, error = UnlockError.QuickUnlockInvalidated)
@@ -373,7 +470,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun unlockWithKeyHash(cipher: Cipher) {
         val locked = _state.value as? DatabaseState.Locked ?: return
-        if (locked.unlocking) return
+        if (locked.unlocking || locked.restoring) return
         unlockWith(locked, viaQuickUnlock = true) { file ->
             withContext(Dispatchers.Default) {
                 val hash = try {
@@ -423,7 +520,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         onDone: () -> Unit = {},
         open: suspend (ByteArray) -> UnlockedDatabase,
     ) {
-        _state.value = locked.copy(unlocking = true, error = null)
+        _state.value = locked.copy(unlocking = true, error = null, restored = false)
         viewModelScope.launch {
             val outcome = try {
                 Result.success(open(locked.database, open))
@@ -446,7 +543,16 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (error is UnlockError.QuickUnlockInvalidated || error is UnlockError.QuickUnlockOutdated) quickUnlock.disable()
                 if (e is KeePassException.WrongKey && !viaQuickUnlock) clearPassword()
-                _state.value = locked.copy(unlocking = false, error = error, quickUnlock = quickUnlockReady(locked.database))
+                val damaged = e is KeePassException.NotKeePass || e is KeePassException.Corrupt ||
+                    e is KeePassException.UnsupportedVersion || (e is CantReadException && !e.keyFile)
+                val backup = if (damaged) withContext(Dispatchers.IO) { backups.find(locked.database.uri.toString()) } else null
+                _state.value = locked.copy(
+                    unlocking = false,
+                    error = error,
+                    quickUnlock = quickUnlockReady(locked.database),
+                    backup = backup,
+                    restored = false,
+                )
                 return@launch
             }
             if (!isActive) {

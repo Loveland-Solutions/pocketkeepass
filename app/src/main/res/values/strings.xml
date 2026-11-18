@@ -17,6 +17,16 @@
     <string name="add_key_file">Add key file</string>
     <string name="remove_key_file">Remove</string>
     <string name="unlock">Unlock</string>
+    <string name="backup_available">PocketKeePass kept a copy of this database from just before its last save here, on %1$s.</string>
+    <string name="backup_unfinished_available">A save here was cut short on %1$s. PocketKeePass kept what it was writing, with your latest changes.</string>
+    <string name="restore_backup">Restore backup</string>
+    <string name="save_backup_as">Save as new file…</string>
+    <string name="restore_backup_title">Restore the backup?</string>
+    <string name="restore_backup_message">This replaces %1$s with the copy from %2$s. Changes made after that, here or on another device, will be lost.\n\nIf the file is still syncing from another device, wait for it to finish first, or choose “Save as new file” instead, which leaves the file alone.</string>
+    <string name="restore_backup_confirm">Replace</string>
+    <string name="backup_restored">The backup was restored. Unlock it as usual.</string>
+    <string name="cant_restore_backup">PocketKeePass couldn\'t write the backup into the database file. Save it as a new file instead.</string>
+    <string name="cant_save_backup">PocketKeePass couldn\'t save the backup into that file. Try another location.</string>
     <string name="unlocking">Unlocking… This can take a few seconds.</string>
     <string name="cant_read_database">PocketKeePass can\'t open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.</string>
     <string name="unlock_with_biometrics">Unlock with biometrics</string>
