@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KeePassFile>
+	<Meta>
+		<Generator>PocketKeePass test fixture</Generator>
+		<DatabaseName>TOTP Test</DatabaseName>
+		<MemoryProtection>
+			<ProtectTitle>False</ProtectTitle>
+			<ProtectUserName>False</ProtectUserName>
+			<ProtectPassword>True</ProtectPassword>
+			<ProtectURL>False</ProtectURL>
+			<ProtectNotes>False</ProtectNotes>
+		</MemoryProtection>
+		<RecycleBinEnabled>False</RecycleBinEnabled>
+	</Meta>
+	<Root>
+		<Group>
+			<UUID>AQEBAQEBAQEBAQEBAQEBAQ==</UUID>
+			<Name>Root</Name>
+			<IconID>48</IconID>
+			<Entry>
+				<UUID>ISEhISEhISEhISEhISEhIQ==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Defaults</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>otp</Key><Value ProtectInMemory="True">otpauth://totp/Example:jo%40example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&amp;issuer=Example</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>IiIiIiIiIiIiIiIiIiIiIg==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>SHA-256</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>otp</Key><Value ProtectInMemory="True">otpauth://totp/x?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA====&amp;period=60&amp;digits=8&amp;algorithm=SHA256</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>IyMjIyMjIyMjIyMjIyMjIw==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>SHA-512</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>otp</Key><Value ProtectInMemory="True">otpauth://totp/x?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA=&amp;period=30&amp;digits=8&amp;algorithm=SHA512</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>JCQkJCQkJCQkJCQkJCQkJA==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Steam</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>otp</Key><Value ProtectInMemory="True">otpauth://totp/Steam:jo?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&amp;period=30&amp;digits=5&amp;issuer=Steam&amp;encoder=steam</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>JSUlJSUlJSUlJSUlJSUlJQ==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>KeeOTP</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>otp</Key><Value ProtectInMemory="True">key=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&amp;size=7&amp;step=45</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>JiYmJiYmJiYmJiYmJiYmJg==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Legacy</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>TOTP Seed</Key><Value ProtectInMemory="True">GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ</Value></String>
+				<String><Key>TOTP Settings</Key><Value>30;8</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>JycnJycnJycnJycnJycnJw==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Legacy Steam</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>TOTP Seed</Key><Value ProtectInMemory="True">GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ</Value></String>
+				<String><Key>TOTP Settings</Key><Value>30;S</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>KCgoKCgoKCgoKCgoKCgoKA==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>KeePass Base32</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>TimeOtp-Secret-Base32</Key><Value ProtectInMemory="True">GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA====</Value></String>
+				<String><Key>TimeOtp-Length</Key><Value>8</Value></String>
+				<String><Key>TimeOtp-Period</Key><Value>60</Value></String>
+				<String><Key>TimeOtp-Algorithm</Key><Value>HMAC-SHA-256</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>KSkpKSkpKSkpKSkpKSkpKQ==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>KeePass UTF-8</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>TimeOtp-Secret</Key><Value ProtectInMemory="True">12345678901234567890</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>KioqKioqKioqKioqKioqKg==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>KeePass Hex</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>TimeOtp-Secret-Hex</Key><Value ProtectInMemory="True">3132333435363738393031323334353637383930</Value></String>
+				<String><Key>TimeOtp-Algorithm</Key><Value>HMAC-SHA-512</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>KysrKysrKysrKysrKysrKw==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>KeePass Base64</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>TimeOtp-Secret-Base64</Key><Value ProtectInMemory="True">MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=</Value></String>
+				<String><Key>TimeOtp-Length</Key><Value>7</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>LCwsLCwsLCwsLCwsLCwsLA==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Broken</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>otp</Key><Value ProtectInMemory="True">otpauth://totp/x?secret=not*base32</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>LS0tLS0tLS0tLS0tLS0tLQ==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>Counter</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+				<String><Key>otp</Key><Value ProtectInMemory="True">otpauth://hotp/x?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&amp;counter=1</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>Li4uLi4uLi4uLi4uLi4uLg==</UUID>
+				<IconID>0</IconID>
+				<String><Key>Title</Key><Value>No TOTP</Value></String>
+				<String><Key>UserName</Key><Value>jo</Value></String>
+				<String><Key>Password</Key><Value ProtectInMemory="True">pw</Value></String>
+			</Entry>
+		</Group>
+	</Root>
+</KeePassFile>
