@@ -25,7 +25,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -56,6 +61,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mn.lls.pocketkeepass.DatabaseState
 import mn.lls.pocketkeepass.R
+import mn.lls.pocketkeepass.SaveState
 import mn.lls.pocketkeepass.core.DatabaseSummary
 import mn.lls.pocketkeepass.core.EntryItem
 import mn.lls.pocketkeepass.core.GroupItem
@@ -86,8 +92,17 @@ fun BrowseScreen(
     onChangeClipboardTimeout: (Int) -> Unit,
     onChangeQuickUnlock: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
+    saveState: SaveState,
+    onSaveDetails: () -> Unit,
+    snackbar: SnackbarHostState,
+    onNewEntry: () -> Unit,
+    onNewGroup: () -> Unit,
+    onEditGroup: () -> Unit,
+    onMoveGroup: () -> Unit,
+    onDeleteGroup: () -> Unit,
 ) {
     val listing = state.listing
+    val inRecycleBin = listing.group.isRecycleBin || listing.parents.any { it.isRecycleBin }
     var showSettings by remember { mutableStateOf(false) }
     if (showSettings) {
         SettingsDialog(
@@ -133,16 +148,83 @@ fun BrowseScreen(
                         IconButton(onClick = onLock) {
                             Icon(painterResource(R.drawable.ic_lock), stringResource(R.string.lock))
                         }
+                        if (!listing.isRoot) {
+                            GroupMenu(listing.group.isRecycleBin, onEditGroup, onMoveGroup, onDeleteGroup)
+                        }
                     },
                 )
             }
         },
+        snackbarHost = { SnackbarHost(snackbar) },
+        floatingActionButton = {
+            // Nothing is created in the recycle bin: things only end up there by being deleted.
+            if (!state.searching && !inRecycleBin) NewItemButton(onNewEntry, onNewGroup)
+        },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding).imePadding()) {
-            if (state.searching) {
-                SearchResults(searchQuery.text.isBlank(), state.results, onOpenEntry)
+        Column(Modifier.fillMaxSize().padding(padding).imePadding()) {
+            SaveStatusBar(saveState, onSaveDetails)
+            Box(Modifier.weight(1f)) {
+                if (state.searching) {
+                    SearchResults(searchQuery.text.isBlank(), state.results, onOpenEntry)
+                } else {
+                    GroupContents(listing, onOpenGroup, onOpenEntry)
+                }
+            }
+        }
+    }
+}
+
+/** "+": a new entry or a new group, in the group being shown. */
+@Composable
+private fun NewItemButton(onNewEntry: () -> Unit, onNewGroup: () -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        FloatingActionButton(onClick = { open = true }) {
+            Icon(painterResource(R.drawable.ic_add), stringResource(R.string.add))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.new_entry)) },
+                onClick = {
+                    open = false
+                    onNewEntry()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.new_group)) },
+                onClick = {
+                    open = false
+                    onNewGroup()
+                },
+            )
+        }
+    }
+}
+
+/** The group being shown: edit, move, or delete it. The recycle bin can only be emptied. */
+@Composable
+private fun GroupMenu(isRecycleBin: Boolean, onEdit: () -> Unit, onMove: () -> Unit, onDelete: () -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.more))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            val item = @Composable { label: Int, action: () -> Unit ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(label)) },
+                    onClick = {
+                        open = false
+                        action()
+                    },
+                )
+            }
+            if (isRecycleBin) {
+                item(R.string.empty_recycle_bin, onDelete)
             } else {
-                GroupContents(listing, onOpenGroup, onOpenEntry)
+                item(R.string.edit_group, onEdit)
+                item(R.string.move, onMove)
+                item(R.string.delete, onDelete)
             }
         }
     }
@@ -321,7 +403,7 @@ private fun Message(text: String) {
 private val previewState = DatabaseState.Unlocked(
     database = Document(Uri.EMPTY, "Passwords.kdbx"),
     keyFile = null,
-    summary = DatabaseSummary("Passwords", "4.1", needsUpgrade = false, groupCount = 3u, entryCount = 4u),
+    summary = DatabaseSummary("Passwords", "4.1", needsUpgrade = false, groupCount = 3u, entryCount = 4u, recycleBinEnabled = true),
     listing = GroupListing(
         group = GroupItem("01", "Root", 3u, 2u, isRecycleBin = false),
         isRoot = true,
@@ -357,6 +439,14 @@ private fun BrowseScreenPreview() {
             onChangeClipboardTimeout = {},
             onChangeQuickUnlock = {},
             onOpenSettings = {},
+            saveState = SaveState.Saved,
+            onSaveDetails = {},
+            snackbar = SnackbarHostState(),
+            onNewEntry = {},
+            onNewGroup = {},
+            onEditGroup = {},
+            onMoveGroup = {},
+            onDeleteGroup = {},
         )
     }
 }

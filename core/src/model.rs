@@ -11,7 +11,7 @@ use crate::xml::Element;
 
 /// An unlocked KeePass database. All decrypted content is wiped from memory when it's dropped.
 pub struct Database {
-    inner: Decrypted,
+    pub(crate) inner: Decrypted,
     /// The composite key hash the database was opened with, kept so it can be saved again.
     key: Zeroizing<[u8; 32]>,
 }

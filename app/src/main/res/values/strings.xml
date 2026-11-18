@@ -63,6 +63,69 @@
     <string name="entry_in_recycle_bin">This entry is in the recycle bin.</string>
     <string name="entry_empty">This entry has no fields.</string>
 
+    <!-- Editing -->
+    <string name="add">Add</string>
+    <string name="more">More options</string>
+    <string name="new_entry">New entry</string>
+    <string name="edit_entry">Edit entry</string>
+    <string name="new_group">New group</string>
+    <string name="edit_group">Edit group</string>
+    <string name="group_name">Name</string>
+    <string name="field_title">Title</string>
+    <string name="field_name">Field name</string>
+    <string name="field_value">Value</string>
+    <string name="add_field">Add field</string>
+    <string name="protect_field">Protect (hide and encrypt)</string>
+    <string name="remove_field">Remove</string>
+    <!-- %1$s is a field name, e.g. "Change Password" -->
+    <string name="change_field">Change %1$s</string>
+    <string name="tags_hint">Separate tags with commas.</string>
+    <string name="save">Save</string>
+    <string name="close">Close</string>
+    <string name="discard_changes">Discard your changes?</string>
+    <string name="discard">Discard</string>
+    <string name="keep_editing">Keep editing</string>
+    <string name="move">Move</string>
+    <string name="delete">Delete</string>
+    <!-- %1$s is an entry or group name -->
+    <string name="move_to">Move “%1$s” to</string>
+    <string name="moved">Moved.</string>
+    <string name="move_to_recycle_bin">Move to recycle bin</string>
+    <string name="empty_recycle_bin">Empty recycle bin</string>
+    <string name="recycle_title">Move to the recycle bin?</string>
+    <string name="delete_for_good_title">Delete for good?</string>
+    <string name="recycle_entry_explained">“%1$s” goes to the recycle bin. You can move it back out from there.</string>
+    <string name="recycle_group_explained">“%1$s” and everything in it go to the recycle bin. You can move them back out from there.</string>
+    <string name="delete_entry_for_good_explained">“%1$s” is deleted for good. This can\'t be undone.</string>
+    <string name="delete_group_for_good_explained">“%1$s” and everything in it are deleted for good. This can\'t be undone.</string>
+    <string name="delete_recycle_bin_explained">Everything in the recycle bin is deleted for good. This can\'t be undone. A new recycle bin appears the next time you delete something.</string>
+    <string name="moved_to_recycle_bin">Moved to the recycle bin.</string>
+    <string name="deleted">Deleted.</string>
+    <string name="upgrade_title">Upgrade to KDBX 4?</string>
+    <string name="upgrade_explained">This database uses the older KDBX 3 format, and PocketKeePass only saves KDBX 4. Upgrading keeps everything in it. KeePass 2.35 or later, KeePassXC 2.3 or later, and current KeePass apps open KDBX 4, but apps that only know KDBX 3 won\'t open the file after you save.</string>
+    <string name="upgrade">Upgrade</string>
+
+    <!-- Saving -->
+    <string name="saving">Saving…</string>
+    <string name="not_saved">Your changes aren\'t saved to the file.</string>
+    <string name="what_now">What now?</string>
+    <string name="conflict_title">The file changed elsewhere</string>
+    <string name="conflict_explained">Another app or device changed the database file since PocketKeePass opened it. Saving now would replace those changes with yours. PocketKeePass can\'t combine the two yet.\n\nYour changes stay here until the database locks.</string>
+    <string name="save_failed_title">Changes not saved</string>
+    <string name="cant_write_explained">PocketKeePass can\'t write to the database file. It may have been moved or deleted, or the storage app may only allow reading it.\n\nYour changes stay here until the database locks. Save a copy to keep them.</string>
+    <string name="write_check_failed_explained">The file didn\'t read back correctly after saving, so the storage app may not have stored it properly. Try again, or save a copy to be safe.\n\nYour changes stay here until the database locks.</string>
+    <string name="engine_save_failed_explained">%1$s\n\nYour changes stay here until the database locks.</string>
+    <string name="save_copy">Save a copy…</string>
+    <string name="replace_with_mine">Replace it with mine</string>
+    <string name="discard_mine">Discard mine and reload</string>
+    <string name="try_again">Try again</string>
+    <string name="not_now">Not now</string>
+    <string name="copy_saved">Saved a copy. The database still opens from its old file.</string>
+    <string name="copy_failed">The copy couldn\'t be saved.</string>
+    <string name="lock_unsaved_title">Lock without saving?</string>
+    <string name="lock_unsaved_explained">Your changes aren\'t saved to the file yet. Locking discards them.</string>
+    <string name="lock_anyway">Lock anyway</string>
+
     <!-- Autofill: the suggestions Android shows under a login field in other apps -->
     <string name="autofill_unlock">Unlock PocketKeePass</string>
     <string name="autofill_search">Search PocketKeePass</string>

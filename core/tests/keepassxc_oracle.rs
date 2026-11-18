@@ -263,3 +263,91 @@ fn keepassxc_can_edit_a_file_we_saved_and_we_can_read_the_result() {
         assert_eq!(entries, common::all_entries(db.xml()), "{}", fixture.file);
     }
 }
+
+#[test]
+fn keepassxc_reads_databases_we_edited() {
+    use pocketkeepass_core::{EntryEdit, FieldEdit, FieldValue};
+    let Some(cli) = keepassxc_cli() else { return };
+    let set = |key, value| FieldEdit {
+        key,
+        value: FieldValue::Set(value),
+        protected: false,
+    };
+    // KDBX 4.0 and 4.1, and a KDBX 3.1 file upgraded first.
+    for fixture in [&KDBX4[0], &KDBX4[3], &KDBX3[0]] {
+        let mut db = fixture.open();
+        db.upgrade_to_kdbx4().unwrap();
+        let root = db.root().uuid().unwrap();
+        fn any_entry(group: pocketkeepass_core::Group<'_>) -> Option<[u8; 16]> {
+            group
+                .entries()
+                .next()
+                .and_then(|e| e.uuid())
+                .or_else(|| group.groups().find_map(any_entry))
+        }
+        let first = any_entry(db.root()).unwrap();
+        let second = db
+            .create_entry(
+                &root,
+                &EntryEdit {
+                    fields: vec![set("Title", "Doomed")],
+                    tags: vec![],
+                },
+            )
+            .unwrap();
+
+        let group = db.create_group(&root, "Made Here", "With notes").unwrap();
+        let edit = EntryEdit {
+            fields: vec![
+                set("Title", "New Entry"),
+                set("UserName", "me"),
+                set("Password", "pässwörd 🔑"),
+                set("Notes", "line one\nline two"),
+                FieldEdit {
+                    key: "PIN",
+                    value: FieldValue::Set("0000"),
+                    protected: true,
+                },
+            ],
+            tags: vec!["one", "two"],
+        };
+        db.create_entry(&group, &edit).unwrap();
+        let rename = EntryEdit {
+            fields: vec![
+                set("Title", "Renamed"),
+                FieldEdit {
+                    key: "Password",
+                    value: FieldValue::Keep { from: "Password" },
+                    protected: false,
+                },
+            ],
+            tags: vec![],
+        };
+        db.update_entry(&first, &rename).unwrap();
+        db.move_entry(&first, &group).unwrap();
+        db.delete_entry(&second).unwrap();
+
+        let saved = TempFile::new(&format!("edited-{}", fixture.file), &db.save().unwrap());
+        let export = keepassxc(&cli, "export", fixture, &saved.0, &[]);
+        let export = xml::parse(std::str::from_utf8(&export).unwrap()).unwrap();
+        // Every entry, history included, with the same fields and values.
+        assert_eq!(
+            common::all_entries(&export),
+            common::all_entries(db.xml()),
+            "{}",
+            fixture.file
+        );
+        let mut protected_pin = false;
+        let mut export = export;
+        export
+            .walk_mut(&mut |el| {
+                if el.name == "String" && el.child_text("Key") == "PIN" {
+                    protected_pin =
+                        el.child("Value").unwrap().attr("ProtectInMemory") == Some("True");
+                }
+                Ok(())
+            })
+            .unwrap();
+        assert!(protected_pin, "{}: PIN isn't protected", fixture.file);
+    }
+}

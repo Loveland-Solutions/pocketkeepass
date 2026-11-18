@@ -167,6 +167,50 @@ class BridgeTest {
     }
 
     @Test
+    fun `edits cross the bridge, with a null value keeping a protected field unfetched`() {
+        UnlockedDatabase.open(fixture("kdbx41-keepassxc.kdbx"), password, null).use { db ->
+            val root = db.listGroup(null).group.id
+            val pin = FieldEdit("PIN", "0000".toByteArray(), previousKey = null, isProtected = true)
+            val id = db.createEntry(
+                root,
+                listOf(FieldEdit("Title", "Router".toByteArray(), null, false), FieldEdit("Password", "pw".toByteArray(), null, false), pin),
+                listOf("home"),
+            )
+            // The caller's bytes are left for the caller to wipe.
+            assertArrayEquals("0000".toByteArray(), pin.value)
+
+            val changed = db.updateEntry(
+                id,
+                listOf(
+                    FieldEdit("Title", "Modem".toByteArray(), null, false),
+                    FieldEdit("Password", null, null, false),
+                    FieldEdit("Code", null, previousKey = "PIN", isProtected = true),
+                ),
+                emptyList(),
+            )
+            assertTrue(changed)
+            val entry = db.entry(id)
+            assertEquals("Modem", entry.title)
+            assertEquals(listOf("UserName", "Password", "URL", "Code", "Notes"), entry.fields.map { it.key })
+            assertArrayEquals("pw".toByteArray(), db.revealField(id, "Password"))
+            assertArrayEquals("0000".toByteArray(), db.revealField(id, "Code"))
+
+            val bad = FieldEdit("Title", "bell\u0007".toByteArray(), null, false)
+            val refused = assertThrows(KeePassException.Invalid::class.java) { db.updateEntry(id, listOf(bad), emptyList()) }
+            assertTrue(refused.message.orEmpty().contains("control character"), refused.message)
+
+            val group = db.createGroup(root, "Made", "")
+            assertTrue(db.moveEntry(id, group))
+            assertEquals(1u, db.listGroup(group).group.entryCount)
+            assertEquals(Deletion.MOVED_TO_RECYCLE_BIN, db.deleteGroup(group))
+            assertEquals(listOf(0u, 1u), db.allGroups().map { it.depth }.distinct().take(2))
+
+            val reopened = UnlockedDatabase.open(db.save(), password, null)
+            reopened.use { assertEquals("Modem", it.entry(id).title) }
+        }
+    }
+
+    @Test
     fun `a locked database refuses everything`() {
         val db = UnlockedDatabase.open(fixture("pw-only.kdbx"), password, null)
         assertFalse(db.isLocked())
@@ -178,6 +222,8 @@ class BridgeTest {
         assertThrows(KeePassException.Locked::class.java) { db.search("email") }
         assertThrows(KeePassException.Locked::class.java) { db.entry("02".repeat(16)) }
         assertThrows(KeePassException.Locked::class.java) { db.revealField("02".repeat(16), "Password") }
+        assertThrows(KeePassException.Locked::class.java) { db.createGroup("02".repeat(16), "x", "") }
+        assertThrows(KeePassException.Locked::class.java) { db.deleteEntry("02".repeat(16)) }
         db.close()
     }
 }

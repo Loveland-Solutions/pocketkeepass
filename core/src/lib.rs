@@ -11,6 +11,7 @@
 
 mod autofill;
 mod browse;
+mod edit;
 mod error;
 pub mod ffi;
 mod kdbx;
@@ -21,6 +22,7 @@ pub mod xml;
 
 pub use autofill::FillTarget;
 pub use browse::{Listing, SearchHit};
+pub use edit::{Deletion, EntryEdit, FieldEdit, FieldValue, STANDARD_FIELDS};
 pub use error::Error;
 pub use kdbx::FormatVersion;
 pub use key::CompositeKey;

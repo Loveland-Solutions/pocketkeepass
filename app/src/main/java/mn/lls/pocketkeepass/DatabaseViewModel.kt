@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -38,9 +39,11 @@ import mn.lls.pocketkeepass.core.GroupListing
 import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.core.UnlockedDatabase
+import mn.lls.pocketkeepass.edit.Item
 import mn.lls.pocketkeepass.files.Document
 import mn.lls.pocketkeepass.files.Documents
 import mn.lls.pocketkeepass.files.RecentDatabase
+import mn.lls.pocketkeepass.files.fingerprint
 import mn.lls.pocketkeepass.security.AutoLockSettings
 import mn.lls.pocketkeepass.security.QuickUnlock
 import mn.lls.pocketkeepass.security.QuickUnlockSetting
@@ -187,6 +190,8 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     init {
         // Follow the session: another screen, the autofill service, or auto-lock may unlock or lock it.
         viewModelScope.launch { session.open.collect(::follow) }
+        // And re-read what's on screen whenever the database is changed.
+        viewModelScope.launch { session.revision.drop(1).collect { refresh() } }
         // Search as the user types, once they pause for a moment.
         viewModelScope.launch {
             snapshotFlow { searchQuery.text.toString() }.collectLatest { query ->
@@ -450,7 +455,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 opened.close()
                 return@launch
             }
-            val open = Session.Open(opened, locked.database, locked.keyFile, unlocked.summary, unlocked.root)
+            val open = Session.Open(opened, locked.database, locked.keyFile, unlocked.summary, unlocked.root, unlocked.fingerprint)
             session.start(open)
             follow(open)
         }
@@ -494,7 +499,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 try {
                     db.listGroup(id)
                 } catch (_: KeePassException.NotFound) {
-                    db.listGroup(null) // gone, which can't happen until editing exists: go home
+                    db.listGroup(null) // deleted meanwhile: go home
                 }
             },
             apply = { listing -> _state.update { (it as? DatabaseState.Unlocked)?.copy(listing = listing) ?: it } },
@@ -546,11 +551,73 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 try {
                     db.entry(id)
                 } catch (_: KeePassException.NotFound) {
-                    null // can't happen until editing exists
+                    null // deleted meanwhile
                 }
             },
             apply = { entry -> _state.update { (it as? DatabaseState.Unlocked)?.copy(entry = entry) ?: it } },
         )
+    }
+
+    /**
+     * Re-reads everything on screen after the database was changed (here or by the editor):
+     * the summary, the group, the search results, and the entry. Whatever was deleted goes
+     * away: an entry closes, and a group falls back to the root group.
+     */
+    private fun refresh() {
+        val unlocked = _state.value as? DatabaseState.Unlocked ?: return
+        val groupId = unlocked.listing.group.id
+        val entryId = unlocked.entry?.id
+        val query = if (unlocked.searching) searchQuery.text.toString() else null
+        read(
+            query = { db ->
+                val summary = db.summary()
+                val listing = try {
+                    db.listGroup(groupId)
+                } catch (_: KeePassException.NotFound) {
+                    db.listGroup(null)
+                }
+                val entry = entryId?.let {
+                    try {
+                        db.entry(it)
+                    } catch (_: KeePassException.NotFound) {
+                        null
+                    }
+                }
+                val results = query?.takeIf { it.isNotBlank() }?.let(db::search).orEmpty()
+                Refreshed(summary, listing, entry, results)
+            },
+            apply = { r ->
+                _state.update { current ->
+                    if (current !is DatabaseState.Unlocked) return@update current
+                    current.copy(
+                        summary = r.summary,
+                        listing = r.listing,
+                        // Only the entry that was asked about: the user may have moved on.
+                        entry = if (current.entry?.id == entryId) r.entry else current.entry,
+                        results = if (current.searching) r.results else current.results,
+                    )
+                }
+            },
+        )
+    }
+
+    private class Refreshed(
+        val summary: DatabaseSummary,
+        val listing: GroupListing,
+        val entry: EntryDetails?,
+        val results: List<SearchResult>,
+    )
+
+    /**
+     * Leaves something that was just deleted: closes it if it's the entry being shown, or goes
+     * up a level if it's the group being shown.
+     */
+    fun leave(item: Item) {
+        val unlocked = _state.value as? DatabaseState.Unlocked ?: return
+        when (item) {
+            is Item.Entry -> if (unlocked.entry?.id == item.id) closeEntry()
+            is Item.Group -> if (unlocked.listing.group.id == item.id) goUp()
+        }
     }
 
     /** Back from the entry to the group or search it was opened from. */
@@ -687,9 +754,10 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         database: Document,
         unlock: suspend (ByteArray) -> UnlockedDatabase,
     ): Pair<UnlockedDatabase, Opened> = withContext(Dispatchers.IO + NonCancellable) {
-        val opened = unlock(read(database.uri, isKeyFile = false))
+        val file = read(database.uri, isKeyFile = false)
+        val opened = unlock(file)
         try {
-            withContext(Dispatchers.Default) { opened to Opened(opened.summary(), opened.listGroup(null)) }
+            withContext(Dispatchers.Default) { opened to Opened(opened.summary(), opened.listGroup(null), fingerprint(file)) }
         } catch (e: KeePassException) {
             opened.lock()
             opened.close()
@@ -731,7 +799,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** What the app shows straight after unlocking. */
-    private class Opened(val summary: DatabaseSummary, val root: GroupListing)
+    private class Opened(val summary: DatabaseSummary, val root: GroupListing, val fingerprint: ByteArray)
 
     private class CantReadException(val keyFile: Boolean, cause: Throwable) : Exception(cause)
 

@@ -38,6 +38,11 @@ pub enum Error {
 
     #[error("That group or entry isn't in the database anymore.")]
     NotFound,
+
+    /// A change the engine refused, with a sentence saying why (an empty field name, a
+    /// character a KeePass file can't hold, a group moved into itself, and so on).
+    #[error("{0}")]
+    Invalid(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
