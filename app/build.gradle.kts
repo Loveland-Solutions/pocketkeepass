@@ -36,7 +36,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = commitCount.get()
-        versionName = "0.1.0"
+        versionName = "0.2.0"
 
         // Only the ABIs the Rust engine is built for. (JNA ships its own library for more.)
         ndk {
