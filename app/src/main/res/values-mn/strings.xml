@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Mongolian (Cyrillic). Placeholders such as a storage app's name, a file name, or a site never
+  get a case ending attached: the right ending depends on how the word is pronounced, which the
+  app can't know. Sentences are built so the placeholder stands alone (with a noun after it, a
+  colon, or in brackets) instead.
+
+  Terms: database өгөгдлийн сан, entry бичлэг, group бүлэг, master password үндсэн нууц үг,
+  key file түлхүүр файл, unlock түгжээ тайлах, passkey нэвтрэх түлхүүр (as Android says it),
+  clipboard түр санах ой, recycle bin хогийн сав, autofill автоматаар бөглөх.
+-->
+<resources>
+    <string name="engine_version">Хөдөлгүүр %1$s</string>
+
+    <string name="error_wrong_key">Нууц үг эсвэл түлхүүр файл буруу байна.</string>
+    <string name="error_invalid_key_file">Тэр түлхүүр файлыг уншиж чадсангүй.</string>
+    <string name="error_not_keepass">Энэ нь KeePass өгөгдлийн сан биш байна.</string>
+    <string name="error_needs_upgrade">Энэ өгөгдлийн сан хуучин KDBX 3 форматтай. Хадгалахаас өмнө KDBX 4 болгон шинэчлэх шаардлагатай.</string>
+    <string name="error_random">Энэ төхөөрөмж найдвартай санамсаргүй тоо гаргаж чадаагүй тул өгөгдлийн санг хадгалсангүй.</string>
+    <string name="error_save_check_failed">Өгөгдлийн сангийн шинэ хуулбар аюулгүй байдлын шалгалтад тэнцээгүй тул хадгалсангүй.</string>
+    <string name="error_locked">Өгөгдлийн сан түгжээтэй байна.</string>
+    <string name="error_not_found">Тэр бүлэг эсвэл бичлэг өгөгдлийн санд байхгүй болсон байна.</string>
+    <string name="error_passkey_exists">Энэ бүртгэлийн нэвтрэх түлхүүр өгөгдлийн санд аль хэдийн байна.</string>
+
+    <!-- Welcome -->
+    <string name="home_credits">KeePass өгөгдлийн санд зориулсан бие даасан апп. Claude ашиглан бичсэн.</string>
+    <string name="home_tagline">Таны KeePass нууц үгнүүд — үнэгүй, интернэтгүй.</string>
+    <string name="open_database">Өгөгдлийн сан нээх</string>
+    <string name="open_database_hint">Энэ утаснаас эсвэл дурын үүлэн хадгалах сангийн аппаас .kdbx файл сонгоно уу.</string>
+
+    <!-- Unlock -->
+    <string name="change_database">Солих</string>
+    <string name="master_password">Үндсэн нууц үг</string>
+    <string name="show_password">Нууц үгийг харуулах</string>
+    <string name="hide_password">Нууц үгийг нуух</string>
+    <string name="key_file">Түлхүүр файл: %1$s</string>
+    <string name="add_key_file">Түлхүүр файл нэмэх</string>
+    <string name="remove_key_file">Хасах</string>
+    <string name="unlock">Түгжээ тайлах</string>
+    <string name="backup_available">PocketKeePass энэ өгөгдлийн сангийн сүүлчийн хадгалалтаас өмнөх хуулбарыг энэ утсанд үлдээсэн байна (%1$s).</string>
+    <string name="backup_unfinished_available">Энэ утсан дээрх хадгалалт тасалдсан байна (%1$s). PocketKeePass бичиж байсан хувилбараа таны сүүлийн өөрчлөлтүүдийн хамт хадгалж үлдээсэн.</string>
+    <string name="restore_backup">Нөөцийг сэргээх</string>
+    <string name="save_backup_as">Шинэ файлаар хадгалах…</string>
+    <string name="restore_backup_title">Нөөцийг сэргээх үү?</string>
+    <string name="restore_backup_message">%1$s файлыг нөөц хуулбараар (%2$s) солино. Түүнээс хойш энд эсвэл өөр төхөөрөмж дээр хийсэн өөрчлөлтүүд алга болно.\n\nХэрэв файл өөр төхөөрөмжөөс синк хийгдсээр байгаа бол дуусахыг нь хүлээнэ үү. Эсвэл оронд нь «Шинэ файлаар хадгалах» товчийг дарна уу: энэ нь одоогийн файлд хүрэхгүй.</string>
+    <string name="restore_backup_confirm">Солих</string>
+    <string name="backup_restored">Нөөцийг сэргээлээ. Ердийнхөөрөө түгжээг нь тайлна уу.</string>
+    <string name="cant_restore_backup">PocketKeePass нөөцийг өгөгдлийн сангийн файлд бичиж чадсангүй. Оронд нь шинэ файлаар хадгална уу.</string>
+    <string name="cant_save_backup">PocketKeePass нөөцийг тэр файлд хадгалж чадсангүй. Өөр байршил сонгоно уу.</string>
+    <string name="unlocking">Түгжээг тайлж байна… Хэдэн секунд болж магадгүй.</string>
+    <string name="cant_read_database">PocketKeePass өгөгдлийн сангийн файлыг нээж чадахгүй байна. Файлыг зөөсөн, нэрийг нь өөрчилсөн эсвэл устгасан байж магадгүй. Дахин сонгоно уу.</string>
+    <string name="unlock_with_biometrics">Биометрээр түгжээ тайлах</string>
+    <string name="biometric_unlock_title">Өгөгдлийн сангийн түгжээг тайлах</string>
+    <string name="use_master_password">Үндсэн нууц үг ашиглах</string>
+    <string name="biometric_invalidated">Энэ төхөөрөмжийн хурууны хээ, царай эсвэл дэлгэцийн түгжээ өөрчлөгдсөн тул биометрээр түгжээ тайлахыг унтраалаа. Үндсэн нууц үгээрээ түгжээг тайлаад, тохиргооноос дахин асаана уу.</string>
+    <string name="biometric_outdated">Энэ өгөгдлийн сангийн үндсэн нууц үг эсвэл түлхүүр файл өөрчлөгдсөн тул биометрээр түгжээ тайлахыг унтраалаа. Шинэ нууц үгээрээ түгжээг тайлаад, тохиргооноос дахин асаана уу.</string>
+    <string name="cant_read_key_file">PocketKeePass түлхүүр файлыг нээж чадахгүй байна. Файлыг зөөсөн, нэрийг нь өөрчилсөн эсвэл устгасан байж магадгүй. Хасаад дахин нэмнэ үү.</string>
+
+    <!-- Browse and search -->
+    <string name="lock">Түгжих</string>
+    <string name="back">Буцах</string>
+    <string name="search">Хайх</string>
+    <string name="search_hint">Бичлэг хайх</string>
+    <string name="clear_search">Хайлтыг арилгах</string>
+    <string name="search_explained">Гарчиг, хэрэглэгчийн нэр, URL, тэмдэглэл, шошгоос хайна. Нууц үг болон бусад хамгаалагдсан талбараас хэзээ ч хайхгүй.</string>
+    <string name="search_no_results">Тохирох бичлэг алга.</string>
+    <string name="group_empty">Энэ бүлэг хоосон байна.</string>
+    <string name="untitled_group">(нэргүй)</string>
+    <string name="untitled_entry">(гарчиггүй)</string>
+    <string name="groups_and_entries">%1$s, %2$s</string>
+    <plurals name="group_count">
+        <item quantity="one">%d бүлэг</item>
+        <item quantity="other">%d бүлэг</item>
+    </plurals>
+    <plurals name="entry_count">
+        <item quantity="one">%d бичлэг</item>
+        <item quantity="other">%d бичлэг</item>
+    </plurals>
+
+    <!-- Entry -->
+    <string name="field_username">Хэрэглэгчийн нэр</string>
+    <string name="field_password">Нууц үг</string>
+    <string name="field_url">URL</string>
+    <string name="field_notes">Тэмдэглэл</string>
+    <string name="field_tags">Шошго</string>
+    <string name="show_field">%1$s харуулах</string>
+    <string name="hide_field">%1$s нуух</string>
+    <string name="copy_field">%1$s хуулах</string>
+    <!-- e.g. "Хуулсан: Нууц үг. 30 секунд өнгөрөхөд арилна." -->
+    <string name="copied">Хуулсан: %1$s. %2$s өнгөрөхөд арилна.</string>
+    <string name="entry_in_recycle_bin">Энэ бичлэг хогийн саванд байна.</string>
+    <string name="totp">Нэг удаагийн код</string>
+    <plurals name="totp_changes_in">
+        <item quantity="one">%d секундын дараа солигдоно</item>
+        <item quantity="other">%d секундын дараа солигдоно</item>
+    </plurals>
+    <string name="entry_empty">Энэ бичлэгт талбар алга.</string>
+
+    <!-- Editing -->
+    <string name="add">Нэмэх</string>
+    <string name="more">Бусад сонголт</string>
+    <string name="new_entry">Шинэ бичлэг</string>
+    <string name="edit_entry">Бичлэг засах</string>
+    <string name="new_group">Шинэ бүлэг</string>
+    <string name="edit_group">Бүлэг засах</string>
+    <string name="group_name">Нэр</string>
+    <string name="field_title">Гарчиг</string>
+    <string name="field_name">Талбарын нэр</string>
+    <string name="field_value">Утга</string>
+    <string name="add_field">Талбар нэмэх</string>
+    <string name="protect_field">Хамгаалах (нууж, шифрлэх)</string>
+    <string name="remove_field">Хасах</string>
+    <string name="change_field">%1$s өөрчлөх</string>
+    <string name="tags_hint">Шошгуудыг таслалаар тусгаарлана уу.</string>
+    <string name="save">Хадгалах</string>
+    <string name="close">Хаах</string>
+    <string name="discard_changes">Өөрчлөлтөө хаях уу?</string>
+    <string name="discard">Хаях</string>
+    <string name="keep_editing">Үргэлжлүүлэн засах</string>
+    <string name="move">Зөөх</string>
+    <string name="duplicate">Хувилах</string>
+    <string name="duplicated">Хуулбар үүсгэлээ.</string>
+    <string name="delete">Устгах</string>
+    <string name="move_to">Зөөх газраа сонгоно уу: «%1$s»</string>
+    <string name="moved">Зөөлөө.</string>
+    <string name="move_to_recycle_bin">Хогийн сав руу зөөх</string>
+    <string name="empty_recycle_bin">Хогийн савыг хоослох</string>
+    <string name="recycle_title">Хогийн сав руу зөөх үү?</string>
+    <string name="delete_for_good_title">Бүрмөсөн устгах уу?</string>
+    <string name="recycle_entry_explained">«%1$s» хогийн сав руу орно. Тэндээс буцааж гаргаж болно.</string>
+    <string name="recycle_group_explained">«%1$s» болон доторх бүх зүйл хогийн сав руу орно. Тэндээс буцааж гаргаж болно.</string>
+    <string name="delete_entry_for_good_explained">«%1$s» бүрмөсөн устна. Үүнийг буцаах боломжгүй.</string>
+    <string name="delete_group_for_good_explained">«%1$s» болон доторх бүх зүйл бүрмөсөн устна. Үүнийг буцаах боломжгүй.</string>
+    <string name="delete_recycle_bin_explained">Хогийн саван дахь бүх зүйл бүрмөсөн устна. Үүнийг буцаах боломжгүй. Дараа нь ямар нэг зүйл устгахад шинэ хогийн сав гарч ирнэ.</string>
+    <string name="moved_to_recycle_bin">Хогийн сав руу зөөлөө.</string>
+    <string name="deleted">Устгалаа.</string>
+    <string name="upgrade_title">KDBX 4 болгон шинэчлэх үү?</string>
+    <string name="upgrade_explained">Энэ өгөгдлийн сан хуучин KDBX 3 форматтай бөгөөд PocketKeePass зөвхөн KDBX 4 форматаар хадгалдаг. Шинэчлэхэд доторх бүх зүйл хэвээр үлдэнэ. KeePass 2.35, KeePassXC 2.3 болон тэдгээрээс хойшх хувилбарууд, мөн одоогийн KeePass аппууд KDBX 4 файлыг нээдэг. Харин зөвхөн KDBX 3 мэддэг аппууд таныг хадгалсны дараа файлыг нээж чадахгүй.</string>
+    <string name="upgrade">Шинэчлэх</string>
+
+    <!-- Saving -->
+    <string name="saving">Хадгалж байна…</string>
+    <string name="saved">Хадгалсан</string>
+    <string name="not_saved">Таны өөрчлөлтүүд файлд хадгалагдаагүй байна.</string>
+    <string name="what_now">Одоо яах вэ?</string>
+    <string name="conflict_title">Файлыг өөр газар өөрчилсөн байна</string>
+    <string name="conflict_explained">Өөр апп эсвэл төхөөрөмж өгөгдлийн сангийн файлыг өөрчилсөн бөгөөд PocketKeePass тэр өөрчлөлтүүдийг таныхтай нэгтгэж чадахгүй байна: файл шинэ үндсэн нууц үгтэй болсон, өөр өгөгдлийн сан агуулж байгаа эсвэл гэмтсэн байж магадгүй. Одоо хадгалвал тэр файлыг таныхаар солино.\n\nӨгөгдлийн сан түгжигдэх хүртэл таны өөрчлөлтүүд энд үлдэнэ.</string>
+    <string name="save_failed_title">Өөрчлөлтүүд хадгалагдсангүй</string>
+    <string name="cant_write_explained">PocketKeePass өгөгдлийн сангийн файлд бичиж чадахгүй байна. Файлыг зөөсөн эсвэл устгасан, эсвэл хадгалах сангийн апп зөвхөн уншихыг зөвшөөрдөг байж магадгүй.\n\nӨгөгдлийн сан түгжигдэх хүртэл таны өөрчлөлтүүд энд үлдэнэ. Тэдгээрийг алдахгүйн тулд хуулбар хадгална уу.</string>
+    <string name="write_check_failed_explained">Хадгалсны дараа файлыг буцааж уншихад зөрүүтэй гарсан тул хадгалах сангийн апп үүнийг зөв хадгалаагүй байж магадгүй. Дахин оролдох эсвэл найдвартай байлгахын тулд хуулбар хадгална уу.\n\nӨгөгдлийн сан түгжигдэх хүртэл таны өөрчлөлтүүд энд үлдэнэ.</string>
+    <string name="engine_save_failed_explained">%1$s\n\nӨгөгдлийн сан түгжигдэх хүртэл таны өөрчлөлтүүд энд үлдэнэ.</string>
+    <string name="save_copy">Хуулбар хадгалах…</string>
+    <string name="replace_with_mine">Минийхээр солих</string>
+    <string name="discard_mine">Минийхийг хаяж, дахин ачаалах</string>
+    <string name="try_again">Дахин оролдох</string>
+    <string name="not_now">Одоо биш</string>
+    <string name="copy_saved">Хуулбарыг хадгаллаа. Өгөгдлийн сан хуучин файлаасаа нээгдсээр байна.</string>
+    <string name="copy_failed">Хуулбарыг хадгалж чадсангүй.</string>
+    <string name="lock_unsaved_title">Хадгалалгүй түгжих үү?</string>
+    <string name="lock_unsaved_explained">Таны өөрчлөлтүүд файлд хараахан хадгалагдаагүй байна. Түгжвэл тэдгээр нь устна.</string>
+    <string name="lock_anyway">Ямар ч байсан түгжих</string>
+
+    <!-- Sync. %1$s in sync_line_cloud is the storage app's name, e.g. "Drive"; times are
+         "дөнгөж сая" or Android's own "5 минутын өмнө" -->
+    <string name="sync_line_cloud">%1$s: сүүлийн хувилбар · %2$s шалгасан</string>
+    <string name="sync_line_phone">Энэ утсанд · %1$s шалгасан</string>
+    <string name="sync_checking">%1$s дээрх өөрчлөлтийг шалгаж байна…</string>
+    <string name="sync_checking_phone">Файлын өөрчлөлтийг шалгаж байна…</string>
+    <string name="sync_cant_read">Яг одоо файлыг уншиж чадахгүй байна. Уншиж чадмагц бусад төхөөрөмжийн өөрчлөлтүүд орж ирнэ.</string>
+    <string name="sync_key_changed">Үндсэн нууц үгийг өөр төхөөрөмж дээр сольсон байна. Түгжээд, шинэ нууц үгээр түгжээг тайлна уу.</string>
+    <string name="sync_other_database">Файлд одоо өөр өгөгдлийн сан байна. Түгжээд, дахин түгжээг нь тайлна уу.</string>
+    <string name="just_now">дөнгөж сая</string>
+    <string name="sync_title_cloud">Синк: %1$s</string>
+    <string name="sync_title_phone">Синк</string>
+    <!-- %1$s is a clock time, e.g. "14:05" -->
+    <string name="sync_saved_at">Таны сүүлийн өөрчлөлтийг файлд %1$s цагт хадгалсан.</string>
+    <string name="sync_nothing_saved">Түгжээ тайлснаас хойш энэ утсан дээр юу ч өөрчлөөгүй.</string>
+    <string name="sync_checked_at">Бусад төхөөрөмжийн өөрчлөлтийг хамгийн сүүлд %1$s шалгасан.</string>
+    <string name="sync_incoming_at">Өөр төхөөрөмжийн хамгийн сүүлийн өөрчлөлтүүд %1$s цагт орж ирсэн: %2$s.</string>
+    <string name="sync_explained_cloud">Таны хийсэн өөрчлөлт бүр шууд файлд хадгалагдаж, %1$s апп тэндээс нь байршуулна. PocketKeePass байршуулалт хэзээ дууссаныг харж чадахгүй: энэ утас интернэтгүй байвал өөрчлөлт нь утсыг дахин холбогдох үед бусад төхөөрөмжид хүрнэ.\n\nPocketKeePass нээлттэй байх үедээ файлыг 30 секунд тутам шалгаж (одоо шалгах бол жагсаалтыг доош татна уу), бусад төхөөрөмж дээр хийсэн өөрчлөлтүүдийг авна. Хоёр төхөөрөмж өгөгдлийн санг нэгэн зэрэг өөрчилсөн бол хоёулангийнх нь өөрчлөлт хадгалагдана. Нэг бичлэгийг хоёр газар өөрчилсөн бол шинэ хувилбар нь үлдэж, нөгөө нь түүний түүхэнд орно.</string>
+    <string name="sync_explained_phone">Энэ файл энэ утсанд хадгалагдаж байна. Хэрэв өөр апп (жишээ нь Syncthing) үүнийг бусад төхөөрөмжтэй хуваалцдаг бол PocketKeePass нээлттэй байх үедээ 30 секунд тутам шалгаж, тэдгээрийн өөрчлөлтүүдийг авна. Өгөгдлийн санг хоёр газар өөрчилсөн бол хоёр талын өөрчлөлт хоёулаа хадгалагдана.</string>
+    <string name="check_now">Одоо шалгах</string>
+    <string name="sync_updated">Шинэчлэгдлээ (%1$s): %2$s</string>
+    <string name="sync_updated_phone">Өөр төхөөрөмжөөс шинэчлэгдлээ: %1$s</string>
+    <plurals name="sync_entries_added">
+        <item quantity="one">%d шинэ бичлэг</item>
+        <item quantity="other">%d шинэ бичлэг</item>
+    </plurals>
+    <plurals name="sync_entries_changed">
+        <item quantity="one">%d бичлэг өөрчлөгдсөн</item>
+        <item quantity="other">%d бичлэг өөрчлөгдсөн</item>
+    </plurals>
+    <plurals name="sync_entries_removed">
+        <item quantity="one">%d бичлэг хасагдсан</item>
+        <item quantity="other">%d бичлэг хасагдсан</item>
+    </plurals>
+    <plurals name="sync_groups_changed">
+        <item quantity="one">%d бүлэг өөрчлөгдсөн</item>
+        <item quantity="other">%d бүлэг өөрчлөгдсөн</item>
+    </plurals>
+
+    <!-- Autofill -->
+    <string name="autofill_unlock">PocketKeePass — түгжээ тайлах</string>
+    <string name="autofill_search">PocketKeePass — хайх</string>
+    <string name="autofill_save_unsupported">PocketKeePass шинэ нэвтрэх мэдээллийг хараахан хадгалж чадахгүй.</string>
+    <string name="autofill_fill_in">Бөглөх газар</string>
+    <string name="autofill_app">%1$s (%2$s)</string>
+    <string name="autofill_linked">Эдгээр бичлэгийг энэ апп эсвэл сайтад зориулж хадгалсан. Өөр бичлэг ашиглах бол хайна уу.</string>
+    <string name="autofill_none_linked">Энэ апп эсвэл сайтад (%1$s) хадгалсан бичлэг алга. Ашиглах бичлэгээ хайна уу. Гэхдээ эхлээд энэ нь таны бодож буй апп эсвэл сайт мөн эсэхийг шалгаарай: сонгосон бичлэгийн хэрэглэгчийн нэр, нууц үг тэнд бөглөгдөнө.</string>
+    <string name="autofill_pick_explained">Таны сонгосон бичлэг энд бөглөгдөнө: %1$s.</string>
+    <string name="autofill_unverified_browser">PocketKeePass энэ хөтчийг баталгаажуулж чадахгүй тул ямар вэбсайт нээлттэй байгааг мэдэх боломжгүй. Хаягийн мөрийг өөрөө шалгаад, ашиглах бичлэгээ хайна уу.</string>
+    <string name="autofill_nothing_to_fill">Тэр бичлэгт энд бөглөх зүйл алга.</string>
+
+    <!-- Settings -->
+    <string name="settings">Тохиргоо</string>
+    <string name="biometric_unlock">Биометрээр түгжээ тайлах</string>
+    <string name="biometric_unlock_switch">Энэ өгөгдлийн санг хурууны хээ эсвэл царайгаар нээх</string>
+    <string name="biometric_unlock_explained">Ингэвэл энэ утсанд хурууны хээ эсвэл царай нь бүртгэлтэй хэн ч үүнийг нээж чадна. Хурууны хээ эсвэл царай нэмэх, хасахад энэ тохиргоо унтарч, дахин асаахад үргэлж үндсэн нууц үг шаардлагатай.</string>
+    <string name="biometric_unlock_unavailable">Үүнийг ашиглахын тулд утасныхаа тохиргоонд хурууны хээ (эсвэл Android хүчтэй гэж үнэлдэг царайгаар түгжээ тайлах) тохируулна уу.</string>
+    <string name="biometric_enable_title">Биометрээр түгжээ тайлахыг асаах</string>
+    <string name="biometric_offer_title">Хурууны хээгээр нээх үү?</string>
+    <!-- %1$s is the database's file name -->
+    <string name="biometric_offer_explained">Дараагийн удаа %1$s өгөгдлийн санг үндсэн нууц үгээ бичихгүйгээр хурууны хээ эсвэл царайгаар нээгээрэй. Үүнийг тохиргооноос хүссэн үедээ өөрчилж болно.</string>
+    <string name="biometric_offer_turn_on">Асаах</string>
+    <string name="cancel">Цуцлах</string>
+    <string name="autofill">Автоматаар бөглөх</string>
+    <string name="autofill_switch">Бусад аппад хэрэглэгчийн нэр, нууц үгийг бөглөх</string>
+    <!-- Chrome's own menu names, as Chrome shows them in Mongolian -->
+    <string name="autofill_explained">Ингэвэл та апп эсвэл хөтөч дээр нэвтрэх талбарт дарахад Android таны бичлэгүүдийг санал болгоно. Та бичлэг сонгохоос нааш юу ч бөглөгдөхгүй. Chrome дээр мөн Тохиргоо › Автоматаар бөглөх үйлчилгээ › Өөр үйлчилгээ ашиглан автоматаар бөглөхийг асаана уу.</string>
+    <string name="autofill_unsupported">Энэ утас автоматаар бөглөхийг дэмждэггүй.</string>
+    <string name="clipboard">Түр санах ой</string>
+    <string name="clipboard_timeout">Хуулсан талбарыг арилгах хугацаа:</string>
+    <string name="auto_lock">Автомат түгжээ</string>
+    <string name="auto_lock_timeout">Ашиглахгүй байх үед (ар талд байсан ч) дараах хугацааны дараа түгжих:</string>
+    <string name="auto_lock_screen_off">Дэлгэц унтрахад түгжих</string>
+    <string name="done">Болсон</string>
+    <string name="about">Тухай</string>
+    <string name="about_keepass">PocketKeePass нь KeePass өгөгдлийн санг (.kdbx) нээж, хадгалдаг. KeePass болон түүний файлын форматыг Dominik Reichl (keepass.info) бүтээсэн. PocketKeePass бол бие даасан апп. Үүнийг KeePass төсөл хийгээгүй, дэмжээгүй бөгөөд тэдний кодыг огт ашигладаггүй.</string>
+    <string name="about_claude">PocketKeePass нь Anthropic компанийн бүтээсэн хиймэл оюуны загвар болох Claude ашиглан бичигдсэн.</string>
+    <string name="about_license">GPLv3 лицензтэй, үнэгүй, нээлттэй эхийн програм хангамж.</string>
+    <string name="privacy_policy">Нууцлалын бодлого</string>
+    <plurals name="seconds">
+        <item quantity="one">%d секунд</item>
+        <item quantity="other">%d секунд</item>
+    </plurals>
+    <plurals name="minutes">
+        <item quantity="one">%d минут</item>
+        <item quantity="other">%d минут</item>
+    </plurals>
+    <plurals name="hours">
+        <item quantity="one">%d цаг</item>
+        <item quantity="other">%d цаг</item>
+    </plurals>
+
+    <!-- Password generator -->
+    <string name="generate_password">Нууц үг үүсгэх</string>
+    <string name="generate_again">Дахин үүсгэх</string>
+    <string name="use_password">Ашиглах</string>
+    <string name="password_length">Урт: %1$d</string>
+    <string name="chars_lowercase_description">Жижиг үсэг</string>
+    <string name="chars_uppercase_description">Том үсэг</string>
+    <string name="chars_digits_description">Цифр</string>
+    <string name="symbols">Тусгай тэмдэгт</string>
+    <string name="symbols_none">Байхгүй</string>
+    <string name="symbols_common">Түгээмэл</string>
+    <string name="symbols_all">Бүгд</string>
+    <string name="symbols_common_explained">Сайтууд ихэвчлэн зөвшөөрдөг тэмдэгтүүд л: %1$s</string>
+    <string name="symbols_all_explained">Гарын бүх тусгай тэмдэгт: %1$s. Зарим сайт эдгээрийн заримыг хүлээж авдаггүй; тийм бол «Түгээмэл» рүү шилжинэ үү.</string>
+    <string name="symbols_none_explained">Тусгай тэмдэгтгүй. Сайт бүгдийг нь хүлээж авахгүй үед л үүнийг ашиглаарай, мөн нөхөж нууц үгээ уртасгаарай.</string>
+    <string name="avoid_lookalikes">Төстэй харагддаг тэмдэгтээс зайлсхийх (%1$s)</string>
+    <string name="every_kind_explained">Сонгосон төрөл бүр дор хаяж нэг удаа орно.</string>
+    <string name="password_strength">%1$s (%2$d бит)</string>
+    <string name="strength_weak">Сул</string>
+    <string name="strength_fair">Дунд зэрэг</string>
+    <string name="strength_strong">Хүчтэй</string>
+    <string name="strength_very_strong">Маш хүчтэй</string>
+
+    <!-- Passkeys -->
+    <string name="passkey">Нэвтрэх түлхүүр</string>
+    <!-- %1$s is a site, e.g. "example.com сайтад" -->
+    <string name="passkey_for">%1$s сайтад</string>
+    <string name="passkey_create_description">Нэвтрэх түлхүүрийг энэ KeePass өгөгдлийн санд хадгалах</string>
+    <string name="passkey_create_for">Нэвтрэх түлхүүр үүсгэх сайт</string>
+    <string name="passkey_create">Үүсгэх</string>
+    <string name="passkey_account">Бүртгэл: %1$s</string>
+    <string name="passkey_create_browser">Хүсэлт гаргагч: %1$s (PocketKeePass баталгаажуулсан хөтөч).</string>
+    <string name="passkey_create_app">Хүсэлт гаргагч: %1$s апп. PocketKeePass энэ апп %2$s сайтынх мөн эсэхийг шалгаж чадахгүй тул итгэдэг бол л үргэлжлүүлнэ үү. Үүнээс хойш энэ апп уг нэвтрэх түлхүүрийг ашиглах боломжтой болно.</string>
+    <string name="passkey_save_in">Хадгалах газар</string>
+    <string name="passkey_new_entry">Шинэ бичлэг</string>
+    <string name="passkey_in_group">Бүлэг: %1$s</string>
+    <string name="passkey_change_group">Бүлэг солих</string>
+    <string name="passkey_choose_group">Шинэ бичлэгийг байршуулах бүлэг</string>
+    <string name="passkey_link_label">Аппад нэвтрэх түлхүүр ашиглахыг зөвшөөрөх</string>
+    <string name="passkey_link_explained">%1$s апп «%3$s» доторх нэвтрэх түлхүүрээр %2$s сайтад нэвтрэхийг хүсэж байна.\n\nPocketKeePass энэ апп %2$s сайтынх мөн эсэхийг шалгаж чадахгүй. Итгэдэг бол л зөвшөөрнө үү: үүнээс хойш энэ апп уг нэвтрэх түлхүүрийг ашиглах боломжтой болно.</string>
+    <string name="passkey_allow">Зөвшөөрөх</string>
+    <string name="passkey_verify_title">Нэвтрэх түлхүүрээ ашиглах</string>
+    <string name="passkey_needs_screen_lock">Нэвтрэх түлхүүр ашиглах бүрд PocketKeePass таныг мөн эсэхийг шалгах ёстой тул дэлгэцийн түгжээ шаардлагатай. Эхлээд утасныхаа тохиргооноос дэлгэцийн түгжээ тохируулна уу.</string>
+    <string name="passkey_saving">Нэвтрэх түлхүүрийг хадгалж байна…</string>
+    <string name="passkey_not_saved">Нэвтрэх түлхүүрийг хадгалж чадсангүй. %1$s</string>
+    <string name="passkey_save_conflict">PocketKeePass өгөгдлийн санг нээснээс хойш өөр апп эсвэл төхөөрөмж файлыг өөрчилсөн байна. PocketKeePass аппыг нээж үүнийг шийдээд, дахин оролдоно уу.</string>
+    <string name="passkey_gone">Тэр нэвтрэх түлхүүр өгөгдлийн санд байхгүй болсон байна.</string>
+    <string name="passkey_other_signer">%1$s нь энэ нэвтрэх түлхүүрийн эзэн апп биш: ийм нэртэй апп үүнтэй холбогдсон ч өөр хүн гарын үсэг зурсан байна. PocketKeePass түүнийг нэвтрүүлэхгүй.</string>
+    <string name="passkey_unknown_caller">PocketKeePass ямар апп хүсэлт гаргаж байгааг тодорхойлж чадсангүй.</string>
+    <string name="passkey_bad_request">Нэвтрэх хүсэлтийг уншиж чадсангүй.</string>
+    <string name="passkeys">Нэвтрэх түлхүүр</string>
+    <string name="passkeys_switch">PocketKeePass доторх нэвтрэх түлхүүрээр нэвтрэх</string>
+    <string name="passkeys_explained">Аль аппууд нэвтрэх түлхүүр нийлүүлэхийг Android-ийн тохиргоо шийддэг. «Нууц үг, нэвтрэх түлхүүр ба бүртгэл» хэсэгт PocketKeePass аппыг асаана уу. Нэвтрэх түлхүүрүүдийг KeePassXC, KeePassDX хадгалдагтай адилаар өгөгдлийн санд хадгалдаг тул тэдгээр дээр ч ажиллана.</string>
+    <string name="passkeys_unsupported">Бусад аппын нэвтрэх түлхүүрт Android 14 буюу түүнээс хойшх хувилбар шаардлагатай.</string>
+</resources>

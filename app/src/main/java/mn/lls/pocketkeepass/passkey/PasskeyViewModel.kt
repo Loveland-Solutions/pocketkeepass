@@ -36,6 +36,7 @@ import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.PasskeyCreation
 import mn.lls.pocketkeepass.core.PasskeyTarget
 import mn.lls.pocketkeepass.core.UnlockedDatabase
+import mn.lls.pocketkeepass.ui.userMessage
 
 /**
  * One passkey request, from the moment the database is open until there's an answer for
@@ -207,11 +208,11 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
         val creation = try {
             engine { it.passkeyCreation(call.requestJson) }
         } catch (e: KeePassException.PasskeyExists) {
-            return fail(ErrorKind.InvalidState, e.message.orEmpty())
+            return fail(ErrorKind.InvalidState, e.userMessage(getApplication<Application>().resources))
         } catch (e: KeePassException.PasskeyUnsupported) {
-            return fail(ErrorKind.NotSupported, e.message.orEmpty())
+            return fail(ErrorKind.NotSupported, e.userMessage(getApplication<Application>().resources))
         } catch (e: KeePassException.Invalid) {
-            return fail(ErrorKind.Unknown, e.message.orEmpty())
+            return fail(ErrorKind.Unknown, e.userMessage(getApplication<Application>().resources))
         }
         val needsUpgrade = engine { it.summary().needsUpgrade }
         val groups = engine { it.allGroups() }.filter { !it.isRecycleBin && !it.isInRecycleBin }

@@ -1,6 +1,18 @@
 <resources>
-    <string name="app_name">PocketKeePass</string>
+    <string name="app_name" translatable="false">PocketKeePass</string>
     <string name="engine_version">Engine %1$s</string>
+
+    <!-- Engine errors with fixed wording (EngineMessages.kt). The engine's own English text is
+         used only for errors that carry details. -->
+    <string name="error_wrong_key">The password or key file is incorrect.</string>
+    <string name="error_invalid_key_file">That key file couldn\'t be read.</string>
+    <string name="error_not_keepass">This isn\'t a KeePass database.</string>
+    <string name="error_needs_upgrade">This database uses the older KDBX 3 format. It has to be upgraded to KDBX 4 before it can be saved.</string>
+    <string name="error_random">This device couldn\'t provide secure random numbers, so the database wasn\'t saved.</string>
+    <string name="error_save_check_failed">The new copy of the database failed its safety check, so it wasn\'t saved.</string>
+    <string name="error_locked">The database is locked.</string>
+    <string name="error_not_found">That group or entry isn\'t in the database anymore.</string>
+    <string name="error_passkey_exists">A passkey for this account is already in the database.</string>
 
     <!-- Welcome (no database chosen yet) -->
     <string name="home_credits">An independent app for KeePass databases. Written with Claude.</string>
@@ -248,9 +260,9 @@
     <string name="use_password">Use</string>
     <!-- %1$d is a number of characters -->
     <string name="password_length">Length: %1$d</string>
-    <string name="chars_lowercase">a–z</string>
-    <string name="chars_uppercase">A–Z</string>
-    <string name="chars_digits">0–9</string>
+    <string name="chars_lowercase" translatable="false">a–z</string>
+    <string name="chars_uppercase" translatable="false">A–Z</string>
+    <string name="chars_digits" translatable="false">0–9</string>
     <string name="chars_lowercase_description">Lowercase letters</string>
     <string name="chars_uppercase_description">Uppercase letters</string>
     <string name="chars_digits_description">Digits</string>

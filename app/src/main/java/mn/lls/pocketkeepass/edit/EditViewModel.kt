@@ -28,6 +28,7 @@ import mn.lls.pocketkeepass.core.generatePassword
 import mn.lls.pocketkeepass.core.passwordStrengthBits
 import mn.lls.pocketkeepass.security.decodeUtf8
 import mn.lls.pocketkeepass.security.wipe
+import mn.lls.pocketkeepass.ui.userMessage
 
 /** An entry or group to delete or move. */
 sealed interface Item {
@@ -289,7 +290,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
             generated = chars
             GeneratorState(field, options, String(chars), passwordStrengthBits(options), error = null)
         } catch (e: KeePassException) {
-            GeneratorState(field, options, password = null, strengthBits = null, error = e.message.orEmpty())
+            GeneratorState(field, options, password = null, strengthBits = null, error = e.userMessage(getApplication<Application>().resources))
         }
         _state.update { it.copy(generator = state) }
     }
@@ -439,7 +440,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
                 onDone(result)
             }.onFailure { e ->
                 if (e is KeePassException.Locked || e is IllegalStateException) return@onFailure
-                val message = e.message.orEmpty()
+                val message = e.userMessage(getApplication<Application>().resources)
                 if (inForm) {
                     _state.update { it.copy(error = message) }
                 } else {

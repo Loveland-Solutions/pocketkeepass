@@ -306,7 +306,7 @@ fun SaveProblemDialog(
                     SaveProblem.Conflict -> stringResource(R.string.conflict_explained)
                     SaveProblem.CantWrite -> stringResource(R.string.cant_write_explained)
                     SaveProblem.WriteCheckFailed -> stringResource(R.string.write_check_failed_explained)
-                    is SaveProblem.Engine -> stringResource(R.string.engine_save_failed_explained, problem.message)
+                    is SaveProblem.Engine -> stringResource(R.string.engine_save_failed_explained, problem.error.userMessage())
                 },
             )
         },

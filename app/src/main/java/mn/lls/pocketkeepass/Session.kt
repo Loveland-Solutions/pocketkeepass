@@ -57,8 +57,8 @@ sealed interface SaveProblem {
     /** The file didn't read back the same after writing. */
     data object WriteCheckFailed : SaveProblem
 
-    /** The engine refused to save. Its message is user-facing. */
-    data class Engine(val message: String) : SaveProblem
+    /** The engine refused to save. Shown with [mn.lls.pocketkeepass.ui.userMessage]. */
+    data class Engine(val error: KeePassException) : SaveProblem
 }
 
 /** Changes that came in from another app or device, and when. */
@@ -358,7 +358,7 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
             val bytes = try {
                 withContext(Dispatchers.Default) { open.database.save() }
             } catch (e: KeePassException) {
-                return@withContext SaveProblem.Engine(e.message.orEmpty())
+                return@withContext SaveProblem.Engine(e)
             }
             writeChecked(uri, bytes)
         }
@@ -419,7 +419,7 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
             } catch (_: IllegalStateException) {
                 return null // closed by lock() before the call started
             } catch (e: KeePassException) {
-                return SaveProblem.Engine(e.message.orEmpty())
+                return SaveProblem.Engine(e)
             }
             val uri = open.document.uri
             val current = try {
