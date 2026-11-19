@@ -71,12 +71,18 @@ if strings "$manifest" | grep -q 'android.permission.INTERNET'; then
   exit 1
 fi
 # The engine must not carry paths from this computer (they name the developer's account).
-libraries=$(find "$check/base/lib" -name '*.so' | wc -l)
-if [ "$libraries" -eq 0 ]; then
-  echo "No native libraries in the bundle. Not releasing it." >&2
+# Our engine, built here, is checked for any home folder. Prebuilt libraries from others carry
+# their own builders' paths (JNA's names /home/matthias/…), so those are checked for ours only.
+engines=$(find "$check/base/lib" -name 'libpocketkeepass_core.so' | wc -l)
+if [ "$engines" -ne 3 ]; then
+  echo "Expected the engine for 3 ABIs in the bundle, found $engines. Not releasing it." >&2
   exit 1
 fi
-if find "$check/base/lib" -name '*.so' -exec strings {} + | grep -q -e "$HOME" -e '/Users/' -e '/home/'; then
+if find "$check/base/lib" -name 'libpocketkeepass_core.so' -exec strings {} + | grep -q -e "$HOME" -e '/Users/' -e '/home/'; then
+  echo "The engine contains local paths. Not releasing it." >&2
+  exit 1
+fi
+if find "$check/base/lib" -name '*.so' -exec strings {} + | grep -q -e "$HOME"; then
   echo "A native library contains paths from this computer. Not releasing it." >&2
   exit 1
 fi
