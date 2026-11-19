@@ -57,6 +57,7 @@ class PocketPasskeyService : CredentialProviderService() {
         cancellationSignal: CancellationSignal,
         callback: OutcomeReceiver<BeginCreateCredentialResponse, CreateCredentialException>,
     ) {
+        (application as PocketKeePassApp).autoLock.check()
         val database = RecentDatabase(this).database
         if (request !is BeginCreatePublicKeyCredentialRequest || database == null || isOurs(request.callingAppInfo?.packageName)) {
             callback.onResult(BeginCreateCredentialResponse())
@@ -80,9 +81,14 @@ class PocketPasskeyService : CredentialProviderService() {
             callback.onResult(BeginGetCredentialResponse())
             return
         }
-        val database = (application as PocketKeePassApp).session.open.value?.database
+        val app = application as PocketKeePassApp
+        // A frozen app runs no timers, so the auto-lock time may have passed unnoticed.
+        app.autoLock.check()
+        val database = app.session.open.value?.database
         val job = scope.launch {
-            val response = withContext(Dispatchers.Default) { signInEntries(this@PocketPasskeyService, request, database, browsers) }
+            val response = withContext(Dispatchers.Default) {
+                signInEntries(this@PocketPasskeyService, request, database, browsers, includeUnlinked = false)
+            }
             callback.onResult(response ?: locked(this@PocketPasskeyService))
         }
         cancellationSignal.setOnCancelListener { job.cancel() }
@@ -115,12 +121,19 @@ class PocketPasskeyService : CredentialProviderService() {
         /**
          * The passkeys to offer for a sign-in, one per usable passkey, or null if the database
          * is locked. Blocks on the engine, so call it off the main thread.
+         *
+         * An app can ask Android what a provider offers without showing the user anything, so
+         * the list itself would tell any app which sites the user has passkeys for. So, unless
+         * [includeUnlinked], an app is offered only the passkeys the user already allowed it to
+         * use, plus one fixed "choose a passkey" action that doesn't depend on the database.
+         * The rest are listed once the user has tapped that, by the system, not to the app.
          */
         fun signInEntries(
             context: Context,
             request: BeginGetCredentialRequest,
             database: UnlockedDatabase?,
             browsers: TrustedBrowsers,
+            includeUnlinked: Boolean,
         ): BeginGetCredentialResponse? {
             if (database == null) return null
             val info = request.callingAppInfo ?: return BeginGetCredentialResponse()
@@ -141,6 +154,7 @@ class PocketPasskeyService : CredentialProviderService() {
                 }
                 for (choice in choices) {
                     if (choice.unusableReason != null || choice.trust == AppTrust.OTHER_SIGNER) continue
+                    if (choice.trust == AppTrust.NOT_LINKED && !includeUnlinked) continue
                     val entry = choice.result.entry
                     val title = entry.title.ifEmpty { context.getString(R.string.untitled_entry) }
                     entries += PublicKeyCredentialEntry.Builder(
@@ -151,7 +165,12 @@ class PocketPasskeyService : CredentialProviderService() {
                     ).setDisplayName(title).build()
                 }
             }
-            return BeginGetCredentialResponse(credentialEntries = entries)
+            val choose = if (caller is Caller.App && !includeUnlinked) {
+                listOf(AuthenticationAction(context.getString(R.string.passkey_choose), pendingIntent(context, PasskeyActivity.ACTION_UNLOCK, null)))
+            } else {
+                emptyList()
+            }
+            return BeginGetCredentialResponse(credentialEntries = entries, authenticationActions = choose)
         }
 
         /**

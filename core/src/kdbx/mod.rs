@@ -12,6 +12,7 @@ use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use zeroize::Zeroizing;
 
+pub(crate) use crypto::KdfCost;
 pub use header::FormatVersion;
 pub(crate) use upgrade::{seconds_since_year_1, upgrade_to_kdbx4};
 pub(crate) use write::encrypt;
@@ -106,6 +107,14 @@ fn drop_header_hash(xml: &mut Element) {
 }
 
 fn decrypt_v4(data: &[u8], header: OuterHeader, key: &[u8; 32]) -> Result<Decrypted> {
+    // The header's checksum needs no key, so it's checked before the key derivation, which is
+    // slow and takes its settings from that same header: a header damaged by accident is then
+    // reported at once, not after however long its damaged settings ask for. (It's checked
+    // again with the key, by the header HMAC, in `read_v4`.)
+    let stored_hash = data.get(header.len..header.len + 32);
+    if stored_hash != Some(sha256(&[&data[..header.len]]).as_slice()) {
+        return Err(corrupt("the header doesn't match its stored hash"));
+    }
     let kdf = VariantDictionary::read(header.kdf_parameters()?)?;
     let transformed = crypto::kdbx4_kdf(key, &kdf)?;
     read_v4(data, header, &transformed)
@@ -197,11 +206,26 @@ fn decompress(data: Zeroizing<Vec<u8>>, compressed: bool) -> Result<Zeroizing<Ve
     gunzip(&data).map_err(|_| corrupt("the compressed data is damaged"))
 }
 
+/// The most a database may decompress to: 1 GiB, far more than a phone could hold open. A few
+/// kilobytes of compressed data can expand to gigabytes, and running out of memory closes the
+/// app without a word.
+const MAX_DECOMPRESSED: u64 = 1 << 30;
+
 /// Decompresses gzip data into a buffer that never leaves plaintext behind as it grows.
 fn gunzip(data: &[u8]) -> std::io::Result<Zeroizing<Vec<u8>>> {
-    let mut out = SecretBuf::with_capacity(data.len() * 4);
-    std::io::copy(&mut flate2::read::GzDecoder::new(data), &mut out)?;
+    use std::io::Read;
+    let mut out = SecretBuf::with_capacity(data.len().saturating_mul(2).min(1 << 24));
+    let mut decoder = flate2::read::GzDecoder::new(data).take(MAX_DECOMPRESSED + 1);
+    let size = std::io::copy(&mut decoder, &mut out)?;
+    if size > MAX_DECOMPRESSED {
+        return Err(std::io::Error::other("too large"));
+    }
     Ok(out.into_inner())
+}
+
+/// What a file's key derivation costs to run, read from its header without running it.
+pub(crate) fn kdf_cost(data: &[u8]) -> Result<KdfCost> {
+    OuterHeader::read(data)?.kdf_cost()
 }
 
 /// Parses the XML, then decrypts every `<Value Protected="True">` in document order. The

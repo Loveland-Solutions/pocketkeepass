@@ -40,10 +40,14 @@ sealed interface Caller {
     }
 }
 
-/** Works out who is calling, or null if Android gave no signing certificate for it. */
+/**
+ * Works out who is calling, or null if Android gave no signing certificate for it, or it's an
+ * app posing as a browser on the list (the browser's package name with another certificate).
+ */
 @RequiresApi(34)
 fun findCaller(context: Context, info: CallingAppInfo, browsers: TrustedBrowsers): Caller? {
     val packageName = info.packageName
+    if (browsers.isImpostor(packageName)) return null
     if (info.isOriginPopulated() && browsers.isTrusted(packageName)) {
         val allowlist = browsers.privilegedAllowlist(packageName)
         // getOrigin checks the package name and certificate against the list once more.
@@ -78,10 +82,12 @@ private fun certificates(signing: SigningInfo): List<ByteArray> {
 
 private fun appDescription(context: Context, packageName: String): String {
     val pm = context.packageManager
+    // The app picks its own name, up to a thousand characters with line breaks, so it could
+    // pose as a website: only the first line, short, and always with the package name.
     val label = try {
         pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
     } catch (_: PackageManager.NameNotFoundException) {
         null // Android only shows us some of the installed apps
-    }
-    return if (label == null || label == packageName) packageName else context.getString(R.string.autofill_app, label, packageName)
+    }?.lineSequence()?.firstOrNull()?.trim()?.take(40)
+    return if (label.isNullOrEmpty() || label == packageName) packageName else context.getString(R.string.app_with_package, label, packageName)
 }

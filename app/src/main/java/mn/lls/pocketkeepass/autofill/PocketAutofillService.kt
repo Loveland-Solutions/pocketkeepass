@@ -3,6 +3,7 @@ package mn.lls.pocketkeepass.autofill
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.CancellationSignal
+import android.os.SystemClock
 import android.service.autofill.AutofillService
 import android.service.autofill.Dataset
 import android.service.autofill.FillCallback
@@ -47,11 +48,14 @@ class PocketAutofillService : AutofillService() {
     override fun onFillRequest(request: FillRequest, cancellationSignal: CancellationSignal, callback: FillCallback) {
         val structure = request.fillContexts.lastOrNull()?.structure
         // Nothing to offer before a database has been chosen, and never in our own screens.
-        if (structure == null || structure.activityComponent.packageName == packageName || RecentDatabase(this).database == null) {
+        if (structure == null || structure.activityComponent?.packageName == packageName || RecentDatabase(this).database == null) {
             callback.onSuccess(null)
             return
         }
-        val session = (application as PocketKeePassApp).session
+        val app = application as PocketKeePassApp
+        // A frozen app runs no timers, so the auto-lock time may have passed unnoticed.
+        app.autoLock.check()
+        val session = app.session
         val job = scope.launch {
             val response = try {
                 withContext(Dispatchers.Default) {
@@ -67,7 +71,7 @@ class PocketAutofillService : AutofillService() {
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
+            } catch (e: Throwable) { // Throwable: a screen deep enough to overflow the stack too
                 // This runs whenever a field gets focus in any app, and other apps describe their
                 // screens in ways we can't foresee. A surprise there means no suggestions, never
                 // a "PocketKeePass keeps stopping" over someone else's app. The trace holds no
@@ -121,6 +125,7 @@ class PocketAutofillService : AutofillService() {
             setViewVisibility(R.id.autofill_detail, if (detail.isEmpty()) View.GONE else View.VISIBLE)
         }
         val intent = fill.putInto(extras.setClass(this, AutofillActivity::class.java))
+            .putExtra(AutofillActivity.EXTRA_CREATED, SystemClock.elapsedRealtime())
         // Pending intents that differ only in their extras count as the same one, so each gets
         // its own request code. Immutable: nobody can alter where the password will go.
         val open = PendingIntent.getActivity(this, Random.nextInt(), intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)

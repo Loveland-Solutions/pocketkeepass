@@ -168,6 +168,7 @@
     <string name="sync_checking_phone">Файлын өөрчлөлтийг шалгаж байна…</string>
     <string name="sync_cant_read">Яг одоо файлыг уншиж чадахгүй байна. Уншиж чадмагц бусад төхөөрөмжийн өөрчлөлтүүд орж ирнэ.</string>
     <string name="sync_key_changed">Үндсэн нууц үгийг өөр төхөөрөмж дээр сольсон байна. Түгжээд, шинэ нууц үгээр түгжээг тайлна уу.</string>
+    <string name="sync_settings_changed">Өгөгдлийн сангийн аюулгүй байдлын тохиргоог өөр төхөөрөмж дээр өөрчилсөн байна. Өөрчлөлтийг авахын тулд түгжээд, дахин түгжээг нь тайлна уу.</string>
     <string name="sync_other_database">Файлд одоо өөр өгөгдлийн сан байна. Түгжээд, дахин түгжээг нь тайлна уу.</string>
     <string name="just_now">дөнгөж сая</string>
     <string name="sync_title_cloud">Синк: %1$s</string>
@@ -203,12 +204,16 @@
     <string name="autofill_unlock">PocketKeePass — түгжээ тайлах</string>
     <string name="autofill_search">PocketKeePass — хайх</string>
     <string name="autofill_save_unsupported">PocketKeePass шинэ нэвтрэх мэдээллийг хараахан хадгалж чадахгүй.</string>
-    <string name="autofill_fill_in">Бөглөх газар</string>
-    <string name="autofill_app">%1$s (%2$s)</string>
+    <string name="app_with_package">%1$s (%2$s)</string>
+    <string name="autofill_fill_in">Бөглөх газар · %1$s</string>
+    <string name="autofill_kind_website">Вэбсайт</string>
+    <string name="autofill_kind_website_http">Вэбсайт, аюулгүй бус холболт (http)</string>
+    <string name="autofill_kind_app">Апп</string>
+    <string name="autofill_kind_app_page">Апп доторх вэб хуудас</string>
     <string name="autofill_linked">Эдгээр бичлэгийг энэ апп эсвэл сайтад зориулж хадгалсан. Өөр бичлэг ашиглах бол хайна уу.</string>
     <string name="autofill_none_linked">Энэ апп эсвэл сайтад (%1$s) хадгалсан бичлэг алга. Ашиглах бичлэгээ хайна уу. Гэхдээ эхлээд энэ нь таны бодож буй апп эсвэл сайт мөн эсэхийг шалгаарай: сонгосон бичлэгийн хэрэглэгчийн нэр, нууц үг тэнд бөглөгдөнө.</string>
     <string name="autofill_pick_explained">Таны сонгосон бичлэг энд бөглөгдөнө: %1$s.</string>
-    <string name="autofill_unverified_browser">PocketKeePass энэ хөтчийг баталгаажуулж чадахгүй тул ямар вэбсайт нээлттэй байгааг мэдэх боломжгүй. Хаягийн мөрийг өөрөө шалгаад, ашиглах бичлэгээ хайна уу.</string>
+    <string name="autofill_unverified_browser">Энэ апп хуудсыг дараах вэбсайтынх гэж мэдэгдэж байна: %1$s. PocketKeePass үүнийг шалгаж чадахгүй тул зөвхөн энэ апп болон тэр вэбсайтын аль алинд нь зориулж хадгалсан бичлэгүүдийг санал болгоно. Өөр бичлэг хайхаасаа өмнө хаягийг өөрөө шалгаарай.</string>
     <string name="autofill_nothing_to_fill">Тэр бичлэгт энд бөглөх зүйл алга.</string>
 
     <!-- Settings -->
@@ -279,6 +284,7 @@
     <string name="passkey">Нэвтрэх түлхүүр</string>
     <!-- %1$s is a site, e.g. "example.com сайтад" -->
     <string name="passkey_for">%1$s сайтад</string>
+    <string name="passkey_choose">PocketKeePass дотроос нэвтрэх түлхүүр сонгох</string>
     <string name="passkey_create_description">Нэвтрэх түлхүүрийг энэ KeePass өгөгдлийн санд хадгалах</string>
     <string name="passkey_create_for">Нэвтрэх түлхүүр үүсгэх сайт</string>
     <string name="passkey_create">Үүсгэх</string>
@@ -296,6 +302,7 @@
     <string name="passkey_verify_title">Нэвтрэх түлхүүрээ ашиглах</string>
     <string name="passkey_needs_screen_lock">Нэвтрэх түлхүүр ашиглах бүрд PocketKeePass таныг мөн эсэхийг шалгах ёстой тул дэлгэцийн түгжээ шаардлагатай. Эхлээд утасныхаа тохиргооноос дэлгэцийн түгжээ тохируулна уу.</string>
     <string name="passkey_saving">Нэвтрэх түлхүүрийг хадгалж байна…</string>
+    <string name="passkey_locked_before_saving">Нэвтрэх түлхүүрийг хадгалахаас өмнө PocketKeePass түгжигдсэн тул түлхүүр үүсээгүй. Дахин оролдоно уу.</string>
     <string name="passkey_not_saved">Нэвтрэх түлхүүрийг хадгалж чадсангүй. %1$s</string>
     <string name="passkey_save_conflict">PocketKeePass өгөгдлийн санг нээснээс хойш өөр апп эсвэл төхөөрөмж файлыг өөрчилсөн байна. PocketKeePass аппыг нээж үүнийг шийдээд, дахин оролдоно уу.</string>
     <string name="passkey_gone">Тэр нэвтрэх түлхүүр өгөгдлийн санд байхгүй болсон байна.</string>

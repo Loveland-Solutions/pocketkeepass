@@ -402,10 +402,13 @@ fn link_fields(
             (suffix, Vec::new())
         }
     };
-    for certificate in certificates {
-        if !known.contains(certificate) {
-            known.push(*certificate);
-        }
+    // Only the current certificate (the first). Earlier ones from key rotation still count when
+    // checking (`trust`), but an app signed only with a key it rotated away from, perhaps
+    // because it leaked, must not be linked by them.
+    if let Some(current) = certificates.first()
+        && !known.contains(current)
+    {
+        known.push(*current);
     }
     put(fields, set(&format!("{APP_FIELD}{suffix}"), package, false));
     put(
@@ -614,6 +617,12 @@ impl Database {
                 if has_passkey(&entry) {
                     return Err(Error::Invalid("That entry already has a passkey.".into()));
                 }
+                if trust(&entry, client) == AppTrust::OtherSigner {
+                    // Linking would add this app's certificate next to the real app's.
+                    return Err(Error::Invalid(
+                        "Another app with the same name is already linked to that entry, so this one can't be.".into(),
+                    ));
+                }
                 let mut fields = keep_all(&entry);
                 if entry.username().trim().is_empty() {
                     put(
@@ -708,8 +717,10 @@ impl Database {
     }
 
     /// Links an app to an entry, after the user agreed: from then on that app, signed with one
-    /// of these certificates, may use the entry's passkey (and autofill offers the entry to it).
-    /// Returns false if it was already linked with all of them.
+    /// of these certificates, may use the entry's passkey. That's all it allows: autofill
+    /// doesn't offer the entry's password to an app linked this way (see `autofill.rs`). An
+    /// app with this name linked under other certificates is refused. Returns false if it was
+    /// already linked with all of them.
     pub fn link_app(
         &mut self,
         entry: &[u8; 16],
@@ -722,6 +733,15 @@ impl Database {
             ));
         }
         let hit = self.find_entry(entry).ok_or(Error::NotFound)?;
+        let client = Client::App {
+            package: package.trim(),
+            certificates,
+        };
+        if trust(&hit.entry, &client) == AppTrust::OtherSigner {
+            return Err(Error::Invalid(
+                "Another app with the same name is already linked to that entry, so this one can't be.".into(),
+            ));
+        }
         let mut fields = keep_all(&hit.entry);
         link_fields(&mut fields, Some(&hit.entry), package.trim(), certificates);
         let tags: Vec<String> = hit

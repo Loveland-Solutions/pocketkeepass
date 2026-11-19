@@ -30,6 +30,19 @@ class TrustedBrowsers(private val context: Context) {
      */
     fun privilegedAllowlist(packageName: String): String? = browsers[packageName]?.let { privilegedAllowlist(packageName, it) }
 
+    /**
+     * Whether this is a browser on the list, installed but signed with a certificate the list
+     * doesn't have: an app posing as that browser. Refused outright, not treated as an app.
+     */
+    fun isImpostor(packageName: String): Boolean = packageName in browsers && !isTrusted(packageName) && isInstalled(packageName)
+
+    private fun isInstalled(packageName: String): Boolean = try {
+        context.packageManager.getPackageInfo(packageName, 0)
+        true
+    } catch (_: PackageManager.NameNotFoundException) {
+        false
+    }
+
     fun isTrusted(packageName: String): Boolean {
         val certificates = browsers[packageName] ?: return false
         return certificates.any { certificate ->

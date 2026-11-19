@@ -1,7 +1,6 @@
 package mn.lls.pocketkeepass
 
 import android.net.Uri
-import java.io.FileNotFoundException
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -74,6 +73,12 @@ enum class SyncProblem {
 
     /** It holds a different database now. */
     OTHER_DATABASE,
+
+    /**
+     * Its key derivation settings changed. They can't be checked before they're run, so a file
+     * could ask for any amount of work: that only happens when the user unlocks it.
+     */
+    SETTINGS_CHANGED,
 }
 
 /**
@@ -113,9 +118,11 @@ data class SyncStatus(
  *
  * The file is shared with other devices through the storage app (Drive, Dropbox, and so on), so
  * while the app is on screen it's read every [CHECK_INTERVAL_MS] (and whenever the storage app
- * says it changed) to take in changes made elsewhere ([sync]). With nothing of our own unsaved,
- * the other version simply replaces ours; otherwise the engine merges the two and the result is
- * saved. A save that finds the file changed merges the same way instead of overwriting it.
+ * says it changed) to take in changes made elsewhere ([sync]). The engine always merges the two
+ * versions, so that a file that went back to an older version (a device that was offline, or
+ * someone putting an old copy back) can't undo what was saved here; if ours adds nothing, the
+ * result is just the file's version. Otherwise the result is saved. A save that finds the file
+ * changed merges the same way instead of overwriting it.
  */
 class Session(private val autoLock: AutoLock, private val documents: Documents, private val backups: Backups) {
     /** An unlocked database, with what the app shows straight after unlocking it. */
@@ -152,11 +159,11 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
 
     private var saveJob: Job? = null
 
-    /** Another change arrived while a save was running: save again when it's done. */
+    /**
+     * Another change arrived while a save was running: save again when it's done. Possibly to
+     * another database than the running save's, if it was locked and another unlocked meanwhile.
+     */
     private var saveAgain = false
-
-    /** Locked while a save was running: wipe it when the save is done. */
-    private var wipeAfterSave: Open? = null
 
     /** Saving and checking for changes take turns with the file. */
     private val fileLock = Mutex()
@@ -231,8 +238,8 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
                     if (_open.value !== open) return@withLock null
                     val current = try {
                         documents.read(open.document.uri)
-                    } catch (e: Exception) {
-                        if (problemFor(e) == null) throw e
+                    } catch (_: Exception) {
+                        // Whatever the storage app throws: it can throw anything, every 30 s.
                         return@withLock Taken.Failed(SyncProblem.CANT_READ)
                     }
                     if (fingerprint(current).contentEquals(open.fileFingerprint)) Taken.Same else sync(open, current)
@@ -256,21 +263,25 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
     }
 
     /**
-     * Takes in [current], the file as another app or device left it: replaces our database with
-     * it if we have nothing unsaved, merges the two otherwise ([SyncReport.merged]: then the
-     * result needs saving). Records the outcome in [sync]. Runs key derivation, so it's slow.
+     * Takes in [current], the file as another app or device left it, merged with ours. If ours
+     * adds nothing to it, the database now matches the file; otherwise ([SyncReport.merged])
+     * the result needs saving. Records the outcome in [sync]. Runs key derivation, so it's slow.
      */
     private suspend fun sync(open: Open, current: ByteArray): Taken {
         val taken = withContext(Dispatchers.Default) {
             try {
                 val report = open.database.syncWithFile(current, open.cleanCount)
                 open.fileFingerprint = fingerprint(current)
-                if (!report.merged) open.cleanCount = open.database.changeCount()
+                // The engine's count from the moment it took the file in, so a change made just
+                // after isn't counted as already in the file.
+                if (!report.merged) open.cleanCount = report.changeCount
                 Taken.Changes(report)
             } catch (_: KeePassException.WrongKey) {
                 Taken.Failed(SyncProblem.KEY_CHANGED)
             } catch (_: KeePassException.Invalid) {
                 Taken.Failed(SyncProblem.OTHER_DATABASE)
+            } catch (_: KeePassException.SettingsChanged) {
+                Taken.Failed(SyncProblem.SETTINGS_CHANGED)
             } catch (_: KeePassException.Locked) {
                 Taken.Same
             } catch (_: IllegalStateException) {
@@ -298,9 +309,11 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
     /**
      * Wipes the decrypted database. Safe to call when nothing is open. Unsaved changes are lost.
      *
-     * A save that's running finishes first (it already has the encrypted bytes, so the change
-     * still reaches the file), and the database is wiped right after. Waiting for it here would
-     * freeze the screen for as long as key derivation takes.
+     * The wipe runs off the main thread: it waits for any engine call still running (a save's
+     * or a check's key derivation), and the screen mustn't freeze meanwhile. It doesn't wait
+     * for the storage app: a save that already has its encrypted bytes still writes them, so
+     * the change reaches the file, but a slow or stuck storage app can't keep the database
+     * decrypted in memory.
      */
     fun lock() {
         val open = _open.value ?: return
@@ -310,7 +323,7 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
         _open.value = null
         _saveState.value = SaveState.Saved
         _sync.value = SyncStatus()
-        if (saveJob?.isActive == true) wipeAfterSave = open else wipe(open)
+        scope.launch(Dispatchers.Default + NonCancellable) { wipe(open) }
     }
 
     /** The open database was just changed in memory. Screens re-read it, and it's saved. */
@@ -326,25 +339,29 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
      */
     fun save(overwrite: Boolean = false) {
         val open = _open.value ?: return
+        _saveState.value = SaveState.Saving
         if (saveJob?.isActive == true) {
             saveAgain = true
             return
         }
-        _saveState.value = SaveState.Saving
         saveJob = scope.launch {
             val problem = withContext(Dispatchers.IO + NonCancellable) {
                 fileLock.withLock { write(open, overwrite) }
             }
-            wipeAfterSave?.let {
-                wipeAfterSave = null
-                wipe(it)
+            val again = saveAgain
+            saveAgain = false
+            if (_open.value !== open) {
+                // Locked meanwhile. A change to a database unlocked since is still to be saved.
+                if (again) save()
+                return@launch
             }
-            if (_open.value !== open) return@launch // locked meanwhile
+            if (again && problem == null) {
+                // Straight on to the next save: "Saved" in between would be untrue, and a
+                // passkey waiting for its save would take it as done.
+                save()
+                return@launch
+            }
             _saveState.value = problem?.let(SaveState::Unsaved) ?: SaveState.Saved
-            if (saveAgain) {
-                saveAgain = false
-                if (problem == null) save()
-            }
         }
     }
 
@@ -381,12 +398,8 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
                 } finally {
                     keyHash.wipe()
                 }
-            } catch (_: KeePassException) {
-                null
-            } catch (_: IOException) {
-                null
-            } catch (_: SecurityException) {
-                null
+            } catch (_: Exception) {
+                null // the engine's errors, a closed database, or whatever the storage app throws
             }
         }
         if (_open.value !== open) {
@@ -426,7 +439,7 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
                 documents.read(uri)
             } catch (e: Exception) {
                 // Replacing it anyway: the write itself will say if the file is really out of reach.
-                if (overwrite) null else return problemFor(e) ?: throw e
+                if (overwrite) null else return problemFor(e)
             }
             if (current != null) {
                 val known = fingerprint(current).contentEquals(open.fileFingerprint)
@@ -491,14 +504,17 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
         documents.write(uri, bytes)
         null
     } catch (e: Exception) {
-        problemFor(e) ?: throw e
+        problemFor(e)
     }
 
-    private fun problemFor(e: Exception): SaveProblem? = when (e) {
+    /**
+     * What a storage app's exception means for a save. A storage app can throw anything at us
+     * (database errors, null pointers, parcel errors all cross from its process), and none of
+     * it may crash the app and take unsaved changes with it.
+     */
+    private fun problemFor(e: Exception): SaveProblem = when (e) {
         is WriteCheckException -> SaveProblem.WriteCheckFailed
-        is FileNotFoundException, is SecurityException, is IOException, is IllegalArgumentException,
-        is UnsupportedOperationException -> SaveProblem.CantWrite
-        else -> null
+        else -> SaveProblem.CantWrite
     }
 
     private fun now() = System.currentTimeMillis()

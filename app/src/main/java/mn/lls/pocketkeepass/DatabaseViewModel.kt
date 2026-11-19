@@ -36,6 +36,7 @@ import mn.lls.pocketkeepass.core.EntryDetails
 import mn.lls.pocketkeepass.core.EntryField
 import mn.lls.pocketkeepass.core.FillTarget
 import mn.lls.pocketkeepass.core.GroupListing
+import mn.lls.pocketkeepass.core.InternalException
 import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.core.UnlockedDatabase
@@ -567,8 +568,10 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 if (error is UnlockError.QuickUnlockInvalidated || error is UnlockError.QuickUnlockOutdated) quickUnlock.disable()
                 if (e is KeePassException.WrongKey && !viaQuickUnlock) clearPassword()
+                // Not UnsupportedVersion: that's a good file in a newer format (another app
+                // upgraded it), and restoring an older copy over it would throw its content away.
                 val damaged = e is KeePassException.NotKeePass || e is KeePassException.Corrupt ||
-                    e is KeePassException.UnsupportedVersion || (e is CantReadException && !e.keyFile)
+                    (e is CantReadException && !e.keyFile)
                 val backup = if (damaged) withContext(Dispatchers.IO) { backups.find(locked.database.uri.toString()) } else null
                 _state.value = locked.copy(
                     unlocking = false,
@@ -869,6 +872,8 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 return@withContext null // locked meanwhile, gone, or (TOTP) unusable settings
             } catch (_: IllegalStateException) {
                 return@withContext null // closed by lock() before the call started
+            } catch (_: InternalException) {
+                return@withContext null // a bug in the engine: nothing to copy, but no crash
             }
             try {
                 bytes.decodeUtf8()
@@ -893,6 +898,8 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 return@launch
             } catch (_: IllegalStateException) {
                 return@launch // closed by lock() before the call started
+            } catch (_: InternalException) {
+                return@launch // a bug in the engine: no answer, but no crash either
             }
             apply(answer)
         }
@@ -957,6 +964,16 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
             documents.keepAccess(uri, write)
         } catch (_: SecurityException) {
         }
+    }
+
+    /**
+     * The app left the screen. A master password typed but not used (the file couldn't be read,
+     * or the user simply walked away) is cleared, so nobody who picks up the phone later can
+     * reveal it with "show password".
+     */
+    fun onAppHidden() {
+        val locked = _state.value as? DatabaseState.Locked ?: return
+        if (!locked.unlocking) clearPassword()
     }
 
     /** Empties the password field, and its undo history, which holds earlier copies of the text. */

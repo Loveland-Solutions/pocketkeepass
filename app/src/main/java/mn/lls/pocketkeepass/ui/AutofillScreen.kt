@@ -38,6 +38,13 @@ import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
 /**
+ * Where an entry will be filled in. [kind] says whether it's a verified website or an app, and
+ * [name] is the site's host or the app's package name: the part nobody can fake. An app's own
+ * [label] is shown only as a hint, since the app chooses it.
+ */
+data class FillDestination(val kind: String, val name: String, val label: String?, val isWebsite: Boolean)
+
+/**
  * Choosing the entry to fill into another app's login form: the entries linked to that app or
  * website, or any entry the search finds. The top of the screen always says where the username
  * and password will go, since that's the one thing the user has to check.
@@ -45,10 +52,10 @@ import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AutofillScreen(
-    /** The website, or the app's name, that will receive the entry. */
-    target: String,
-    /** The app reported a website, but it isn't a browser PocketKeePass can verify. */
-    unverifiedBrowser: Boolean,
+    /** The website or app that will receive the entry. */
+    destination: FillDestination,
+    /** The website an app that isn't a verified browser says it shows, or null. */
+    claimedDomain: String?,
     linked: List<SearchResult>,
     searchQuery: TextFieldState,
     results: List<SearchResult>,
@@ -67,11 +74,27 @@ fun AutofillScreen(
                         }
                         Column(Modifier.padding(start = 12.dp)) {
                             Text(
-                                stringResource(R.string.autofill_fill_in),
+                                stringResource(R.string.autofill_fill_in, destination.kind),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                            Text(target, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            if (destination.isWebsite) {
+                                // Cut at the start if it's too long: the end of a host name is
+                                // the part that says whose site it is.
+                                Text(destination.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.StartEllipsis)
+                            } else {
+                                // A package name is shown whole: it's what can't be faked.
+                                Text(destination.name, style = MaterialTheme.typography.titleMedium)
+                                destination.label?.let { label ->
+                                    Text(
+                                        label,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
                         }
                     }
                     Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -96,9 +119,9 @@ fun AutofillScreen(
                 val note = when {
                     searching && results.isEmpty() -> stringResource(R.string.search_no_results)
                     // Picking by hand is the user vouching for the app or site, so say what happens.
-                    searching -> stringResource(R.string.autofill_pick_explained, target)
-                    unverifiedBrowser -> stringResource(R.string.autofill_unverified_browser)
-                    linked.isEmpty() -> stringResource(R.string.autofill_none_linked, target)
+                    searching -> stringResource(R.string.autofill_pick_explained, destination.name)
+                    claimedDomain != null -> stringResource(R.string.autofill_unverified_browser, claimedDomain)
+                    linked.isEmpty() -> stringResource(R.string.autofill_none_linked, destination.name)
                     else -> stringResource(R.string.autofill_linked)
                 }
                 Text(
@@ -124,8 +147,8 @@ fun AutofillScreen(
 private fun AutofillScreenPreview() {
     PocketKeePassTheme {
         AutofillScreen(
-            target = "login.example.com",
-            unverifiedBrowser = false,
+            destination = FillDestination("Website", "login.example.com", label = null, isWebsite = true),
+            claimedDomain = null,
             linked = listOf(
                 SearchResult(EntryItem("01", "Example", "me@example.com", "https://example.com"), listOf("Sites")),
                 SearchResult(EntryItem("02", "Example (work)", "", "https://example.com"), emptyList()),

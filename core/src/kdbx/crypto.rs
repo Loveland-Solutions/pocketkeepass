@@ -49,12 +49,106 @@ const KDF_AES_KEEPASSXC: [u8; 16] = uuid("7C02BB82-79A7-4AC0-927D-114A00648238")
 const KDF_ARGON2D: [u8; 16] = uuid("EF636DDF-8C29-444B-91F7-A9A403E30A0C");
 const KDF_ARGON2ID: [u8; 16] = uuid("9E298B19-56DB-4773-B23D-FC3EC6F0A1E6");
 
+// How much key derivation work a file may ask for. The settings come from the file's header,
+// which can't be checked before the key derivation has run, so anyone who can write the file
+// (a shared folder, a cloud account) can set them to anything. Without limits, such a file
+// would keep the phone busy for years or use up its memory, and the app would never get as far
+// as saying that the file is damaged. The limits are far above what KeePass apps set by
+// themselves (KeePassXC: 64 MiB and a few dozen passes for Argon2, tens of millions of rounds
+// for AES-KDF), and what a phone could run in reasonable time.
+
+/// The most AES-KDF rounds a file may ask for: about a billion.
+pub(crate) const MAX_AES_KDF_ROUNDS: u64 = 1 << 30;
+/// The most Argon2 memory a file may ask for, in KiB: 1 GiB.
+pub(crate) const MAX_ARGON2_MEMORY_KIB: u64 = 1 << 20;
+/// The most Argon2 work a file may ask for, as memory in KiB times passes: 64 passes over 1 GiB,
+/// or 1024 over 64 MiB.
+pub(crate) const MAX_ARGON2_WORK: u64 = 64 << 20;
+/// The most Argon2 lanes a file may ask for.
+pub(crate) const MAX_ARGON2_PARALLELISM: u32 = 64;
+
+fn too_much_work() -> Error {
+    corrupt("its key derivation settings ask for more work than a phone can do")
+}
+
+/// What a file's key derivation costs to run: the algorithm and its work settings, without the
+/// salt. Two files with the same cost take the same time and memory to open.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum KdfCost {
+    Aes {
+        rounds: u64,
+    },
+    Argon2 {
+        algorithm: [u8; 16],
+        version: u32,
+        memory: u64,
+        iterations: u64,
+        parallelism: u32,
+    },
+}
+
+impl KdfCost {
+    /// Reads the cost from a KDBX 4 key derivation dictionary.
+    pub(crate) fn of(params: &VariantDictionary) -> Result<Self> {
+        let id = params
+            .bytes("$UUID")
+            .ok_or_else(|| corrupt("key derivation has no algorithm"))?;
+        let id: [u8; 16] = id
+            .try_into()
+            .map_err(|_| corrupt("bad key derivation algorithm ID"))?;
+        if id == KDF_AES || id == KDF_AES_KEEPASSXC {
+            let rounds = params
+                .u64("R")
+                .ok_or_else(|| corrupt("AES-KDF has no round count"))?;
+            return Ok(Self::Aes { rounds });
+        }
+        if id != KDF_ARGON2D && id != KDF_ARGON2ID {
+            return Err(Error::Unsupported("this key derivation algorithm".into()));
+        }
+        Ok(Self::Argon2 {
+            algorithm: id,
+            version: params
+                .u32("V")
+                .ok_or_else(|| corrupt("Argon2 has no version"))?,
+            memory: params
+                .u64("M")
+                .ok_or_else(|| corrupt("Argon2 has no memory size"))?,
+            iterations: params
+                .u64("I")
+                .ok_or_else(|| corrupt("Argon2 has no iteration count"))?,
+            parallelism: params
+                .u32("P")
+                .ok_or_else(|| corrupt("Argon2 has no parallelism"))?,
+        })
+    }
+
+    /// Refuses settings beyond the limits above.
+    pub(crate) fn check(&self) -> Result<()> {
+        let fine = match *self {
+            Self::Aes { rounds } => rounds <= MAX_AES_KDF_ROUNDS,
+            Self::Argon2 {
+                memory,
+                iterations,
+                parallelism,
+                ..
+            } => {
+                let kib = memory / 1024;
+                kib <= MAX_ARGON2_MEMORY_KIB
+                    && kib.saturating_mul(iterations) <= MAX_ARGON2_WORK
+                    && parallelism <= MAX_ARGON2_PARALLELISM
+            }
+        };
+        if fine { Ok(()) } else { Err(too_much_work()) }
+    }
+}
+
 /// AES-KDF: encrypt the key with AES-256 (keyed by the seed) `rounds` times, then SHA-256 it.
 pub(crate) fn aes_kdf(
     composite: &[u8; 32],
     seed: &[u8],
     rounds: u64,
 ) -> Result<Zeroizing<[u8; 32]>> {
+    KdfCost::Aes { rounds }.check()?;
     let cipher =
         Aes256::new_from_slice(seed).map_err(|_| corrupt("AES-KDF seed has the wrong length"))?;
     let mut blocks = [aes::Block::default(), aes::Block::default()];
@@ -124,6 +218,8 @@ pub(crate) fn kdbx4_kdf(
         0x13 => argon2::Version::V0x13,
         v => return Err(Error::Unsupported(format!("Argon2 version {v:#x}"))),
     };
+
+    KdfCost::of(params)?.check()?;
 
     let bad = |_| corrupt("Argon2 settings are out of range");
     let params = argon2::Params::new(

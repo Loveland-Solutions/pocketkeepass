@@ -118,6 +118,11 @@ impl Element {
     }
 }
 
+/// The deepest nesting a document may have. Everything that walks the tree (and dropping it)
+/// recurses once per level, and running out of stack closes the app without a word. Real
+/// databases nest a few levels per group, so this allows groups more than a hundred deep.
+const MAX_DEPTH: usize = 512;
+
 /// Parses an XML document into its root element.
 pub fn parse(xml: &str) -> Result<Element> {
     let mut reader = Reader::from_str(xml);
@@ -129,7 +134,12 @@ pub fn parse(xml: &str) -> Result<Element> {
             .read_event()
             .map_err(|e| corrupt(format!("invalid XML ({e})")))?;
         match event {
-            Event::Start(start) => stack.push(element_from(&start)?),
+            Event::Start(start) => {
+                if stack.len() >= MAX_DEPTH {
+                    return Err(corrupt("its XML is nested too deeply"));
+                }
+                stack.push(element_from(&start)?);
+            }
             Event::Empty(start) => {
                 let el = element_from(&start)?;
                 attach(&mut stack, &mut root, el)?;

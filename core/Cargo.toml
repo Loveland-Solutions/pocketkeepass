@@ -23,11 +23,13 @@ required-features = ["bindgen"]
 # Dependency rule (see ../CLAUDE.md): only current, maintained crates. The crypto primitives come
 # from RustCrypto. Everything KeePass-specific (format, key handling, data model) is ours.
 [dependencies]
-aes = "0.9"
+# "zeroize" on the ciphers: their key schedules are built from the master key, and are wiped
+# when dropped instead of being left in freed memory.
+aes = { version = "0.9", features = ["zeroize"] }
 argon2 = { version = "0.6", default-features = false, features = ["alloc", "zeroize"] }
 base64 = "0.23"
-cbc = { version = "0.2", features = ["alloc", "block-padding"] }
-chacha20 = "0.10"
+cbc = { version = "0.2", features = ["alloc", "block-padding", "zeroize"] }
+chacha20 = { version = "0.10", features = ["zeroize"] }
 flate2 = "1"
 getrandom = "0.4"
 hmac = "0.13"
@@ -39,13 +41,13 @@ p256 = "0.14"
 quick-xml = "0.42"
 # RSA passkeys (RS256) made by KeePassXC. 0.10 fixes the Marvin timing advisory (RUSTSEC-2023-0071).
 rsa = { version = "0.10", features = ["pkcs1v15"] }
-salsa20 = "0.11"
+salsa20 = { version = "0.11", features = ["zeroize"] }
 # Passkey requests and responses are WebAuthn JSON from other apps, so the parser has to be robust.
 serde_json = "1"
 # SHA-1 only for TOTP codes, where RFC 6238 and nearly every service still use it.
 sha1 = { version = "0.11", default-features = false }
 sha2 = "0.11"
 thiserror = "2"
-twofish = "0.8"
+twofish = { version = "0.8", features = ["zeroize"] }
 uniffi = { version = "0.32", default-features = false }
 zeroize = "1"

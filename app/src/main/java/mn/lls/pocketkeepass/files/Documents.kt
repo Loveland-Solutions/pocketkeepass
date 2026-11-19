@@ -15,6 +15,13 @@ import java.io.SyncFailedException
 import java.security.MessageDigest
 import mn.lls.pocketkeepass.security.readAllWiping
 
+/**
+ * The largest database or key file PocketKeePass reads: 256 MiB. Real databases are kilobytes to
+ * a few megabytes; a bigger one is the wrong file or a storage app gone wrong, and reading it
+ * would run the phone out of memory.
+ */
+const val MAX_FILE_SIZE = 256 * 1024 * 1024
+
 /** A file the user picked through the system file picker, and the name it showed there. */
 data class Document(val uri: Uri, val name: String)
 
@@ -108,7 +115,7 @@ class Documents(context: Context) {
      */
     fun read(uri: Uri): ByteArray =
         (resolver.openInputStream(uri) ?: throw FileNotFoundException(uri.toString()))
-            .use { it.readAllWiping() }
+            .use { it.readAllWiping(MAX_FILE_SIZE) }
 
     /**
      * Replaces the file's contents with [bytes], then reads it back and compares, so a provider

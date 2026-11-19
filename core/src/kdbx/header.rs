@@ -1,5 +1,6 @@
 //! The unencrypted outer header at the start of every KDBX file.
 
+use super::crypto::KdfCost;
 use crate::error::{Error, Result, corrupt};
 use crate::util::Cursor;
 
@@ -173,8 +174,25 @@ impl OuterHeader {
         self.required(PROTECTED_STREAM_KEY, "the protected stream key")
     }
 
+    /// The 32 bytes the decrypted payload has to start with. They're how a KDBX 3 file tells a
+    /// right key from a wrong one, so a shorter value (which would check less, or nothing) is
+    /// refused.
     pub fn stream_start_bytes(&self) -> Result<&[u8]> {
-        self.required(STREAM_START_BYTES, "the stream start bytes")
+        let bytes = self.required(STREAM_START_BYTES, "the stream start bytes")?;
+        if bytes.len() != 32 {
+            return Err(corrupt("the stream start bytes have the wrong length"));
+        }
+        Ok(bytes)
+    }
+
+    /// What this file's key derivation costs to run, for either format version.
+    pub fn kdf_cost(&self) -> Result<KdfCost> {
+        if self.version.major < 4 {
+            return Ok(KdfCost::Aes {
+                rounds: self.transform_rounds()?,
+            });
+        }
+        KdfCost::of(&VariantDictionary::read(self.kdf_parameters()?)?)
     }
 
     pub fn inner_stream_id(&self) -> Result<u32> {

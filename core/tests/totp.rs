@@ -98,6 +98,43 @@ fn unusable_settings_are_explained_not_guessed() {
     assert!(totp(&db, "No TOTP").unwrap().is_none());
 }
 
+/// An `otp` field can hold anything a person types into it. Text in another script used to
+/// crash the engine: checking for the `otpauth://` prefix cut the text in the middle of a
+/// character.
+#[test]
+fn text_that_isnt_a_code_setup_is_explained_too() {
+    use pocketkeepass_core::{EntryEdit, FieldEdit, FieldValue};
+    let mut db = database();
+    let root = db.root().uuid().unwrap();
+    for (title, otp) in [
+        ("Cyrillic", "нууц код 123456"),
+        ("Accents", "aéééééé"),
+        ("Emoji", "otpauth:/🔑🔑🔑"),
+    ] {
+        let fields = vec![
+            FieldEdit {
+                key: "Title",
+                value: FieldValue::Set(title),
+                protected: false,
+            },
+            FieldEdit {
+                key: "otp",
+                value: FieldValue::Set(otp),
+                protected: true,
+            },
+        ];
+        let edit = EntryEdit {
+            fields,
+            tags: vec![],
+        };
+        db.create_entry(&root, &edit).unwrap();
+        assert!(
+            matches!(totp(&db, title), Err(Error::Invalid(_))),
+            "{title}"
+        );
+    }
+}
+
 /// The codes KeePassXC shows right now, for every entry it can read, against ours for the same
 /// moment. Skipped if KeePassXC isn't installed.
 #[test]

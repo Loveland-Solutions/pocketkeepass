@@ -5,7 +5,7 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use zeroize::Zeroizing;
 
 use crate::error::{Result, corrupt};
-use crate::kdbx::{self, Decrypted, FormatVersion};
+use crate::kdbx::{self, Decrypted, FormatVersion, KdfCost};
 use crate::key::CompositeKey;
 use crate::xml::Element;
 
@@ -62,6 +62,11 @@ impl Database {
     /// key file for opening the database, so treat it like them: never log it, and wipe copies.
     pub fn key_hash(&self) -> &[u8; 32] {
         &self.key
+    }
+
+    /// What this database's key derivation costs to run (see [`KdfCost`]).
+    pub(crate) fn kdf_cost(&self) -> Result<KdfCost> {
+        self.inner.header.kdf_cost()
     }
 
     /// Whether this is a KDBX 3 database, which has to be upgraded before it can be saved.

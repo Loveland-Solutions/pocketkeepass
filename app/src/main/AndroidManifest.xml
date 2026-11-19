@@ -8,6 +8,9 @@
     -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
 
+    <!-- Hides other apps' overlays while PocketKeePass is showing (security/Overlays.kt). -->
+    <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
+
     <!--
         Lets PocketKeePass look up installed web browsers. Autofill only believes a website
         address reported by a browser whose signing certificate it has checked.
@@ -112,5 +115,22 @@
         <receiver
             android:name=".security.ClipboardClearReceiver"
             android:exported="false" />
+
+        <!--
+            No downloadable emoji font. AndroidX would ask Google Play Services for one at every
+            start, which tells Play Services the app ran and may download on our behalf. The
+            phone's own emoji font is used instead. (MissingClass: the provider comes from a
+            library the app only gets at run time, through AndroidX.)
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:ignore="MissingClass"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                tools:node="remove" />
+        </provider>
     </application>
 </manifest>

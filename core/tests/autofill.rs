@@ -137,6 +137,100 @@ fn an_app_only_gets_entries_that_name_its_package() {
     }
 }
 
+/// An app that shows a web page isn't a browser we can verify. It's offered an entry only if
+/// the entry is linked to the app and also saved for the site the app says it's showing: so not
+/// on a page it merely displays (a link someone sent, opened in its in-app browser).
+#[test]
+fn a_web_page_inside_an_app_needs_both_the_app_and_the_site() {
+    let db = database();
+    let inside = |package, domain| {
+        let plain_http = false;
+        titles(
+            &db,
+            FillTarget::AppWeb {
+                package,
+                domain,
+                plain_http,
+            },
+        )
+    };
+    // "Site And App" is saved for both.example.com and linked to com.example.both. "Example",
+    // for example.com, matches that page too, but isn't linked to the app.
+    assert_eq!(app(&db, "com.example.both"), ["Site And App"]);
+    assert_eq!(web(&db, "both.example.com"), ["Site And App", "Example"]);
+    assert_eq!(
+        inside("com.example.both", "both.example.com"),
+        ["Site And App"]
+    );
+    assert_eq!(
+        inside("com.example.both", "login.both.example.com"),
+        ["Site And App"]
+    );
+    assert_eq!(
+        inside("com.example.both", "other.example.com"),
+        ["Site And App"]
+    );
+    // The same app showing someone else's page: nothing.
+    assert_eq!(inside("com.example.both", "evil.example.net"), NOTHING);
+    assert_eq!(inside("com.example.both", "example.com"), NOTHING);
+    assert_eq!(
+        inside("com.example.both", "both.example.com.evil.net"),
+        NOTHING
+    );
+    assert_eq!(inside("com.example.both", ""), NOTHING);
+    // Another app claiming to show the entry's site: nothing. Claiming is free.
+    assert_eq!(inside("com.example.evil", "both.example.com"), NOTHING);
+    assert_eq!(inside("com.example.evil", "login.example.com"), NOTHING);
+    assert_eq!(inside("", "both.example.com"), NOTHING);
+    // An entry linked to an app but saved for no site isn't offered on any page in it.
+    assert_eq!(app(&db, "com.example.app"), ["App Link"]);
+    assert_eq!(inside("com.example.app", "example.com"), NOTHING);
+    // Plain http still doesn't get an entry saved as https.
+    let plain_http = true;
+    let target = FillTarget::AppWeb {
+        package: "com.example.both",
+        domain: "both.example.com",
+        plain_http,
+    };
+    assert_eq!(titles(&db, target), NOTHING);
+}
+
+/// Allowing an app to use an entry's passkey writes `AndroidApp` with `AndroidApp Signature`.
+/// That must not hand the app the entry's password as well.
+#[test]
+fn an_app_allowed_to_use_a_passkey_isnt_offered_the_password() {
+    use pocketkeepass_core::{EntryEdit, FieldEdit, FieldValue};
+    let mut db = database();
+    let root = db.root().uuid().unwrap();
+    let field = |key, value, protected| FieldEdit {
+        key,
+        value: FieldValue::Set(value),
+        protected,
+    };
+    let fingerprint = ["AB"; 32].join(":");
+    let fields = vec![
+        field("Title", "Pinned", false),
+        field("Password", "secret", true),
+        // Pinned with a certificate: a passkey permission.
+        field("AndroidApp", "com.example.pinned", false),
+        field("AndroidApp Signature", &fingerprint, true),
+        // No certificate: an autofill link, as before.
+        field("AndroidApp_1", "com.example.plain", false),
+        // Not app fields at all, whatever they hold.
+        field("AndroidApplication", "com.example.other", false),
+        field("AndroidApp Signature_2", "com.example.sig", false),
+    ];
+    let edit = EntryEdit {
+        fields,
+        tags: vec![],
+    };
+    db.create_entry(&root, &edit).unwrap();
+    assert_eq!(app(&db, "com.example.pinned"), NOTHING);
+    assert_eq!(app(&db, "com.example.plain"), ["Pinned"]);
+    assert_eq!(app(&db, "com.example.other"), NOTHING);
+    assert_eq!(app(&db, "com.example.sig"), NOTHING);
+}
+
 #[test]
 fn matches_know_where_they_live() {
     let db = database();

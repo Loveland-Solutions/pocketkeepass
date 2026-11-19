@@ -20,6 +20,7 @@ fun Throwable.userMessage(resources: Resources): String {
         is KeePassException.Random -> R.string.error_random
         is KeePassException.SaveCheckFailed -> R.string.error_save_check_failed
         is KeePassException.Locked -> R.string.error_locked
+        is KeePassException.SettingsChanged -> R.string.sync_settings_changed
         is KeePassException.NotFound -> R.string.error_not_found
         is KeePassException.PasskeyExists -> R.string.error_passkey_exists
         else -> return message.orEmpty()

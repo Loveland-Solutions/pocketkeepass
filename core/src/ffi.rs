@@ -35,9 +35,13 @@ pub struct UnlockedDatabase {
 /// What taking in another version of the database's file did. Nothing secret.
 #[derive(uniffi::Record)]
 pub struct SyncReport {
-    /// True if both sides had changes and they were merged: the result is in memory only, and
-    /// needs saving. False if the other version simply replaced ours.
+    /// True if the database now holds something the file doesn't (changes made here, or kept
+    /// here while the file went back to an older version): the result is in memory only, and
+    /// needs saving. False if the database is now exactly what the file holds.
     pub merged: bool,
+    /// `change_count` at the moment the file was taken in. If `merged` is false, this is the
+    /// count at which the database matched the file.
+    pub change_count: u64,
     pub entries_added: u32,
     pub entries_changed: u32,
     pub entries_removed: u32,
@@ -121,6 +125,14 @@ pub enum FillTarget {
         domain: String,
         /// The page was loaded over plain `http`. Entries saved with an `https` URL aren't
         /// offered then.
+        plain_http: bool,
+    },
+    /// A web page inside an app that isn't a verified browser (an in-app browser, a login
+    /// screen made of a web view). Only entries linked to the app that are also saved for the
+    /// site it reports are offered.
+    AppWeb {
+        package: String,
+        domain: String,
         plain_http: bool,
     },
 }
@@ -421,6 +433,15 @@ impl UnlockedDatabase {
             let target = match &target {
                 FillTarget::App { package } => crate::FillTarget::App { package },
                 FillTarget::Web { domain, plain_http } => crate::FillTarget::Web {
+                    domain,
+                    plain_http: *plain_http,
+                },
+                FillTarget::AppWeb {
+                    package,
+                    domain,
+                    plain_http,
+                } => crate::FillTarget::AppWeb {
+                    package,
                     domain,
                     plain_http: *plain_http,
                 },
@@ -744,24 +765,40 @@ impl UnlockedDatabase {
     /// Takes in `file`, the database's file as another app or device left it, opened with the
     /// same master key. Runs the key derivation, so call it off the main thread.
     ///
-    /// If nothing has changed here since `change_count` returned `unchanged_since`, their
-    /// version replaces ours. Otherwise the two are merged, keeping the changes of both, and the
-    /// result needs saving. Fails with `WrongKey` if the master key was changed elsewhere, and
-    /// `Invalid` if the file holds a different database. On an error, nothing has changed.
+    /// The two versions are merged, keeping the changes of both. That holds even when nothing
+    /// has changed here since the last save: the file may be an older copy (another device that
+    /// was offline, or someone putting an old file back), and what we hold that it lacks must
+    /// not be lost. `merged` in the report says whether the result needs saving.
+    ///
+    /// The one exception is a database still in KDBX 3, which can't be merged or saved without
+    /// upgrading it: if nothing has changed here since `change_count` returned
+    /// `unchanged_since`, their version replaces ours; otherwise this fails with `NeedsUpgrade`.
+    ///
+    /// Fails with `WrongKey` if the master key was changed elsewhere, `Invalid` if the file
+    /// holds a different database, and `SettingsChanged` if its key derivation settings aren't
+    /// ours: those come from the file's unprotected header, so a file can ask for any amount of
+    /// work, and this runs by itself in the background. On an error, nothing has changed.
     pub fn sync_with_file(&self, file: Vec<u8>, unchanged_since: u64) -> Result<SyncReport> {
-        let key = self.with(|db| Ok(Zeroizing::new(*db.key_hash())))?;
+        let (key, cost) = self.with(|db| Ok((Zeroizing::new(*db.key_hash()), db.kdf_cost()?)))?;
+        if crate::kdbx::kdf_cost(&file)? != cost {
+            return Err(Error::SettingsChanged);
+        }
         // The slow part, without holding the lock: the app keeps working meanwhile.
         let theirs = Database::open_with_key_hash(&file, &key)?;
         let mut guard = self.db.write().unwrap_or_else(PoisonError::into_inner);
         let db = guard.as_mut().ok_or(Error::Locked)?;
-        let merged = self.changes.load(Ordering::SeqCst) != unchanged_since;
-        let changes = if merged {
-            db.merge_from(theirs)?
+        let (changes, merged) = if db.needs_upgrade() {
+            if self.changes.load(Ordering::SeqCst) != unchanged_since {
+                return Err(Error::NeedsUpgrade);
+            }
+            (db.replace_with(theirs)?, false)
         } else {
-            db.replace_with(theirs)
+            db.sync_from(theirs)?
         };
         Ok(SyncReport {
             merged,
+            // Read under the lock, so no change can slip in between this and the merge.
+            change_count: self.changes.load(Ordering::SeqCst),
             entries_added: changes.entries_added,
             entries_changed: changes.entries_changed,
             entries_removed: changes.entries_removed,
@@ -935,7 +972,10 @@ const STANDARD_FIELDS: [&str; 4] = ["UserName", "Password", "URL", "Notes"];
 fn entry_fields(entry: &Entry<'_>) -> Vec<EntryField> {
     let field = |key: &str| {
         let found = entry.fields().find(|f| f.key == key);
-        let protected = found.is_some_and(|f| f.protected);
+        // A password is secret whatever the file says. Some databases don't mark it protected
+        // (the setting can be turned off, and some import tools leave it out), and it would
+        // then be shown, copied, and read out to accessibility apps like a username.
+        let protected = found.is_some_and(|f| f.protected) || key == "Password";
         let value = found.map_or("", |f| f.value);
         EntryField {
             key: key.to_owned(),
@@ -1186,6 +1226,43 @@ mod tests {
 
     fn field<'a>(details: &'a EntryDetails, key: &str) -> &'a EntryField {
         details.fields.iter().find(|f| f.key == key).unwrap()
+    }
+
+    #[test]
+    fn a_password_the_file_doesnt_protect_is_still_treated_as_secret() {
+        let db = open("browse.kdbx");
+        let root = db.list_group(None).unwrap().group.id;
+        let title = FieldEdit {
+            key: "Title".to_owned(),
+            value: Some(b"Plain".to_vec()),
+            previous_key: None,
+            is_protected: false,
+        };
+        db.upgrade_to_kdbx4().unwrap();
+        let id = db.create_entry(root, vec![title], vec![]).unwrap();
+        // Unprotect the password behind the engine's back, as another app's file could have it.
+        db.with_mut(|db| {
+            let uuid = uuid_from_hex(&id).unwrap();
+            let path = db.locate(&uuid, crate::edit::Kind::Entry).unwrap();
+            let entry = crate::edit::at_mut(&mut db.inner.xml, &path);
+            for string in &mut entry.children {
+                if string.name == "String" && string.child_text("Key") == "Password" {
+                    let value = string.child_mut("Value").unwrap();
+                    value.attrs.clear();
+                    value.text = Zeroizing::new("hunter2".to_owned());
+                }
+            }
+            Ok(())
+        })
+        .unwrap();
+        let details = db.entry(id.clone()).unwrap();
+        let password = field(&details, "Password");
+        assert!(password.is_protected && !password.is_empty);
+        assert_eq!(password.value, "");
+        assert_eq!(
+            db.reveal_field(id, "Password".to_owned()).unwrap(),
+            b"hunter2"
+        );
     }
 
     #[test]

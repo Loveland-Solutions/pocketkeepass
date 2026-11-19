@@ -9,3 +9,11 @@ build/
 .DS_Store
 /keystore/*.jks
 /keystore.properties
+# Signing keys and credentials, wherever they end up: the repository is public.
+*.jks
+*.keystore
+*.p12
+*.pem
+!core/tests/fixtures/**
+*service-account*.json
+.env

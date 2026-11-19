@@ -43,6 +43,7 @@ import mn.lls.pocketkeepass.passkey.PasskeyViewModel.Outcome
 import mn.lls.pocketkeepass.passkey.PasskeyViewModel.Request
 import mn.lls.pocketkeepass.passkey.PasskeyViewModel.Step
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
+import mn.lls.pocketkeepass.security.protectFromOverlays
 import mn.lls.pocketkeepass.ui.PasskeyCreateScreen
 import mn.lls.pocketkeepass.ui.PasskeyFailedScreen
 import mn.lls.pocketkeepass.ui.PasskeyLinkScreen
@@ -65,6 +66,9 @@ class PasskeyActivity : ComponentActivity() {
     private val viewModel: DatabaseViewModel by viewModels()
     private val passkeys: PasskeyViewModel by viewModels()
 
+    /** This activity showed the unlock screen: an open database after it means the user unlocked here. */
+    private var shownUnlock = false
+
     // One launcher for both kinds of prompt: unlocking the database, and verifying the user.
     private val prompt = registerForAuthenticationResult(
         object : AuthenticationResultCallback {
@@ -81,6 +85,7 @@ class PasskeyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        window.protectFromOverlays()
         window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
         val request = readRequest()
         if (request == null) {
@@ -104,8 +109,7 @@ class PasskeyActivity : ComponentActivity() {
                 when (val current = state) {
                     DatabaseState.NoDatabase -> LaunchedEffect(Unit) { finishWith(Outcome.Cancelled) }
                     is DatabaseState.Locked -> {
-                        // Unlocking within this request verifies the user.
-                        LaunchedEffect(Unit) { passkeys.unlockedHere = true }
+                        shownUnlock = true
                         UnlockScreen(
                             state = current,
                             password = viewModel.password,
@@ -118,7 +122,11 @@ class PasskeyActivity : ComponentActivity() {
                         )
                     }
                     is DatabaseState.Unlocked -> {
-                        LaunchedEffect(Unit) { passkeys.start(request) }
+                        LaunchedEffect(Unit) {
+                            // Unlocking within this request verifies the user.
+                            if (shownUnlock) passkeys.unlockedHere = true
+                            passkeys.start(request)
+                        }
                         val step by passkeys.step.collectAsStateWithLifecycle()
                         Steps(step, databaseName = current.database.name)
                     }
@@ -175,6 +183,7 @@ class PasskeyActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         autoLock.onAppHidden()
+        if (!isChangingConfigurations) viewModel.onAppHidden()
     }
 
     private fun readRequest(): Request? = when (intent.action) {

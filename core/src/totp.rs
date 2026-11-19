@@ -253,7 +253,12 @@ fn hmac<D: EagerHash>(key: &[u8], message: &[u8]) -> Vec<u8> {
 fn parse_otp_field(value: &str) -> Result<Totp> {
     let value = value.trim();
     let scheme = "otpauth://";
-    if value.len() >= scheme.len() && value[..scheme.len()].eq_ignore_ascii_case(scheme) {
+    // `get` and not `[..]`: the tenth byte can be the middle of a character (in Cyrillic, say),
+    // and slicing there would panic.
+    if value
+        .get(..scheme.len())
+        .is_some_and(|start| start.eq_ignore_ascii_case(scheme))
+    {
         return parse_otpauth(&value[scheme.len()..]);
     }
     let params = query_params(value);
