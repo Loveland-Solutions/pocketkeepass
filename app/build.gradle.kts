@@ -203,6 +203,21 @@ abstract class BuildRustForAndroid : CargoTask() {
         val suffix = if (os.contains("windows")) ".cmd" else ""
         outputDir.get().asFile.deleteRecursively()
 
+        // Rust keeps source paths in the library (for panic messages), and they start with the
+        // home folder, whose name is the developer's account name. Shipped to everyone who
+        // installs the app, so they're rewritten to neutral ones. (Also a step towards builds
+        // that come out the same on any computer.)
+        val home = System.getProperty("user.home")
+        // rustc applies the last one that matches, so the home folder, the broadest, goes first.
+        val remaps = listOf(
+            home to "~",
+            (System.getenv("CARGO_HOME") ?: "$home/.cargo") to "/cargo",
+            (System.getenv("RUSTUP_HOME") ?: "$home/.rustup") to "/rustup",
+            crateDir.get().asFile.path to "/src",
+        )
+        // One flag per entry, separated by 0x1F: paths with spaces stay whole.
+        val rustflags = remaps.joinToString("\u001f") { (from, to) -> "--remap-path-prefix=$from=$to" }
+
         for ((abi, target) in targets.get()) {
             // The NDK names its 32-bit ARM compiler "armv7a", where Rust says "armv7".
             val clang = target.replace("armv7-", "armv7a-") + minSdk.get() + "-clang" + suffix
@@ -211,6 +226,7 @@ abstract class BuildRustForAndroid : CargoTask() {
             cargoBuild(
                 "--target", target,
                 env = mapOf(
+                    "CARGO_ENCODED_RUSTFLAGS" to rustflags,
                     "CARGO_TARGET_${envName.uppercase()}_LINKER" to linker,
                     // Only used if a dependency ever compiles C code. None does today.
                     "CC_$envName" to linker,

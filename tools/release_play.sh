@@ -56,11 +56,31 @@ JAVA_HOME=${JAVA_HOME:-"/Applications/Android Studio.app/Contents/jbr/Contents/H
 aab=app/build/outputs/bundle/release/app-release.aab
 version=$(sed -n 's/^ *versionName = "\(.*\)"/\1/p' app/build.gradle.kts)
 
-# 2. The app never goes online: the bundle must not ask for the internet.
-if unzip -p "$aab" base/manifest/AndroidManifest.xml | strings | grep -q 'android.permission.INTERNET'; then
+# 2. Checks on what's inside. Each one fails closed: a check that can't read what it checks
+# stops the release instead of passing it.
+check=$(mktemp -d)
+unzip -q "$aab" 'base/manifest/AndroidManifest.xml' 'base/lib/*' -d "$check"
+manifest=$check/base/manifest/AndroidManifest.xml
+if [ ! -s "$manifest" ] || ! strings "$manifest" | grep -q "$package"; then
+  echo "Couldn't read the bundle's manifest. Not releasing it." >&2
+  exit 1
+fi
+# The app never goes online: the bundle must not ask for the internet.
+if strings "$manifest" | grep -q 'android.permission.INTERNET'; then
   echo "The bundle asks for internet access. Not releasing it." >&2
   exit 1
 fi
+# The engine must not carry paths from this computer (they name the developer's account).
+libraries=$(find "$check/base/lib" -name '*.so' | wc -l)
+if [ "$libraries" -eq 0 ]; then
+  echo "No native libraries in the bundle. Not releasing it." >&2
+  exit 1
+fi
+if find "$check/base/lib" -name '*.so' -exec strings {} + | grep -q -e "$HOME" -e '/Users/' -e '/home/'; then
+  echo "A native library contains paths from this computer. Not releasing it." >&2
+  exit 1
+fi
+rm -rf "$check"
 
 # 3. Sign in as the service account: a JWT signed with its key, traded for a token that can
 # only reach the Play Developer API.
