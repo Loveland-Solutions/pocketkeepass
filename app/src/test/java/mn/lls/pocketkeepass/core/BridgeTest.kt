@@ -340,9 +340,11 @@ class BridgeTest {
     }
 
     @Test
-    fun `a file our key no longer opens is refused as WrongKey`() {
+    fun `a file with other key derivation settings is refused before any key derivation runs`() {
+        // keyfile-only.kdbx has another key too, but its settings are checked first: a sync
+        // runs by itself in the background, so it never runs settings it can't vouch for.
         UnlockedDatabase.open(fixture("kdbx41-keepassxc.kdbx"), password, null).use { mine ->
-            assertThrows(KeePassException.WrongKey::class.java) {
+            assertThrows(KeePassException.SettingsChanged::class.java) {
                 mine.syncWithFile(fixture("keyfile-only.kdbx"), mine.changeCount())
             }
         }

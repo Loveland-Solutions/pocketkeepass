@@ -263,7 +263,7 @@ fn replacing_reports_what_the_other_phone_changed() {
     jens.delete_entry(&uuid(BANK)).unwrap();
     jens.delete_entry(&uuid(BANK)).unwrap();
     let theirs = jens.save().unwrap();
-    let changes = mine.replace_with(phone(&theirs));
+    let changes = mine.replace_with(phone(&theirs)).unwrap();
     assert_eq!(changes.entries_added, 1);
     assert_eq!(changes.entries_changed, 1);
     assert_eq!(changes.entries_removed, 1);
@@ -272,9 +272,102 @@ fn replacing_reports_what_the_other_phone_changed() {
 
 #[test]
 fn a_different_database_is_not_merged() {
+    let other = || open("kdbx41-keepassxc.kdbx", Some(PASSWORD), None).unwrap();
     let mut mine = phone(&shared_file());
-    let other = open("kdbx41-keepassxc.kdbx", Some(PASSWORD), None).unwrap();
-    assert!(matches!(mine.merge_from(other), Err(Error::Invalid(_))));
+    assert!(matches!(mine.merge_from(other()), Err(Error::Invalid(_))));
+    assert!(matches!(mine.sync_from(other()), Err(Error::Invalid(_))));
+    assert!(matches!(mine.replace_with(other()), Err(Error::Invalid(_))));
+    assert_eq!(title(&mine, uuid(VPN)).as_deref(), Some("VPN"));
+}
+
+/// The usual case: the other phone started from our last save. Ours adds nothing, so we end up
+/// with exactly what's in the file, and there's nothing to save.
+#[test]
+fn syncing_with_a_newer_version_gives_exactly_that_version() {
+    let file = shared_file();
+    let (mut mine, mut jens) = (phone(&file), phone(&file));
+    jens.create_entry(&uuid(ROOT), &login("New", "x")).unwrap();
+    retitle(&mut jens, uuid(VPN), "VPN 2");
+    jens.move_entry(&uuid(EMAIL), &uuid(BANKING)).unwrap();
+    jens.delete_entry(&uuid(BANK)).unwrap();
+    jens.delete_entry(&uuid(BANK)).unwrap();
+    let theirs = jens.save().unwrap();
+
+    let (changes, to_save) = mine.sync_from(phone(&theirs)).unwrap();
+    assert!(!to_save);
+    assert_eq!(changes.entries_added, 1);
+    assert_eq!(changes.entries_removed, 1);
+    assert_eq!(first_difference(mine.xml(), phone(&theirs).xml()), None);
+
+    // And again with the same file: still nothing of ours to add.
+    let (changes, to_save) = mine.sync_from(phone(&theirs)).unwrap();
+    assert!(!to_save && changes.is_empty());
+}
+
+/// The file went back to an older version after we saved: a laptop that was offline uploaded
+/// over ours, or someone with access to the storage put yesterday's file back. What we saved
+/// since must survive, even though nothing here is unsaved.
+#[test]
+fn an_older_file_doesnt_undo_what_was_saved_here() {
+    let old = shared_file();
+    let mut mine = phone(&old);
+    let added = mine
+        .create_entry(&uuid(ROOT), &login("Saved yesterday", "x"))
+        .unwrap();
+    retitle(&mut mine, uuid(VPN), "VPN, renamed");
+    mine.delete_entry(&uuid(BANK)).unwrap();
+    mine.delete_entry(&uuid(BANK)).unwrap();
+    let mut mine = saved(&mine); // saved: nothing here is unsaved now
+
+    let (changes, to_save) = mine.sync_from(phone(&old)).unwrap();
+    assert!(
+        to_save,
+        "the file lacks what we have, so it has to be saved"
+    );
+    assert!(changes.is_empty(), "nothing changes for us: {changes:?}");
+    let mine = saved(&mine);
+    assert_eq!(title(&mine, added).as_deref(), Some("Saved yesterday"));
+    assert_eq!(title(&mine, uuid(VPN)).as_deref(), Some("VPN, renamed"));
+    assert_eq!(title(&mine, uuid(BANK)), None, "our deletion holds too");
+}
+
+/// Two phones that each saved over the other end up the same, and stop saving.
+#[test]
+fn two_phones_settle_on_one_version() {
+    let file = shared_file();
+    let (mut mine, mut jens) = (phone(&file), phone(&file));
+    let my_new = mine.create_entry(&uuid(ROOT), &login("Mine", "x")).unwrap();
+    let her_new = jens.create_entry(&uuid(WORK), &login("Hers", "y")).unwrap();
+    retitle(&mut jens, uuid(VPN), "VPN, hers");
+
+    // Her save landed last. I take it in and save the merge.
+    let (_, to_save) = mine.sync_from(phone(&jens.save().unwrap())).unwrap();
+    assert!(to_save);
+    let merged = mine.save().unwrap();
+    // She takes that in: everything of hers is already in it.
+    let (changes, to_save) = jens.sync_from(phone(&merged)).unwrap();
+    assert!(!to_save);
+    assert_eq!(changes.entries_added, 1);
+    for db in [&mine, &jens] {
+        assert_eq!(title(db, my_new).as_deref(), Some("Mine"));
+        assert_eq!(title(db, her_new).as_deref(), Some("Hers"));
+        assert_eq!(title(db, uuid(VPN)).as_deref(), Some("VPN, hers"));
+    }
+    // And I, reading my own save back from her, have nothing to add either.
+    let (changes, to_save) = mine.sync_from(phone(&merged)).unwrap();
+    assert!(!to_save && changes.is_empty());
+}
+
+/// A file that went back to KDBX 3 after we upgraded is merged and saved as KDBX 4 again.
+#[test]
+fn a_kdbx3_file_from_the_other_side_is_upgraded_and_saved() {
+    let mut mine = phone(&shared_file());
+    let theirs = open("browse.kdbx", Some(PASSWORD), None).unwrap();
+    assert!(theirs.needs_upgrade());
+    let (_, to_save) = mine.sync_from(theirs).unwrap();
+    assert!(to_save);
+    assert!(!mine.needs_upgrade());
+    saved(&mine);
 }
 
 #[test]

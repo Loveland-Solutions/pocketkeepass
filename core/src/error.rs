@@ -36,6 +36,14 @@ pub enum Error {
     #[error("The database is locked.")]
     Locked,
 
+    /// The file's key derivation settings are no longer the ones this database was opened with.
+    /// Syncing doesn't run a key derivation whose cost it can't vouch for (the settings in a
+    /// file can't be checked before they've been run), so the user has to unlock again.
+    #[error(
+        "The database's security settings were changed on another device. Lock it and unlock it again to use them."
+    )]
+    SettingsChanged,
+
     #[error("That group or entry isn't in the database anymore.")]
     NotFound,
 

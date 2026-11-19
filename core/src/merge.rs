@@ -1,10 +1,14 @@
 //! Bringing in another copy of the same database: the file as another app or device saved it.
 //!
 //! Two phones sharing one file through Dropbox or Google Drive each change their own copy, so
-//! when one of them saves, the other has to take in what changed. With no changes of its own
-//! to keep, it simply takes the other version ([`Database::replace_with`]). With changes on
-//! both sides, the two are merged ([`Database::merge_from`]) the way KeePass's own "Synchronize"
-//! does it, by UUID and by the dates every entry and group carries:
+//! when one of them saves, the other has to take in what changed ([`Database::sync_from`]). The
+//! two versions are always merged, never simply swapped: the file can also be an older copy
+//! (a laptop that was offline uploading over ours, or someone with access to the storage
+//! putting yesterday's file back), and whatever we hold that it lacks has to survive. If ours
+//! adds nothing to theirs, the result is exactly their version, and nothing needs saving.
+//!
+//! Merging works the way KeePass's own "Synchronize" does, by UUID and by the dates every
+//! entry and group carries:
 //!
 //! - An entry or group on only one side is kept, unless the other side recorded deleting it
 //!   (`DeletedObjects`) after it was last changed.
@@ -63,12 +67,67 @@ const META_SETTINGS: &[(&[&str], &str)] = &[
 ];
 
 impl Database {
+    /// Fails with `Invalid` unless `theirs` is another version of this database: one with the
+    /// same root group.
+    fn same_database(&self, theirs: &Database) -> Result<()> {
+        let root_of = |db: &Database| {
+            db.locate_root()
+                .and_then(|p| uuid_of(at(&db.inner.xml, &p)))
+        };
+        let our_root = root_of(self);
+        if our_root.is_none() || our_root != root_of(theirs) {
+            return Err(Error::Invalid(
+                "The file now holds a different database, so it can't be merged.".into(),
+            ));
+        }
+        Ok(())
+    }
+
     /// Replaces the database with `theirs`, another version of its file opened with the same
-    /// key, and says what that changed. For when there's nothing of our own to keep.
-    pub fn replace_with(&mut self, theirs: Database) -> SyncChanges {
+    /// key, and says what that changed. Only for a database that can't hold anything of its own
+    /// worth keeping: one still in KDBX 3 that hasn't been changed here. Everything else goes
+    /// through [`sync_from`](Self::sync_from). Fails with `Invalid` if `theirs` is a different
+    /// database. On an error, nothing has changed.
+    pub fn replace_with(&mut self, theirs: Database) -> Result<SyncChanges> {
+        self.same_database(&theirs)?;
         let before = self.snapshot();
         *self = theirs;
-        compare(&before, &self.snapshot())
+        Ok(compare(&before, &self.snapshot()))
+    }
+
+    /// Takes in `theirs`, the database's file as another app or device left it. Says what that
+    /// changed here, and whether the result holds anything their version doesn't: if so it
+    /// exists in memory only, and has to be saved.
+    ///
+    /// Ours is merged into theirs, not the other way round, so that when ours adds nothing the
+    /// result is their version exactly as it was read, and two phones never save back and forth
+    /// over differences that mean nothing. Their header (cipher, key derivation settings) is
+    /// kept for the same reason. A KDBX 3 file from their side is upgraded first, which always
+    /// counts as something to save: we were upgraded already, with the user's agreement.
+    ///
+    /// Fails with `Invalid` if `theirs` is a different database, and with `NeedsUpgrade` if
+    /// this one is still KDBX 3. On an error, nothing has changed.
+    pub fn sync_from(&mut self, mut theirs: Database) -> Result<(SyncChanges, bool)> {
+        if self.needs_upgrade() {
+            return Err(Error::NeedsUpgrade);
+        }
+        self.same_database(&theirs)?;
+        let upgraded = theirs.needs_upgrade();
+        theirs.upgrade_to_kdbx4()?;
+
+        let before = self.snapshot();
+        let as_read = theirs.inner.xml.clone();
+        let attachments = theirs.inner.binaries.len();
+        theirs.merge_core(self);
+        let ours_added = upgraded
+            || theirs.inner.binaries.len() != attachments
+            || !same_tree(&theirs.inner.xml, &as_read);
+        if ours_added {
+            theirs.mark_changed();
+        }
+        theirs.passkey_undo = self.passkey_undo.take();
+        *self = theirs;
+        Ok((compare(&before, &self.snapshot()), ours_added))
     }
 
     /// Merges `theirs`, another version of this database's file, into this one, keeping the
@@ -79,20 +138,20 @@ impl Database {
         if self.needs_upgrade() {
             return Err(Error::NeedsUpgrade);
         }
-        let root_of = |db: &Database| {
-            db.locate_root()
-                .and_then(|p| uuid_of(at(&db.inner.xml, &p)))
-        };
-        let our_root = root_of(self);
-        if our_root.is_none() || our_root != root_of(&theirs) {
-            return Err(Error::Invalid(
-                "The file now holds a different database, so it can't be merged.".into(),
-            ));
-        }
+        self.same_database(&theirs)?;
         // Their dates and attachments have to be in the same form as ours.
         theirs.upgrade_to_kdbx4()?;
 
         let before = self.snapshot();
+        self.merge_core(&theirs);
+        let changes = compare(&before, &self.snapshot());
+        self.mark_changed();
+        Ok(changes)
+    }
+
+    /// The merge itself. Both databases are KDBX 4 and have the same root group. Where `theirs`
+    /// has nothing this one lacks, this one's tree is left exactly as it was.
+    fn merge_core(&mut self, theirs: &Database) {
         let their_minor = theirs.inner.version.minor;
         if their_minor > self.inner.version.minor {
             // A 4.1 file may hold 4.1-only elements; say so in the header we write.
@@ -105,13 +164,13 @@ impl Database {
             import_binaries(el, &theirs.inner.binaries, ours, &mut binaries);
         };
 
-        let deleted = self.merge_deleted_objects(&theirs);
+        let deleted = self.merge_deleted_objects(theirs);
         let max_history = self.history_max_items();
-        let their_root_path = theirs.locate_root().expect("checked above");
+        let their_root_path = theirs.locate_root().expect("checked by the caller");
         let their_root = at(&theirs.inner.xml, &their_root_path);
 
         // The root group itself: its name and notes.
-        let our_root_path = self.locate_root().expect("checked above");
+        let our_root_path = self.locate_root().expect("checked by the caller");
         let ours = at_mut(&mut self.inner.xml, &our_root_path);
         if time(their_root, "LastModificationTime") > time(ours, "LastModificationTime") {
             replace_group_fields(ours, their_root);
@@ -168,11 +227,7 @@ impl Database {
 
         self.apply_deletions(&deleted);
         self.forget_deletions(&resurrected);
-        self.merge_meta(&theirs);
-
-        let changes = compare(&before, &self.snapshot());
-        self.mark_changed();
-        Ok(changes)
+        self.merge_meta(theirs);
     }
 
     /// Combines their `DeletedObjects` into ours (the later time wins) and returns them all,
@@ -275,14 +330,14 @@ impl Database {
             let Some(their_list) = their_meta.child(list) else {
                 continue;
             };
-            let our_list = child_or_append(ours, list);
             for el in their_list.children_named(item) {
                 let key = el.child_text(id);
-                if !our_list
-                    .children_named(item)
-                    .any(|o| o.child_text(id) == key)
-                {
-                    our_list.children.push(el.clone());
+                let have = ours
+                    .child(list)
+                    .is_some_and(|l| l.children_named(item).any(|o| o.child_text(id) == key));
+                if !have {
+                    // Only now, so that a list we have nothing to add to isn't created empty.
+                    child_or_append(ours, list).children.push(el.clone());
                 }
             }
         }
@@ -470,9 +525,17 @@ fn merge_entry(ours: &mut Element, mut theirs: Element, max_history: Option<usiz
     child_or_append(ours, "History").children = versions;
 }
 
-/// Whether two versions of an entry are the same, history and access statistics aside.
+/// Whether two versions of an entry are the same, aside from their history, access statistics,
+/// and where the entry lives. A move isn't a new version of the entry: it's settled separately,
+/// by the move dates.
 fn same_version(a: &Element, b: &Element) -> bool {
-    const IGNORED: [&str; 3] = ["History", "LastAccessTime", "UsageCount"];
+    const IGNORED: [&str; 5] = [
+        "History",
+        "LastAccessTime",
+        "UsageCount",
+        "LocationChanged",
+        "PreviousParentGroup",
+    ];
     fn same(a: &Element, b: &Element) -> bool {
         fn children(el: &Element) -> Vec<&Element> {
             (el.children.iter())
@@ -487,6 +550,18 @@ fn same_version(a: &Element, b: &Element) -> bool {
             && ca.iter().zip(&cb).all(|(x, y)| same(x, y))
     }
     same(a, b)
+}
+
+/// Whether two trees are the same in every element, attribute, and text.
+fn same_tree(a: &Element, b: &Element) -> bool {
+    a.name == b.name
+        && a.attrs == b.attrs
+        && *a.text == *b.text
+        && a.children.len() == b.children.len()
+        && a.children
+            .iter()
+            .zip(&b.children)
+            .all(|(x, y)| same_tree(x, y))
 }
 
 /// A group's own fields (name, notes, icon, dates, settings), without what's inside it.

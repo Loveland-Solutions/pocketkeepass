@@ -13,6 +13,20 @@
 //! or a custom field named `AndroidApp`, `AndroidApp_1`, and so on holding the package name
 //! (KeePassDX's). An app is never matched to a website's entry by guessing from its package
 //! name: anyone can name an app `com.yourbank.something`.
+//!
+//! An `AndroidApp` field that comes with an `AndroidApp Signature` field is **not** an autofill
+//! link. That pair is what allowing an app to use the entry's passkey writes (`passkey.rs`), and
+//! the two permissions are far apart: a passkey answer is useless to the wrong app (the site
+//! checks who asked), a password isn't. So agreeing to the first must not grant the second.
+//! Autofill couldn't check the certificate anyway, since Android hides most installed apps
+//! from us.
+//!
+//! An app that shows a **web page** of its own accord (an in-app browser, a login screen that
+//! is really a web view) isn't a browser we can verify, so the site it reports can't be relied
+//! on to find entries. But it does narrow things down: such a page is offered only an entry
+//! that is linked to the app *and* saved for the site the app reports. An app gains nothing by
+//! lying about the site (it's offered its own entries at most), and a page it merely displays,
+//! such as a link someone sent, isn't offered the app's own login.
 
 use crate::browse::SearchHit;
 use crate::model::{Database, Entry};
@@ -31,12 +45,23 @@ pub enum FillTarget<'a> {
         /// then: someone on the network could have swapped the page.
         plain_http: bool,
     },
+    /// A web page inside an app that isn't a browser we can verify. Matches only entries linked
+    /// to the app that are also saved for the site it reports.
+    AppWeb {
+        package: &'a str,
+        /// The host name the app reports. Not to be believed on its own.
+        domain: &'a str,
+        plain_http: bool,
+    },
 }
 
 /// Custom fields holding more URLs for the same entry.
 const EXTRA_URL_PREFIX: &str = "KP2A_URL";
 /// Custom fields holding an Android package name.
 const APP_FIELD_PREFIX: &str = "AndroidApp";
+/// Next to an `AndroidApp` field with the same suffix: the app's certificates, which make the
+/// pair a passkey permission and not an autofill link (see above).
+const APP_SIGNATURE_PREFIX: &str = crate::passkey::APP_SIGNATURE_FIELD;
 const APP_SCHEME: &str = "androidapp";
 
 impl Database {
@@ -56,6 +81,18 @@ impl Database {
                 Some(host) => Target::Web { host, plain_http },
                 None => return Vec::new(),
             },
+            FillTarget::AppWeb {
+                package,
+                domain,
+                plain_http,
+            } => match normalize_host(domain) {
+                Some(host) => Target::AppWeb {
+                    package: package.trim(),
+                    host,
+                    plain_http,
+                },
+                None => return Vec::new(),
+            },
         };
         let mut hits: Vec<(Match, SearchHit<'_>)> = Vec::new();
         self.for_each_searchable(|entry, path| {
@@ -71,7 +108,15 @@ impl Database {
 
 enum Target<'a> {
     App(&'a str),
-    Web { host: String, plain_http: bool },
+    Web {
+        host: String,
+        plain_http: bool,
+    },
+    AppWeb {
+        package: &'a str,
+        host: String,
+        plain_http: bool,
+    },
 }
 
 /// How well an entry matches. Better matches sort first.
@@ -82,16 +127,32 @@ enum Match {
 }
 
 fn best_match(entry: &Entry<'_>, target: &Target<'_>) -> Option<Match> {
+    if let Target::AppWeb {
+        package,
+        host,
+        plain_http,
+    } = target
+    {
+        // Both: linked to the app, and saved for the site. How well is the site's business.
+        best_match(entry, &Target::App(package))?;
+        let web = Target::Web {
+            host: host.clone(),
+            plain_http: *plain_http,
+        };
+        return best_match(entry, &web);
+    }
     entry
         .fields()
         .filter(|field| !field.protected)
         .filter_map(|field| {
             if field.key == "URL" || field.key.starts_with(EXTRA_URL_PREFIX) {
                 match_url(field.value, target)
-            } else if field.key.starts_with(APP_FIELD_PREFIX) {
+            } else if let Some(suffix) = app_field_suffix(field.key) {
                 match target {
                     Target::App(package)
-                        if !package.is_empty() && field.value.trim() == *package =>
+                        if !package.is_empty()
+                            && field.value.trim() == *package
+                            && !has_signature(entry, suffix) =>
                     {
                         Some(Match::Exact)
                     }
@@ -104,6 +165,22 @@ fn best_match(entry: &Entry<'_>, target: &Target<'_>) -> Option<Match> {
         .min()
 }
 
+/// The suffix of an app field's name: "" for `AndroidApp`, "_1" for `AndroidApp_1`. None for
+/// any other field, including `AndroidApp Signature`.
+fn app_field_suffix(key: &str) -> Option<&str> {
+    let suffix = key.strip_prefix(APP_FIELD_PREFIX)?;
+    (suffix.is_empty() || suffix.starts_with('_')).then_some(suffix)
+}
+
+/// Whether the app field with this suffix comes with certificates, which makes it a passkey
+/// permission.
+fn has_signature(entry: &Entry<'_>, suffix: &str) -> bool {
+    entry.fields().any(|field| {
+        field.key.strip_prefix(APP_SIGNATURE_PREFIX) == Some(suffix)
+            && !field.value.trim().is_empty()
+    })
+}
+
 fn match_url(url: &str, target: &Target<'_>) -> Option<Match> {
     let url = Url::parse(url)?;
     match target {
@@ -113,6 +190,7 @@ fn match_url(url: &str, target: &Target<'_>) -> Option<Match> {
                 && url.authority == *package;
             linked.then_some(Match::Exact)
         }
+        Target::AppWeb { .. } => None, // split into its two halves by `best_match`
         Target::Web { host, plain_http } => {
             let https = url.scheme.eq_ignore_ascii_case("https");
             let web = https || url.scheme.is_empty() || url.scheme.eq_ignore_ascii_case("http");

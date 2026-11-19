@@ -17,6 +17,7 @@ dependencies = [
  "cipher",
  "cpubits",
  "cpufeatures",
+ "zeroize",
 ]
 
 [[package]]
@@ -227,6 +228,7 @@ dependencies = [
  "cfg-if",
  "cipher",
  "cpufeatures",
+ "zeroize",
 ]
 
 [[package]]
@@ -238,6 +240,7 @@ dependencies = [
  "block-buffer",
  "crypto-common",
  "inout",
+ "zeroize",
 ]
 
 [[package]]
