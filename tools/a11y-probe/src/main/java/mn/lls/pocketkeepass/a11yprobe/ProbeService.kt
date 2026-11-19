@@ -30,7 +30,9 @@ open class ProbeService : AccessibilityService() {
         val text = node.text
         val desc = node.contentDescription
         if (text != null || desc != null || node.isPassword || node.isEditable) {
-            out += "  ".repeat(depth + 1) + "${node.className} text=$text desc=$desc password=${node.isPassword} editable=${node.isEditable}"
+            // Where it is on screen too, so a test script can tap it.
+            val bounds = android.graphics.Rect().also(node::getBoundsInScreen)
+            out += "  ".repeat(depth + 1) + "${node.className} text=$text desc=$desc password=${node.isPassword} editable=${node.isEditable} bounds=${bounds.toShortString()}"
         }
         for (i in 0 until node.childCount) node.getChild(i)?.let { dump(it, depth + 1, out) }
     }

@@ -4,6 +4,7 @@ A free, open-source KeePass password manager for Android, from Loveland Solution
 
 - Opens and saves your existing `.kdbx` databases (KeePass 2.x / KeePassXC compatible)
 - Works with any cloud folder through Android's file picker: Google Drive, Dropbox, Syncthing, and more
+- Keeps phones in step: while it's open, it picks up changes made on other devices and merges them with yours, so nothing is lost when two people edit the same database
 - Passkeys on Android 14 and later, kept in the database the way KeePassXC and KeePassDX keep them, so they work there too
 - No internet permission, no ads, no tracking, no paid tier
 
