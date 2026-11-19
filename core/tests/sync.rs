@@ -277,6 +277,10 @@ fn a_different_database_is_not_merged() {
     assert!(matches!(mine.merge_from(other()), Err(Error::Invalid(_))));
     assert!(matches!(mine.sync_from(other()), Err(Error::Invalid(_))));
     assert!(matches!(mine.replace_with(other()), Err(Error::Invalid(_))));
+    assert!(matches!(
+        mine.merge_saved_copy(other()),
+        Err(Error::Invalid(_))
+    ));
     assert_eq!(title(&mine, uuid(VPN)).as_deref(), Some("VPN"));
 }
 
@@ -457,4 +461,67 @@ fn entry_el(el: &Element, id: [u8; 16]) -> Option<&Element> {
         el.children.iter().find_map(|c| walk(c, id))
     }
     walk(el, &id)
+}
+
+/// What happened with Google Drive on 2026-11-19: this phone saved "From the phone", then
+/// another device's upload replaced the file with a version that never had it (the storage app
+/// kept whichever copy arrived last). After locking, all this phone has is its own copy of what
+/// it saved. Merging that copy into the file as opened brings the entry back, keeps what the
+/// other device added, and leaves what it deleted on purpose deleted.
+#[test]
+fn our_saved_copy_brings_back_what_an_overwrite_dropped() {
+    let file = shared_file();
+    let mut mine = phone(&file);
+    let ours = mine
+        .create_entry(&uuid(ROOT), &login("From the phone", "x"))
+        .unwrap();
+    retitle(&mut mine, uuid(VPN), "VPN, renamed here");
+    let copy = mine.save().unwrap(); // what this phone wrote, and keeps
+
+    // The other device never saw that save, and overwrote it.
+    let mut other = phone(&file);
+    let theirs = other
+        .create_entry(&uuid(WORK), &login("From the Mac", "y"))
+        .unwrap();
+    other.delete_entry(&uuid(BANK)).unwrap();
+    other.delete_entry(&uuid(BANK)).unwrap(); // for good: recorded in DeletedObjects
+    let overwritten = other.save().unwrap();
+
+    // Unlocking later opens the overwritten file, then merges our copy into it.
+    let mut opened = phone(&overwritten);
+    let (changes, to_save) = opened.merge_saved_copy(phone(&copy)).unwrap();
+    assert!(to_save);
+    assert_eq!(changes.entries_added, 1);
+    assert_eq!(changes.entries_changed, 1);
+    let opened = saved(&opened);
+    assert_eq!(title(&opened, ours).as_deref(), Some("From the phone"));
+    assert_eq!(
+        title(&opened, uuid(VPN)).as_deref(),
+        Some("VPN, renamed here")
+    );
+    assert_eq!(title(&opened, theirs).as_deref(), Some("From the Mac"));
+    assert_eq!(title(&opened, uuid(BANK)), None, "their deletion holds");
+}
+
+/// The usual case: the file still holds what we saved, so the copy adds nothing, the file is
+/// left exactly as read, and nothing needs saving.
+#[test]
+fn our_saved_copy_changes_nothing_when_the_file_already_has_it() {
+    let file = shared_file();
+    let mut mine = phone(&file);
+    mine.create_entry(&uuid(ROOT), &login("Saved", "x"))
+        .unwrap();
+    let copy = mine.save().unwrap();
+
+    // The file as we wrote it, and later with another device's change on top.
+    let mut later = phone(&copy);
+    later
+        .create_entry(&uuid(WORK), &login("Later", "y"))
+        .unwrap();
+    for file in [copy.clone(), later.save().unwrap()] {
+        let mut opened = phone(&file);
+        let (changes, to_save) = opened.merge_saved_copy(phone(&copy)).unwrap();
+        assert!(!to_save && changes.is_empty(), "{changes:?}");
+        assert_eq!(first_difference(opened.xml(), phone(&file).xml()), None);
+    }
 }

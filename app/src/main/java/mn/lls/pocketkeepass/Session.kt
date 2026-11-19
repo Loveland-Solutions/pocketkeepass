@@ -24,6 +24,7 @@ import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.SyncReport
 import mn.lls.pocketkeepass.core.UnlockedDatabase
 import mn.lls.pocketkeepass.files.Backups
+import mn.lls.pocketkeepass.files.Connection
 import mn.lls.pocketkeepass.files.Document
 import mn.lls.pocketkeepass.files.Documents
 import mn.lls.pocketkeepass.files.WriteCheckException
@@ -38,6 +39,13 @@ sealed interface SaveState {
 
     /** A save is running. */
     data object Saving : SaveState
+
+    /**
+     * The changes are saved on this phone ([Backups]) but not in the file: it's held by a cloud
+     * storage app and the phone is offline. They go into the file, merged with whatever it holds
+     * by then, once the phone is back online, and survive a lock meanwhile.
+     */
+    data object Waiting : SaveState
 
     /** There are changes that aren't in the file, and why. They're lost if the database locks. */
     data class Unsaved(val problem: SaveProblem) : SaveState
@@ -123,8 +131,24 @@ data class SyncStatus(
  * someone putting an old copy back) can't undo what was saved here; if ours adds nothing, the
  * result is just the file's version. Otherwise the result is saved. A save that finds the file
  * changed merges the same way instead of overwriting it.
+ *
+ * Two more guards keep a cloud storage app from losing changes. Some (Google Drive, at least)
+ * take a save made offline into their own copy and upload it later over whatever the file became
+ * meanwhile, without checking:
+ *
+ * - offline, a save to a file such an app holds stays on this phone ([SaveState.Waiting]) and
+ *   goes into the file once the phone has been back online for [RECONNECT_DELAY_MS], merged
+ *   with what the file holds by then. So we never overwrite another device's change unseen;
+ * - each unlock merges what this phone last saved ([Backups.ours]) into the file as read, so
+ *   if another device or app overwrote our save without it, it comes back. While the database
+ *   stays open, the checks above do the same from memory.
  */
-class Session(private val autoLock: AutoLock, private val documents: Documents, private val backups: Backups) {
+class Session(
+    private val autoLock: AutoLock,
+    private val documents: Documents,
+    private val backups: Backups,
+    private val connection: Connection,
+) {
     /** An unlocked database, with what the app shows straight after unlocking it. */
     class Open(
         val database: UnlockedDatabase,
@@ -182,11 +206,17 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
     private var checkJob: Job? = null
     private var stopObserving: (() -> Unit)? = null
 
+    /** Merging what this phone last saved into the database just unlocked. Saves wait for it. */
+    private var restoreJob: Job? = null
+    private var reconnectJob: Job? = null
+
+    init {
+        connection.onReconnect(::reconnected)
+    }
+
     /** A database was just unlocked. Any other one is locked first. */
     fun start(open: Open) {
         lock()
-        // The file opened, so it isn't damaged: a save to it that was cut short is no longer needed.
-        backups.finished(open.document.uri.toString())
         _saveState.value = SaveState.Saved
         open.cleanCount = try {
             open.database.changeCount()
@@ -196,7 +226,52 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
         _sync.value = SyncStatus(storage = documents.storageName(open.document.uri), checkedAt = now())
         _open.value = open
         autoLock.arm(::lock)
+        restoreJob = scope.launch { restoreOurs(open) }
         startWatching()
+    }
+
+    /**
+     * Merges what this phone last saved to the file (or a save that was held back or cut short)
+     * into the database as just read from it, and saves if that brought anything back: another
+     * device or app overwrote the file without our change. Usually the file is exactly what we
+     * saved, and nothing runs.
+     */
+    private suspend fun restoreOurs(open: Open) {
+        val location = open.document.uri.toString()
+        val restored = withContext(Dispatchers.IO + NonCancellable) {
+            fileLock.withLock {
+                if (_open.value !== open) return@withLock false
+                val ours = backups.ours(location) ?: return@withLock false
+                if (fingerprint(ours).contentEquals(open.fileFingerprint)) {
+                    backups.finished(location)
+                    return@withLock false
+                }
+                val report = withContext(Dispatchers.Default) {
+                    try {
+                        open.database.mergeSavedCopy(ours)
+                    } catch (_: KeePassException) {
+                        // Another master key since (changed elsewhere), another database, or a copy
+                        // that won't open. The copy stays until the next save replaces it.
+                        null
+                    } catch (_: IllegalStateException) {
+                        null // closed by lock() before the call started
+                    }
+                } ?: return@withLock false
+                if (!report.merged) backups.finished(location)
+                report.merged
+            }
+        }
+        if (restored && _open.value === open) changed()
+    }
+
+    /** The phone is back online: write a save that was waiting for it, after [RECONNECT_DELAY_MS]. */
+    private fun reconnected() {
+        if (_saveState.value != SaveState.Waiting) return
+        reconnectJob?.cancel()
+        reconnectJob = scope.launch {
+            delay(RECONNECT_DELAY_MS)
+            if (_saveState.value == SaveState.Waiting && connection.isOnline()) save()
+        }
     }
 
     /** The app's own screen came into view, or left it. Changes elsewhere are watched for meanwhile. */
@@ -214,7 +289,9 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
         stopObserving = documents.observe(open.document.uri) { check() }
         watchJob = scope.launch {
             while (true) {
-                check()
+                // In case the reconnect callback was missed (the app was frozen meanwhile).
+                val waited = _saveState.value == SaveState.Waiting && (connection.onlineFor() ?: 0) >= RECONNECT_DELAY_MS
+                if (waited) save() else check()
                 delay(CHECK_INTERVAL_MS)
             }
         }
@@ -320,6 +397,7 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
         autoLock.disarm()
         stopWatching()
         checkJob?.cancel()
+        reconnectJob?.cancel()
         _open.value = null
         _saveState.value = SaveState.Saved
         _sync.value = SyncStatus()
@@ -345,7 +423,9 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
             return
         }
         saveJob = scope.launch {
-            val problem = withContext(Dispatchers.IO + NonCancellable) {
+            // What this phone saved before must be in the database before anything is written.
+            restoreJob?.join()
+            val written = withContext(Dispatchers.IO + NonCancellable) {
                 fileLock.withLock { write(open, overwrite) }
             }
             val again = saveAgain
@@ -355,13 +435,17 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
                 if (again) save()
                 return@launch
             }
-            if (again && problem == null) {
+            if (again && written !is Written.Failed) {
                 // Straight on to the next save: "Saved" in between would be untrue, and a
                 // passkey waiting for its save would take it as done.
                 save()
                 return@launch
             }
-            _saveState.value = problem?.let(SaveState::Unsaved) ?: SaveState.Saved
+            _saveState.value = when (written) {
+                Written.Done -> SaveState.Saved
+                Written.Held -> SaveState.Waiting
+                is Written.Failed -> SaveState.Unsaved(written.problem)
+            }
         }
     }
 
@@ -379,6 +463,16 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
             }
             writeChecked(uri, bytes)
         }
+    }
+
+    private sealed interface Written {
+        /** In the file. */
+        data object Done : Written
+
+        /** Kept on this phone until it's back online ([SaveState.Waiting]). */
+        data object Held : Written
+
+        class Failed(val problem: SaveProblem) : Written
     }
 
     /**
@@ -415,11 +509,11 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
     }
 
     /**
-     * Saves to the database's own file. Returns null on success, or what went wrong. A file
-     * changed elsewhere is merged with ours first (unless [overwrite]), and the result saved.
-     * Hold [fileLock].
+     * Saves to the database's own file. A file changed elsewhere is merged with ours first
+     * (unless [overwrite]), and the result saved. Offline, a file a cloud storage app holds
+     * isn't touched: the save is kept on this phone instead ([Written.Held]). Hold [fileLock].
      */
-    private suspend fun write(open: Open, overwrite: Boolean): SaveProblem? {
+    private suspend fun write(open: Open, overwrite: Boolean): Written {
         // Each round merges what another device saved meanwhile; it would take a device saving
         // every few seconds to need more than a couple.
         repeat(MAX_MERGES + 1) {
@@ -428,25 +522,34 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
                 count = open.database.changeCount()
                 withContext(Dispatchers.Default) { open.database.save() }
             } catch (_: KeePassException.Locked) {
-                return null // locked before the save started; nothing to do
+                return Written.Done // locked before the save started; nothing to do
             } catch (_: IllegalStateException) {
-                return null // closed by lock() before the call started
+                return Written.Done // closed by lock() before the call started
             } catch (e: KeePassException) {
-                return SaveProblem.Engine(e)
+                return Written.Failed(SaveProblem.Engine(e))
             }
             val uri = open.document.uri
+            if (!documents.isOnThisPhone(uri) && !connection.isOnline()) {
+                // The storage app would upload this later over whatever the file is by then.
+                return try {
+                    backups.keepUnfinished(uri.toString(), bytes)
+                    Written.Held
+                } catch (_: IOException) {
+                    Written.Failed(SaveProblem.CantWrite) // nowhere to keep it: in memory only
+                }
+            }
             val current = try {
                 documents.read(uri)
             } catch (e: Exception) {
                 // Replacing it anyway: the write itself will say if the file is really out of reach.
-                if (overwrite) null else return problemFor(e)
+                if (overwrite) null else return Written.Failed(problemFor(e))
             }
             if (current != null) {
                 val known = fingerprint(current).contentEquals(open.fileFingerprint)
                 if (!overwrite && !known) {
                     when (val taken = sync(open, current)) {
-                        is Taken.Changes -> if (taken.report.merged) return@repeat else return null
-                        else -> return SaveProblem.Conflict
+                        is Taken.Changes -> if (taken.report.merged) return@repeat else return Written.Done
+                        else -> return Written.Failed(SaveProblem.Conflict)
                     }
                 }
                 // Replacing another app's version: keep it only if it's a database our key opens, so
@@ -454,16 +557,16 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
                 if (known || opensWithOurKey(open, current)) keepBackup { backups.keep(uri.toString(), current) }
             }
             keepBackup { backups.keepUnfinished(uri.toString(), bytes) }
-            return writeChecked(uri, bytes).also {
-                if (it == null) {
-                    open.fileFingerprint = fingerprint(bytes)
-                    open.cleanCount = count
-                    backups.finished(uri.toString())
-                    _sync.update { status -> status.copy(savedAt = now()) }
-                }
+            val problem = writeChecked(uri, bytes) ?: run {
+                open.fileFingerprint = fingerprint(bytes)
+                open.cleanCount = count
+                backups.saved(uri.toString())
+                _sync.update { status -> status.copy(savedAt = now()) }
+                return Written.Done
             }
+            return Written.Failed(problem)
         }
-        return SaveProblem.Conflict
+        return Written.Failed(SaveProblem.Conflict)
     }
 
     /**
@@ -527,6 +630,12 @@ class Session(private val autoLock: AutoLock, private val documents: Documents, 
 
 /** How often the file is read for changes made elsewhere while the app is on screen. */
 const val CHECK_INTERVAL_MS = 30_000L
+
+/**
+ * How long the phone must be back online before a save that waited for it is written, so the
+ * storage app has had a moment to fetch what other devices saved meanwhile.
+ */
+const val RECONNECT_DELAY_MS = 10_000L
 
 /** How many times one save merges in another device's changes before giving up. */
 private const val MAX_MERGES = 3

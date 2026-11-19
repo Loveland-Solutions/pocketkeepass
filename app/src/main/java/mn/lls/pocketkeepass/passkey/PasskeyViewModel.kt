@@ -257,7 +257,8 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun saved(open: Session.Open, count: ULong, entryId: String, responseJson: String): Outcome {
         while (true) {
             _step.value = Step.Saving
-            val state = session.saveState.first { it != SaveState.Saving }
+            // Offline, the save waits on this phone: the site can't be reached meanwhile anyway.
+            val state = session.saveState.first { it != SaveState.Saving && it != SaveState.Waiting }
             if (session.open.value !== open) {
                 // Locked meanwhile: the passkey, never saved, went with the rest of the database.
                 return fail(ErrorKind.Unknown, string(R.string.passkey_not_saved, string(R.string.passkey_locked_before_saving)))

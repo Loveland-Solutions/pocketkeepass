@@ -210,7 +210,7 @@ fun rememberJustSaved(state: SaveState): Boolean {
                 delay(SAVED_NOTICE_MS)
                 justSaved = false
             }
-            is SaveState.Unsaved -> {
+            SaveState.Waiting, is SaveState.Unsaved -> {
                 wasSaving = false
                 justSaved = false
             }
@@ -221,8 +221,8 @@ fun rememberJustSaved(state: SaveState): Boolean {
 
 /**
  * A thin bar under the top bar while saving, "Saved" for a moment afterwards ([justSaved], from
- * [rememberJustSaved]), or a warning while changes aren't saved, with a button for what can be
- * done about it. Nothing otherwise.
+ * [rememberJustSaved]), a note while changes wait on this phone for a connection, or a warning
+ * while changes aren't saved, with a button for what can be done about it. Nothing otherwise.
  */
 @Composable
 fun SaveStatusBar(state: SaveState, justSaved: Boolean, onDetails: () -> Unit) {
@@ -262,6 +262,17 @@ fun SaveStatusBar(state: SaveState, justSaved: Boolean, onDetails: () -> Unit) {
                 Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        SaveState.Waiting -> Surface(color = MaterialTheme.colorScheme.secondaryContainer) {
+            Text(
+                stringResource(R.string.waiting_for_connection),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
         }
         is SaveState.Unsaved -> Surface(color = MaterialTheme.colorScheme.errorContainer) {

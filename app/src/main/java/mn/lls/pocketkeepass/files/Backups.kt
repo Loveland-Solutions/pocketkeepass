@@ -24,11 +24,16 @@ data class Backup(val savedAt: Long, val unfinished: Boolean)
  *
  * - the **previous** version: the file as it was before the save. It stays until the next save
  *   replaces it;
- * - the **unfinished** save: the new bytes being written. It's deleted once the write is
- *   confirmed, or once the file opens fine ([finished]), so it only survives a save that was
- *   cut short, and then it holds the changes that save was writing.
+ * - the **unfinished** save: the new bytes being written. Once the write is confirmed it
+ *   becomes the saved copy ([saved]), so it only survives a save that was cut short or held
+ *   back (offline), and then it holds the changes that save was writing.
  *
  * The unlock screen offers them back if the file no longer opens, the unfinished save first.
+ *
+ * A third copy, the **saved** one, is what this phone last wrote to the file. It's how our
+ * changes survive the file being overwritten elsewhere without them: a cloud storage app that
+ * uploads whichever copy arrives last, or another app that doesn't merge. Each unlock merges
+ * it (or an unfinished save, which is newer) into the file as read ([ours]).
  *
  * Both are the database file itself, encrypted with the master key, so they hold nothing the
  * file doesn't. They live in [dir] (the app's no-backup storage), named by a hash of the
@@ -43,6 +48,7 @@ class Backups(private val dir: File) {
         const val MAX_DATABASES = 3
         private const val PREVIOUS = ".kdbx"
         private const val UNFINISHED = ".unfinished.kdbx"
+        private const val SAVED = ".saved.kdbx"
 
         /** A SHA-256 hash in hex, which starts every copy's file name. */
         private const val HASH_LENGTH = 64
@@ -54,12 +60,37 @@ class Backups(private val dir: File) {
     /** Keeps [bytes], a save about to be written to the database at [location], until [finished]. */
     fun keepUnfinished(location: String, bytes: ByteArray) = store(file(location, UNFINISHED), bytes)
 
+    /** Whether a save to the database at [location] was kept here but isn't confirmed in its file. */
+    fun hasUnfinished(location: String) = file(location, UNFINISHED).isFile
+
     /**
-     * The save to the database at [location] was written and confirmed, or the file opened fine
-     * since: the unfinished copy isn't needed.
+     * The save to the database at [location] was written and confirmed: the unfinished copy is
+     * now the saved one, what this phone last wrote.
+     */
+    fun saved(location: String) {
+        val unfinished = file(location, UNFINISHED)
+        if (unfinished.isFile && !unfinished.renameTo(file(location, SAVED))) unfinished.delete()
+    }
+
+    /**
+     * The file opened and our copy was merged into it, with nothing left to save: the
+     * unfinished copy isn't needed.
      */
     fun finished(location: String) {
         file(location, UNFINISHED).delete()
+    }
+
+    /**
+     * What this phone last kept of the database at [location], to merge into the file as read:
+     * an unfinished save if there is one (it's newer), else what was last written. Null if
+     * there's neither, or it can't be read.
+     */
+    fun ours(location: String): ByteArray? = listOf(UNFINISHED, SAVED).firstNotNullOfOrNull { kind ->
+        try {
+            file(location, kind).takeIf { it.isFile }?.readBytes()
+        } catch (_: IOException) {
+            null
+        }
     }
 
     /** The best copy of the database at [location]: the unfinished save if any, else the previous version. */
@@ -79,7 +110,7 @@ class Backups(private val dir: File) {
      * new file). Does nothing for copies [from] doesn't have.
      */
     fun move(from: String, to: String) {
-        for (kind in listOf(PREVIOUS, UNFINISHED)) {
+        for (kind in listOf(PREVIOUS, UNFINISHED, SAVED)) {
             val source = file(from, kind)
             if (source.isFile && !source.renameTo(file(to, kind))) throw IOException("Can't move $source")
         }
@@ -89,6 +120,7 @@ class Backups(private val dir: File) {
     fun delete(location: String) {
         file(location, PREVIOUS).delete()
         file(location, UNFINISHED).delete()
+        file(location, SAVED).delete()
     }
 
     private fun store(target: File, bytes: ByteArray) {

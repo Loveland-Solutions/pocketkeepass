@@ -12,6 +12,12 @@
     <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
 
     <!--
+        Only whether the phone is online, so a save to a cloud file can wait for the connection
+        (files/Connection.kt). It can't send or receive anything.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!--
         Lets PocketKeePass look up installed web browsers. Autofill only believes a website
         address reported by a browser whose signing certificate it has checked.
     -->

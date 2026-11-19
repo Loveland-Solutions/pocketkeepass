@@ -50,6 +50,9 @@ class Documents(context: Context) {
         } ?: authority
     }
 
+    /** Whether the file is in this phone's own storage rather than held by a cloud storage app. */
+    fun isOnThisPhone(uri: Uri): Boolean = uri.authority in ON_THIS_PHONE
+
     /**
      * Calls [onChange] (on the main thread) whenever the storage app says the file changed.
      * Not every storage app says so, which is why the file is also checked on a timer. Returns

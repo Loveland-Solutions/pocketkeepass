@@ -3,6 +3,7 @@ package mn.lls.pocketkeepass
 import android.app.Application
 import java.io.File
 import mn.lls.pocketkeepass.files.Backups
+import mn.lls.pocketkeepass.files.Connection
 import mn.lls.pocketkeepass.files.Documents
 import mn.lls.pocketkeepass.security.AutoLock
 import mn.lls.pocketkeepass.security.Clipboard
@@ -28,7 +29,7 @@ class PocketKeePassApp : Application() {
         super.onCreate()
         autoLock = AutoLock(this)
         backups = Backups(File(noBackupFilesDir, "backups"))
-        session = Session(autoLock, Documents(this), backups)
+        session = Session(autoLock, Documents(this), backups, Connection(this))
         clipboard = Clipboard(this)
         // A fresh process with a clear still pending: the app was stopped before it happened, and
         // a force stop (some phones do one when an app is swiped away) cancels its alarm too.
