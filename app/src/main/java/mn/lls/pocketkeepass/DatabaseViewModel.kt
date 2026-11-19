@@ -51,6 +51,7 @@ import mn.lls.pocketkeepass.security.QuickUnlockSetting
 import mn.lls.pocketkeepass.security.decodeUtf8
 import mn.lls.pocketkeepass.security.toUtf8Bytes
 import mn.lls.pocketkeepass.security.wipe
+import mn.lls.pocketkeepass.ui.userMessage
 
 /** Where the app is: no database chosen yet, a database waiting to be unlocked, or open. */
 sealed interface DatabaseState {
@@ -562,7 +563,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                     e is CantReadException -> UnlockError.CantRead(e.keyFile)
                     e is QuickUnlockBrokenException -> UnlockError.QuickUnlockInvalidated
                     viaQuickUnlock && e is KeePassException.WrongKey -> UnlockError.QuickUnlockOutdated
-                    else -> UnlockError.Engine(e.message.orEmpty())
+                    else -> UnlockError.Engine(e.userMessage(getApplication<Application>().resources))
                 }
                 if (error is UnlockError.QuickUnlockInvalidated || error is UnlockError.QuickUnlockOutdated) quickUnlock.disable()
                 if (e is KeePassException.WrongKey && !viaQuickUnlock) clearPassword()

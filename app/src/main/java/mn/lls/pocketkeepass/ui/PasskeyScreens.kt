@@ -190,7 +190,7 @@ fun PasskeySaveFailedScreen(problem: SaveProblem, onRetry: () -> Unit, onCancel:
     val reason = when (problem) {
         SaveProblem.Conflict -> stringResource(R.string.passkey_save_conflict)
         SaveProblem.CantWrite, SaveProblem.WriteCheckFailed -> stringResource(R.string.not_saved)
-        is SaveProblem.Engine -> problem.message
+        is SaveProblem.Engine -> problem.error.userMessage()
     }
     PasskeyMessage(stringResource(R.string.passkey_not_saved, reason)) {
         TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }

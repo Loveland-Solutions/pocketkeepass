@@ -44,6 +44,15 @@ android {
         }
     }
 
+    androidResources {
+        // Android 13+ lets the user pick the app's language in system settings, from a list
+        // generated out of these (res/resources.properties names the default, English). Only
+        // languages the app is translated into: AndroidX's own strings in other languages would
+        // otherwise put a few translated words into an English app.
+        generateLocaleConfig = true
+        localeFilters += listOf("en", "mn")
+    }
+
     signingConfigs {
         if (uploadKey != null) {
             create("upload") {
