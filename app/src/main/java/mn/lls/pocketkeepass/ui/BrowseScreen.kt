@@ -2,8 +2,9 @@ package mn.lls.pocketkeepass.ui
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import mn.lls.pocketkeepass.DatabaseState
 import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.SaveState
+import mn.lls.pocketkeepass.SyncStatus
 import mn.lls.pocketkeepass.core.DatabaseSummary
 import mn.lls.pocketkeepass.core.EntryItem
 import mn.lls.pocketkeepass.core.GroupItem
@@ -73,6 +76,35 @@ import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
 /** Separates group names in a path, e.g. "Work › Servers". */
 internal const val PATH_SEPARATOR = " › "
+
+/** One choice in a list row's long-press menu. */
+class RowAction(@param:StringRes val label: Int, val action: () -> Unit)
+
+/** What a long press on an entry or group in the list offers. */
+class RowActions(
+    val duplicateEntry: (EntryItem) -> Unit,
+    val moveEntry: (EntryItem, inRecycleBin: Boolean) -> Unit,
+    val deleteEntry: (EntryItem, inRecycleBin: Boolean) -> Unit,
+    val editGroup: (GroupItem) -> Unit,
+    val moveGroup: (GroupItem, inRecycleBin: Boolean) -> Unit,
+    val deleteGroup: (GroupItem, inRecycleBin: Boolean) -> Unit,
+) {
+    fun forEntry(entry: EntryItem, inRecycleBin: Boolean): List<RowAction> = buildList {
+        // A copy of something deleted would land in the recycle bin too: not useful.
+        if (!inRecycleBin) add(RowAction(R.string.duplicate) { duplicateEntry(entry) })
+        add(RowAction(R.string.move) { moveEntry(entry, inRecycleBin) })
+        add(RowAction(R.string.delete) { deleteEntry(entry, inRecycleBin) })
+    }
+
+    fun forGroup(group: GroupItem, inRecycleBin: Boolean): List<RowAction> = when {
+        group.isRecycleBin -> listOf(RowAction(R.string.empty_recycle_bin) { deleteGroup(group, false) })
+        else -> buildList {
+            if (!inRecycleBin) add(RowAction(R.string.edit_group) { editGroup(group) })
+            add(RowAction(R.string.move) { moveGroup(group, inRecycleBin) })
+            add(RowAction(R.string.delete) { deleteGroup(group, inRecycleBin) })
+        }
+    }
+}
 
 /** An open database: one group's subgroups and entries, or search results across the database. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,6 +134,9 @@ fun BrowseScreen(
     onEditGroup: () -> Unit,
     onMoveGroup: () -> Unit,
     onDeleteGroup: () -> Unit,
+    rowActions: RowActions,
+    sync: SyncStatus,
+    onCheckNow: () -> Unit,
 ) {
     val listing = state.listing
     val inRecycleBin = listing.group.isRecycleBin || listing.parents.any { it.isRecycleBin }
@@ -116,6 +151,10 @@ fun BrowseScreen(
             onChangeQuickUnlock = onChangeQuickUnlock,
             onDismiss = { showSettings = false },
         )
+    }
+    var showSync by remember { mutableStateOf(false) }
+    if (showSync) {
+        SyncDialog(sync, onCheckNow = onCheckNow, onDismiss = { showSync = false })
     }
     val onOpenEntry: (EntryItem) -> Unit = { onOpenEntry(it.id) }
 
@@ -165,11 +204,13 @@ fun BrowseScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).imePadding()) {
             SaveStatusBar(saveState, justSaved, onSaveDetails)
-            Box(Modifier.weight(1f)) {
+            SyncLine(sync, onDetails = { showSync = true })
+            // Pulling the list down checks the file for changes made on other devices.
+            PullToRefreshBox(isRefreshing = sync.checking, onRefresh = onCheckNow, modifier = Modifier.weight(1f)) {
                 if (state.searching) {
-                    SearchResults(searchQuery.text.isBlank(), state.results, onOpenEntry)
+                    SearchResults(searchQuery.text.isBlank(), state.results, onOpenEntry, rowActions)
                 } else {
-                    GroupContents(listing, onOpenGroup, onOpenEntry)
+                    GroupContents(listing, inRecycleBin, onOpenGroup, onOpenEntry, rowActions)
                 }
             }
         }
@@ -305,9 +346,16 @@ internal fun SearchField(query: TextFieldState, modifier: Modifier, focusAtOnce:
 }
 
 @Composable
-private fun GroupContents(listing: GroupListing, onOpenGroup: (String) -> Unit, onOpenEntry: (EntryItem) -> Unit) {
+private fun GroupContents(
+    listing: GroupListing,
+    inRecycleBin: Boolean,
+    onOpenGroup: (String) -> Unit,
+    onOpenEntry: (EntryItem) -> Unit,
+    rowActions: RowActions,
+) {
     if (listing.groups.isEmpty() && listing.entries.isEmpty()) {
-        Message(stringResource(R.string.group_empty))
+        // Scrollable, so pull to refresh works on an empty group too.
+        LazyColumn(Modifier.fillMaxSize()) { item { Message(stringResource(R.string.group_empty)) } }
         return
     }
     // A fresh list for every group, so each one opens scrolled to the top. Saveable, so coming
@@ -315,25 +363,32 @@ private fun GroupContents(listing: GroupListing, onOpenGroup: (String) -> Unit, 
     val listState = rememberSaveable(listing.group.id, saver = LazyListState.Saver) { LazyListState() }
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(bottom = 16.dp)) {
         items(listing.groups, key = { "g" + it.id }) { group ->
-            GroupRow(group, onClick = { onOpenGroup(group.id) })
+            GroupRow(group, onClick = { onOpenGroup(group.id) }, actions = rowActions.forGroup(group, inRecycleBin))
         }
         items(listing.entries, key = { "e" + it.id }) { entry ->
-            EntryRow(entry, location = null, onClick = { onOpenEntry(entry) })
+            EntryRow(entry, location = null, onClick = { onOpenEntry(entry) }, actions = rowActions.forEntry(entry, inRecycleBin))
         }
     }
 }
 
 @Composable
-private fun SearchResults(blankQuery: Boolean, results: List<SearchResult>, onOpenEntry: (EntryItem) -> Unit) {
+private fun SearchResults(
+    blankQuery: Boolean,
+    results: List<SearchResult>,
+    onOpenEntry: (EntryItem) -> Unit,
+    rowActions: RowActions,
+) {
     when {
-        blankQuery -> Message(stringResource(R.string.search_explained))
-        results.isEmpty() -> Message(stringResource(R.string.search_no_results))
+        blankQuery -> LazyColumn(Modifier.fillMaxSize()) { item { Message(stringResource(R.string.search_explained)) } }
+        results.isEmpty() -> LazyColumn(Modifier.fillMaxSize()) { item { Message(stringResource(R.string.search_no_results)) } }
         else -> LazyColumn(Modifier.fillMaxSize(), state = rememberLazyListState(), contentPadding = PaddingValues(bottom = 16.dp)) {
             items(results, key = { it.entry.id }) { result ->
                 EntryRow(
                     result.entry,
                     location = result.groupPath.joinToString(PATH_SEPARATOR),
                     onClick = { onOpenEntry(result.entry) },
+                    // Search leaves the recycle bin out.
+                    actions = rowActions.forEntry(result.entry, inRecycleBin = false),
                 )
             }
         }
@@ -341,46 +396,79 @@ private fun SearchResults(blankQuery: Boolean, results: List<SearchResult>, onOp
 }
 
 @Composable
-private fun GroupRow(group: GroupItem, onClick: () -> Unit) {
+private fun GroupRow(group: GroupItem, onClick: () -> Unit, actions: List<RowAction>) {
     val groups = pluralStringResource(R.plurals.group_count, group.groupCount.toInt(), group.groupCount.toInt())
     val entries = pluralStringResource(R.plurals.entry_count, group.entryCount.toInt(), group.entryCount.toInt())
-    ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
-        leadingContent = {
-            Icon(
-                painterResource(if (group.isRecycleBin) R.drawable.ic_delete else R.drawable.ic_folder),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        },
-        headlineContent = { Text(group.name.ifEmpty { stringResource(R.string.untitled_group) }, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = {
-            Text(
-                when {
-                    group.groupCount == 0u -> entries
-                    group.entryCount == 0u -> groups
-                    else -> stringResource(R.string.groups_and_entries, groups, entries)
-                },
-            )
-        },
-    )
+    WithRowMenu(actions, onClick) { modifier ->
+        ListItem(
+            modifier = modifier,
+            leadingContent = {
+                Icon(
+                    painterResource(if (group.isRecycleBin) R.drawable.ic_delete else R.drawable.ic_folder),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            },
+            headlineContent = { Text(group.name.ifEmpty { stringResource(R.string.untitled_group) }, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            supportingContent = {
+                Text(
+                    when {
+                        group.groupCount == 0u -> entries
+                        group.entryCount == 0u -> groups
+                        else -> stringResource(R.string.groups_and_entries, groups, entries)
+                    },
+                )
+            },
+        )
+    }
+}
+
+/**
+ * A list row that opens with a tap and offers [actions] in a menu on a long press (screen
+ * readers announce it as "More options").
+ */
+@Composable
+private fun WithRowMenu(actions: List<RowAction>, onClick: () -> Unit, row: @Composable (Modifier) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        row(
+            Modifier.combinedClickable(
+                onClick = onClick,
+                onLongClick = if (actions.isEmpty()) null else ({ open = true }),
+                onLongClickLabel = stringResource(R.string.more),
+            ),
+        )
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            actions.forEach { action ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(action.label)) },
+                    onClick = {
+                        open = false
+                        action.action()
+                    },
+                )
+            }
+        }
+    }
 }
 
 /** An entry: its title, then its username (and, in search results, where it lives). */
 @Composable
-internal fun EntryRow(entry: EntryItem, location: String?, onClick: () -> Unit) {
+internal fun EntryRow(entry: EntryItem, location: String?, onClick: () -> Unit, actions: List<RowAction> = emptyList()) {
     val title = entry.title.ifEmpty { stringResource(R.string.untitled_entry) }
     val details = listOf(entry.username, location.orEmpty()).filter { it.isNotEmpty() }
-    ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
-        leadingContent = { Initial(title) },
-        headlineContent = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = if (details.isEmpty()) {
-            null
-        } else {
-            { Text(details.joinToString(" · "), maxLines = 1, overflow = TextOverflow.Ellipsis) }
-        },
-    )
+    WithRowMenu(actions, onClick) { modifier ->
+        ListItem(
+            modifier = modifier,
+            leadingContent = { Initial(title) },
+            headlineContent = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            supportingContent = if (details.isEmpty()) {
+                null
+            } else {
+                { Text(details.joinToString(" · "), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            },
+        )
+    }
 }
 
 /** A round badge with the title's first letter, until entry icons exist. */
@@ -450,6 +538,9 @@ private fun BrowseScreenPreview() {
             onEditGroup = {},
             onMoveGroup = {},
             onDeleteGroup = {},
+            rowActions = RowActions({}, { _, _ -> }, { _, _ -> }, {}, { _, _ -> }, { _, _ -> }),
+            sync = SyncStatus(storage = "Drive", checkedAt = System.currentTimeMillis()),
+            onCheckNow = {},
         )
     }
 }

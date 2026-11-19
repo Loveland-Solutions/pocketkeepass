@@ -101,6 +101,8 @@
     <string name="discard">Discard</string>
     <string name="keep_editing">Keep editing</string>
     <string name="move">Move</string>
+    <string name="duplicate">Duplicate</string>
+    <string name="duplicated">Made a copy.</string>
     <string name="delete">Delete</string>
     <!-- %1$s is an entry or group name -->
     <string name="move_to">Move “%1$s” to</string>
@@ -126,7 +128,7 @@
     <string name="not_saved">Your changes aren\'t saved to the file.</string>
     <string name="what_now">What now?</string>
     <string name="conflict_title">The file changed elsewhere</string>
-    <string name="conflict_explained">Another app or device changed the database file since PocketKeePass opened it. Saving now would replace those changes with yours. PocketKeePass can\'t combine the two yet.\n\nYour changes stay here until the database locks.</string>
+    <string name="conflict_explained">Another app or device changed the database file, and PocketKeePass can\'t combine those changes with yours: the file may have a new master password, hold another database, or be damaged. Saving now would replace it with yours.\n\nYour changes stay here until the database locks.</string>
     <string name="save_failed_title">Changes not saved</string>
     <string name="cant_write_explained">PocketKeePass can\'t write to the database file. It may have been moved or deleted, or the storage app may only allow reading it.\n\nYour changes stay here until the database locks. Save a copy to keep them.</string>
     <string name="write_check_failed_explained">The file didn\'t read back correctly after saving, so the storage app may not have stored it properly. Try again, or save a copy to be safe.\n\nYour changes stay here until the database locks.</string>
@@ -141,6 +143,51 @@
     <string name="lock_unsaved_title">Lock without saving?</string>
     <string name="lock_unsaved_explained">Your changes aren\'t saved to the file yet. Locking discards them.</string>
     <string name="lock_anyway">Lock anyway</string>
+
+    <!-- Sync: keeping the file in step with other devices through Drive, Dropbox, and so on -->
+    <!-- %1$s is the storage app's name, e.g. "Drive"; %2$s is a time, e.g. "just now" or "5 minutes ago" -->
+    <string name="sync_line_cloud">Up to date with %1$s · checked %2$s</string>
+    <!-- %1$s is a time, e.g. "just now" or "5 minutes ago" -->
+    <string name="sync_line_phone">On this phone · checked %1$s</string>
+    <!-- %1$s is the storage app's name -->
+    <string name="sync_checking">Checking %1$s for changes…</string>
+    <string name="sync_checking_phone">Checking the file for changes…</string>
+    <string name="sync_cant_read">Can\'t read the file right now. Changes from other devices will come in once it can.</string>
+    <string name="sync_key_changed">The master password was changed on another device. Lock, then unlock with the new one.</string>
+    <string name="sync_other_database">The file now holds a different database. Lock, then unlock it again.</string>
+    <string name="just_now">just now</string>
+    <!-- %1$s is the storage app's name -->
+    <string name="sync_title_cloud">Syncing with %1$s</string>
+    <string name="sync_title_phone">Syncing</string>
+    <string name="sync_saved_at">Your last change was saved to the file at %1$s.</string>
+    <string name="sync_nothing_saved">Nothing has been changed on this phone since unlocking.</string>
+    <string name="sync_checked_at">Last checked for changes from other devices %1$s.</string>
+    <!-- %1$s is a time; %2$s is a list of changes, e.g. "1 new entry, 2 changed" -->
+    <string name="sync_incoming_at">Last changes from another device came in at %1$s: %2$s.</string>
+    <!-- %1$s is the storage app's name -->
+    <string name="sync_explained_cloud">Every change you make is saved into the file straight away, and %1$s uploads it from there. PocketKeePass can\'t see when %1$s has finished uploading: if this phone is offline, the change reaches other devices once it\'s back online.\n\nWhile PocketKeePass is open, it checks the file every 30 seconds (or pull down on the list to check now) and takes in changes made on other devices. If two devices changed the database at the same time, both sets of changes are kept. When an entry was changed in both places, the newer version is kept and the other goes into its history.</string>
+    <string name="sync_explained_phone">This file is stored on this phone. If another app (such as Syncthing) shares it with other devices, PocketKeePass checks it every 30 seconds while it\'s open and takes in their changes, keeping both sides\' changes when the database was changed in two places.</string>
+    <string name="check_now">Check now</string>
+    <!-- %1$s is the storage app's name; %2$s is a list of changes, e.g. "1 new entry, 2 changed" -->
+    <string name="sync_updated">Updated from %1$s: %2$s</string>
+    <!-- %1$s is a list of changes, e.g. "1 new entry, 2 changed" -->
+    <string name="sync_updated_phone">Updated from another device: %1$s</string>
+    <plurals name="sync_entries_added">
+        <item quantity="one">%d new entry</item>
+        <item quantity="other">%d new entries</item>
+    </plurals>
+    <plurals name="sync_entries_changed">
+        <item quantity="one">%d entry changed</item>
+        <item quantity="other">%d entries changed</item>
+    </plurals>
+    <plurals name="sync_entries_removed">
+        <item quantity="one">%d entry removed</item>
+        <item quantity="other">%d entries removed</item>
+    </plurals>
+    <plurals name="sync_groups_changed">
+        <item quantity="one">%d group changed</item>
+        <item quantity="other">%d groups changed</item>
+    </plurals>
 
     <!-- Autofill: the suggestions Android shows under a login field in other apps -->
     <string name="autofill_unlock">Unlock PocketKeePass</string>

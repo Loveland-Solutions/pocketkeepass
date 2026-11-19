@@ -81,6 +81,7 @@ fun EntryScreen(
     onSaveDetails: () -> Unit,
     snackbar: SnackbarHostState,
     onEdit: () -> Unit,
+    onDuplicate: () -> Unit,
     onMove: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -138,7 +139,7 @@ fun EntryScreen(
                     IconButton(onClick = onLock) {
                         Icon(painterResource(R.drawable.ic_lock), stringResource(R.string.lock))
                     }
-                    EntryMenu(onMove, onDelete)
+                    EntryMenu(onDuplicate.takeUnless { entry.isInRecycleBin }, onMove, onDelete)
                 },
             )
         },
@@ -232,15 +233,24 @@ fun EntryScreen(
     }
 }
 
-/** Move or delete the entry. */
+/** Copy, move, or delete the entry. Without [onDuplicate] (in the recycle bin), no copying. */
 @Composable
-private fun EntryMenu(onMove: () -> Unit, onDelete: () -> Unit) {
+private fun EntryMenu(onDuplicate: (() -> Unit)?, onMove: () -> Unit, onDelete: () -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
             Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.more))
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (onDuplicate != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.duplicate)) },
+                    onClick = {
+                        open = false
+                        onDuplicate()
+                    },
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.move)) },
                 onClick = {
@@ -422,6 +432,7 @@ private fun EntryScreenPreview() {
             onSaveDetails = {},
             snackbar = SnackbarHostState(),
             onEdit = {},
+            onDuplicate = {},
             onMove = {},
             onDelete = {},
         )

@@ -158,6 +158,15 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     private val backups = (app as PocketKeePassApp).backups
     private val recent = RecentDatabase(app)
     private val session = (app as PocketKeePassApp).session
+
+    /** How the file stands with other devices, for the sync line. */
+    val sync = session.sync
+
+    /** Changes that came in from other devices, as they arrive. */
+    val incoming = session.incoming
+
+    /** Reads the file now for changes made on other devices. */
+    fun checkNow() = session.checkNow()
     private val autoLock = (app as PocketKeePassApp).autoLock
     private val clipboard = (app as PocketKeePassApp).clipboard
     private val quickUnlock = QuickUnlock(app)
