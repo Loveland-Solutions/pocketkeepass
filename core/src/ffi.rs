@@ -7,6 +7,7 @@
 //! - Opening and saving run the key derivation, which is slow on purpose. Kotlin must call them
 //!   off the main thread.
 
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, PoisonError, RwLock, RwLockReadGuard};
 
 use zeroize::{Zeroize, Zeroizing};
@@ -26,6 +27,22 @@ use crate::{
 #[derive(uniffi::Object)]
 pub struct UnlockedDatabase {
     db: RwLock<Option<Database>>,
+    /// Goes up with every change made through this object, so that syncing knows whether the
+    /// database still matches the file it last read or wrote (see `sync_with_file`).
+    changes: AtomicU64,
+}
+
+/// What taking in another version of the database's file did. Nothing secret.
+#[derive(uniffi::Record)]
+pub struct SyncReport {
+    /// True if both sides had changes and they were merged: the result is in memory only, and
+    /// needs saving. False if the other version simply replaced ours.
+    pub merged: bool,
+    pub entries_added: u32,
+    pub entries_changed: u32,
+    pub entries_removed: u32,
+    /// Groups added, renamed, moved, or removed.
+    pub groups_changed: u32,
 }
 
 /// What the app shows about a database once it's open. Nothing secret.
@@ -317,6 +334,7 @@ impl UnlockedDatabase {
         let db = Database::open(&file, &key)?;
         Ok(Arc::new(Self {
             db: RwLock::new(Some(db)),
+            changes: AtomicU64::new(0),
         }))
     }
 
@@ -335,6 +353,7 @@ impl UnlockedDatabase {
         let db = Database::open_with_key_hash(&file, key_hash)?;
         Ok(Arc::new(Self {
             db: RwLock::new(Some(db)),
+            changes: AtomicU64::new(0),
         }))
     }
 
@@ -624,6 +643,14 @@ impl UnlockedDatabase {
         self.with_mut(|db| db.delete_entry(&entry).map(Deletion::from))
     }
 
+    /// Copies an entry into the same group, just after it, and returns the copy's id. The copy's
+    /// title ends in " - Copy"; it has no history, and no passkey (see the engine's
+    /// `Database::duplicate_entry`).
+    pub fn duplicate_entry(&self, id: String) -> Result<String> {
+        let entry = parse_id(&id)?;
+        self.with_mut(|db| Ok(uuid_to_hex(&db.duplicate_entry(&entry)?)))
+    }
+
     /// Moves an entry into another group. Returns false if it's already there.
     pub fn move_entry(&self, id: String, group_id: String) -> Result<bool> {
         let (entry, group) = (parse_id(&id)?, parse_id(&group_id)?);
@@ -705,8 +732,41 @@ impl UnlockedDatabase {
     /// Converts a KDBX 3 database to KDBX 4 in memory so that it can be saved. Ask the user
     /// first: older apps that only read KDBX 3 won't open the file once it's saved.
     pub fn upgrade_to_kdbx4(&self) -> Result<()> {
-        let mut db = self.db.write().unwrap_or_else(PoisonError::into_inner);
-        db.as_mut().ok_or(Error::Locked)?.upgrade_to_kdbx4()
+        self.with_mut(Database::upgrade_to_kdbx4)
+    }
+
+    /// How many changes have been made to the database in memory so far. Read it just before
+    /// `save` (or after opening) to know which state the file holds, for `sync_with_file`.
+    pub fn change_count(&self) -> u64 {
+        self.changes.load(Ordering::SeqCst)
+    }
+
+    /// Takes in `file`, the database's file as another app or device left it, opened with the
+    /// same master key. Runs the key derivation, so call it off the main thread.
+    ///
+    /// If nothing has changed here since `change_count` returned `unchanged_since`, their
+    /// version replaces ours. Otherwise the two are merged, keeping the changes of both, and the
+    /// result needs saving. Fails with `WrongKey` if the master key was changed elsewhere, and
+    /// `Invalid` if the file holds a different database. On an error, nothing has changed.
+    pub fn sync_with_file(&self, file: Vec<u8>, unchanged_since: u64) -> Result<SyncReport> {
+        let key = self.with(|db| Ok(Zeroizing::new(*db.key_hash())))?;
+        // The slow part, without holding the lock: the app keeps working meanwhile.
+        let theirs = Database::open_with_key_hash(&file, &key)?;
+        let mut guard = self.db.write().unwrap_or_else(PoisonError::into_inner);
+        let db = guard.as_mut().ok_or(Error::Locked)?;
+        let merged = self.changes.load(Ordering::SeqCst) != unchanged_since;
+        let changes = if merged {
+            db.merge_from(theirs)?
+        } else {
+            db.replace_with(theirs)
+        };
+        Ok(SyncReport {
+            merged,
+            entries_added: changes.entries_added,
+            entries_changed: changes.entries_changed,
+            entries_removed: changes.entries_removed,
+            groups_changed: changes.groups_changed,
+        })
     }
 
     /// Encrypts the database into the bytes of a complete `.kdbx` file. The engine has already
@@ -735,9 +795,12 @@ impl UnlockedDatabase {
         f(self.read().as_ref().ok_or(Error::Locked)?)
     }
 
+    /// Every change goes through here, so it's counted (see `change_count`).
     fn with_mut<T>(&self, f: impl FnOnce(&mut Database) -> Result<T>) -> Result<T> {
         let mut db = self.db.write().unwrap_or_else(PoisonError::into_inner);
-        f(db.as_mut().ok_or(Error::Locked)?)
+        let db = db.as_mut().ok_or(Error::Locked)?;
+        self.changes.fetch_add(1, Ordering::SeqCst);
+        f(db)
     }
 }
 

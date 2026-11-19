@@ -351,3 +351,39 @@ fn keepassxc_reads_databases_we_edited() {
         assert!(protected_pin, "{}: PIN isn't protected", fixture.file);
     }
 }
+
+#[test]
+fn keepassxc_reads_databases_we_merged() {
+    use pocketkeepass_core::{EntryEdit, FieldEdit, FieldValue};
+    let Some(cli) = keepassxc_cli() else { return };
+    let set = |key, value| FieldEdit {
+        key,
+        value: FieldValue::Set(value),
+        protected: false,
+    };
+    for fixture in [&KDBX4[0], &KDBX4[3]] {
+        let file = fixture.open().save().unwrap();
+        let open = || Database::open(&file, &fixture.key()).unwrap();
+        let (mut mine, mut theirs) = (open(), open());
+        let root = mine.root().uuid().unwrap();
+        let login = |title| EntryEdit {
+            fields: vec![set("Title", title), set("Password", "secret")],
+            tags: vec![],
+        };
+        mine.create_entry(&root, &login("Mine")).unwrap();
+        let hers = theirs.create_entry(&root, &login("Hers")).unwrap();
+        theirs.duplicate_entry(&hers).unwrap();
+        theirs.create_group(&root, "Her Group", "").unwrap();
+        mine.merge_from(Database::open(&theirs.save().unwrap(), &fixture.key()).unwrap())
+            .unwrap();
+
+        let saved = TempFile::new(&format!("merged-{}", fixture.file), &mine.save().unwrap());
+        let export = keepassxc(&cli, "export", fixture, &saved.0, &[]);
+        let export = xml::parse(std::str::from_utf8(&export).unwrap()).unwrap();
+        let entries = common::all_entries(&export);
+        assert_eq!(entries, common::all_entries(mine.xml()), "{}", fixture.file);
+        for title in ["Mine", "Hers", "Hers - Copy"] {
+            assert!(entries.iter().any(|e| e["Title"] == title), "{title}");
+        }
+    }
+}

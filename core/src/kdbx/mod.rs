@@ -13,7 +13,7 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use zeroize::Zeroizing;
 
 pub use header::FormatVersion;
-pub(crate) use upgrade::upgrade_to_kdbx4;
+pub(crate) use upgrade::{seconds_since_year_1, upgrade_to_kdbx4};
 pub(crate) use write::encrypt;
 
 use crate::error::{Error, Result, corrupt};

@@ -167,6 +167,14 @@ pub fn has_passkey(entry: &Entry<'_>) -> bool {
     entry.field_keys().any(|k| k.starts_with(PREFIX))
 }
 
+/// Whether a field holds part of the passkey itself (not an app link), which a copy of the
+/// entry must not carry: two entries with one credential would answer for the same passkey.
+pub(crate) fn is_passkey_credential_field(key: &str) -> bool {
+    key.starts_with(PREFIX) || key == STRONGBOX_USERNAME
+}
+
+pub(crate) const PASSKEY_TAG_NAME: &str = PASSKEY_TAG;
+
 /// Whether a field is part of a passkey or an app link: the app hides these from the entry's
 /// field list and shows the passkey as a whole instead.
 pub fn is_passkey_field(key: &str) -> bool {
