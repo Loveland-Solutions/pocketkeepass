@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.core.EntryItem
+import mn.lls.pocketkeepass.core.ItemIcon
 import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
@@ -150,8 +151,8 @@ private fun AutofillScreenPreview() {
             destination = FillDestination("Website", "login.example.com", label = null, isWebsite = true),
             claimedDomain = null,
             linked = listOf(
-                SearchResult(EntryItem("01", "Example", "me@example.com", "https://example.com"), listOf("Sites")),
-                SearchResult(EntryItem("02", "Example (work)", "", "https://example.com"), emptyList()),
+                SearchResult(EntryItem("01", "Example", "me@example.com", "https://example.com", ItemIcon(1u, null)), listOf("Sites")),
+                SearchResult(EntryItem("02", "Example (work)", "", "https://example.com", ItemIcon(0u, null)), emptyList()),
             ),
             searchQuery = TextFieldState(),
             results = emptyList(),

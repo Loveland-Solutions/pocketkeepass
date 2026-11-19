@@ -3,7 +3,6 @@ package mn.lls.pocketkeepass.ui
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,12 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -69,6 +66,7 @@ import mn.lls.pocketkeepass.core.DatabaseSummary
 import mn.lls.pocketkeepass.core.EntryItem
 import mn.lls.pocketkeepass.core.GroupItem
 import mn.lls.pocketkeepass.core.GroupListing
+import mn.lls.pocketkeepass.core.ItemIcon
 import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.files.Document
 import mn.lls.pocketkeepass.security.AutoLockSettings
@@ -402,13 +400,7 @@ private fun GroupRow(group: GroupItem, onClick: () -> Unit, actions: List<RowAct
     WithRowMenu(actions, onClick) { modifier ->
         ListItem(
             modifier = modifier,
-            leadingContent = {
-                Icon(
-                    painterResource(if (group.isRecycleBin) R.drawable.ic_delete else R.drawable.ic_folder),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            },
+            leadingContent = { GroupIcon(group.icon, group.isRecycleBin) },
             headlineContent = { Text(group.name.ifEmpty { stringResource(R.string.untitled_group) }, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             supportingContent = {
                 Text(
@@ -460,7 +452,7 @@ internal fun EntryRow(entry: EntryItem, location: String?, onClick: () -> Unit, 
     WithRowMenu(actions, onClick) { modifier ->
         ListItem(
             modifier = modifier,
-            leadingContent = { Initial(title) },
+            leadingContent = { EntryIcon(entry.icon) },
             headlineContent = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             supportingContent = if (details.isEmpty()) {
                 null
@@ -468,18 +460,6 @@ internal fun EntryRow(entry: EntryItem, location: String?, onClick: () -> Unit, 
                 { Text(details.joinToString(" · "), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             },
         )
-    }
-}
-
-/** A round badge with the title's first letter, until entry icons exist. */
-@Composable
-private fun Initial(title: String) {
-    val letter = title.trim().let { if (it.isEmpty()) "" else String(Character.toChars(it.codePointAt(0))).uppercase() }
-    Box(
-        Modifier.size(40.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(letter, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
     }
 }
 
@@ -495,17 +475,17 @@ private val previewState = DatabaseState.Unlocked(
     keyFile = null,
     summary = DatabaseSummary("Passwords", "4.1", needsUpgrade = false, groupCount = 3u, entryCount = 4u, recycleBinEnabled = true),
     listing = GroupListing(
-        group = GroupItem("01", "Root", 3u, 2u, isRecycleBin = false),
+        group = GroupItem("01", "Root", 3u, 2u, isRecycleBin = false, ItemIcon(48u, null)),
         isRoot = true,
         parents = emptyList(),
         groups = listOf(
-            GroupItem("02", "Work", 1u, 3u, isRecycleBin = false),
-            GroupItem("03", "Banking", 0u, 1u, isRecycleBin = false),
-            GroupItem("04", "Recycle Bin", 0u, 2u, isRecycleBin = true),
+            GroupItem("02", "Work", 1u, 3u, isRecycleBin = false, ItemIcon(48u, null)),
+            GroupItem("03", "Banking", 0u, 1u, isRecycleBin = false, ItemIcon(37u, null)),
+            GroupItem("04", "Recycle Bin", 0u, 2u, isRecycleBin = true, ItemIcon(43u, null)),
         ),
         entries = listOf(
-            EntryItem("05", "Email", "me@example.com", "https://mail.example.com"),
-            EntryItem("06", "Router", "", ""),
+            EntryItem("05", "Email", "me@example.com", "https://mail.example.com", ItemIcon(19u, null)),
+            EntryItem("06", "Router", "", "", ItemIcon(3u, null)),
         ),
     ),
 )

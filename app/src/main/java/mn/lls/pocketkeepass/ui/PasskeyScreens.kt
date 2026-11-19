@@ -44,6 +44,7 @@ import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.SaveProblem
 import mn.lls.pocketkeepass.core.EntryItem
 import mn.lls.pocketkeepass.core.GroupChoice
+import mn.lls.pocketkeepass.core.ItemIcon
 import mn.lls.pocketkeepass.core.PasskeyCreation
 import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
@@ -294,9 +295,9 @@ private fun PasskeyCreateScreenPreview() {
                 rpName = "Example",
                 userName = "me@example.com",
                 userDisplayName = "Me",
-                candidates = listOf(SearchResult(EntryItem("01", "Example", "me@example.com", "https://example.com"), listOf("Sites"))),
+                candidates = listOf(SearchResult(EntryItem("01", "Example", "me@example.com", "https://example.com", ItemIcon(1u, null)), listOf("Sites"))),
             ),
-            groups = listOf(GroupChoice("01", "Root", 0u, false, false), GroupChoice("02", "Sites", 1u, false, false)),
+            groups = listOf(GroupChoice("01", "Root", 0u, false, false, ItemIcon(48u, null)), GroupChoice("02", "Sites", 1u, false, false, ItemIcon(1u, null))),
             initialGroup = "02",
             databaseName = "Passwords",
             caller = "example.com",

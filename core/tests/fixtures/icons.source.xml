@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<KeePassFile>
+	<Meta>
+		<Generator>PocketKeePass test fixture</Generator>
+		<DatabaseName>Icons Test</DatabaseName>
+		<CustomIcons>
+			<Icon><UUID>UVFRUVFRUVFRUVFRUVFRUQ==</UUID><Data>iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGO4o6FBEmIY1TCqYfhqAAAyBCwQhvh37QAAAABJRU5ErkJggg==</Data></Icon>
+			<Icon><UUID>U1NTU1NTU1NTU1NTU1NTUw==</UUID><Data>iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR4nGPQCLhDU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAB8sUExAp8tCAAAAAElFTkSuQmCC</Data></Icon>
+		</CustomIcons>
+		<RecycleBinEnabled>True</RecycleBinEnabled>
+		<RecycleBinUUID>T09PT09PT09PT09PT09PTw==</RecycleBinUUID>
+	</Meta>
+	<Root>
+		<Group>
+			<UUID>AQEBAQEBAQEBAQEBAQEBAQ==</UUID>
+			<Name>Root</Name>
+			<IconID>48</IconID>
+			<Entry>
+				<UUID>QUFBQUFBQUFBQUFBQUFBQQ==</UUID>
+				<IconID>37</IconID>
+				<String><Key>Title</Key><Value>Bank</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>QkJCQkJCQkJCQkJCQkJCQg==</UUID>
+				<IconID>1</IconID>
+				<CustomIconUUID>UVFRUVFRUVFRUVFRUVFRUQ==</CustomIconUUID>
+				<String><Key>Title</Key><Value>Custom</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>Q0NDQ0NDQ0NDQ0NDQ0NDQw==</UUID>
+				<IconID>19</IconID>
+				<CustomIconUUID>UlJSUlJSUlJSUlJSUlJSUg==</CustomIconUUID>
+				<String><Key>Title</Key><Value>Missing Custom</Value></String>
+			</Entry>
+			<Entry>
+				<UUID>RERERERERERERERERERERA==</UUID>
+				<IconID>68</IconID>
+				<String><Key>Title</Key><Value>Last Standard</Value></String>
+			</Entry>
+			<Group>
+				<UUID>RkZGRkZGRkZGRkZGRkZGRg==</UUID>
+				<Name>Games</Name>
+				<IconID>61</IconID>
+				<CustomIconUUID>U1NTU1NTU1NTU1NTU1NTUw==</CustomIconUUID>
+			</Group>
+			<Group>
+				<UUID>R0dHR0dHR0dHR0dHR0dHRw==</UUID>
+				<Name>Mail</Name>
+				<IconID>19</IconID>
+			</Group>
+			<Group>
+				<UUID>T09PT09PT09PT09PT09PTw==</UUID>
+				<Name>Recycle Bin</Name>
+				<IconID>43</IconID>
+			</Group>
+		</Group>
+	</Root>
+</KeePassFile>

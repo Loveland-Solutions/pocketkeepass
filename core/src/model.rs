@@ -127,6 +127,62 @@ impl Database {
     pub fn xml(&self) -> &Element {
         &self.inner.xml
     }
+
+    /// A custom icon's image data (`Meta/CustomIcons`), as stored: usually PNG, but nothing
+    /// checks that, so treat it as untrusted. `None` if no icon has that UUID, its data isn't
+    /// valid base64, or it's bigger than [`MAX_CUSTOM_ICON_BYTES`].
+    pub fn custom_icon(&self, uuid: &[u8; 16]) -> Option<Vec<u8>> {
+        let icon = self
+            .inner
+            .xml
+            .path(&["Meta", "CustomIcons"])?
+            .children_named("Icon")
+            .find(|icon| decode_uuid(icon.child_text("UUID")).as_ref() == Some(uuid))?;
+        let data = icon.child_text("Data").trim();
+        // Base64 is 4 characters for every 3 bytes: refuse a big icon before decoding it (and
+        // check the exact size after).
+        if data.len() > MAX_CUSTOM_ICON_BYTES.div_ceil(3) * 4 {
+            return None;
+        }
+        BASE64
+            .decode(data)
+            .ok()
+            .filter(|bytes| !bytes.is_empty() && bytes.len() <= MAX_CUSTOM_ICON_BYTES)
+    }
+}
+
+/// How many standard icons KeePass has: `IconID` runs from 0 to 68. The images aren't in the
+/// file; every app draws its own.
+pub const STANDARD_ICON_COUNT: u32 = 69;
+/// The standard icon of an entry that doesn't say (a key).
+pub const DEFAULT_ENTRY_ICON: u32 = 0;
+/// The standard icon of a group that doesn't say (a folder).
+pub const DEFAULT_GROUP_ICON: u32 = 48;
+/// The largest custom icon [`Database::custom_icon`] returns. KeePass and KeePassXC store
+/// small images (KeePassXC scales them to 128 pixels); anything this big is a mistake or an
+/// attack, and the standard icon is shown instead.
+pub const MAX_CUSTOM_ICON_BYTES: usize = 256 * 1024;
+
+/// A group's or entry's icon: a standard one, and maybe a custom image shown instead of it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Icon {
+    /// 0 to 68. A missing or out-of-range `IconID` reads as the default.
+    pub standard: u32,
+    /// The UUID of an image in `Meta/CustomIcons`. The image may be missing; then the
+    /// standard icon is the one to show.
+    pub custom: Option<[u8; 16]>,
+}
+
+fn icon(el: &Element, default: u32) -> Icon {
+    let standard = el
+        .child_text("IconID")
+        .trim()
+        .parse()
+        .ok()
+        .filter(|id| *id < STANDARD_ICON_COUNT)
+        .unwrap_or(default);
+    let custom = decode_uuid(el.child_text("CustomIconUUID")).filter(|uuid| *uuid != [0; 16]);
+    Icon { standard, custom }
 }
 
 #[derive(Clone, Copy)]
@@ -145,6 +201,10 @@ impl<'a> Group<'a> {
 
     pub fn notes(&self) -> &'a str {
         self.el.child_text("Notes")
+    }
+
+    pub fn icon(&self) -> Icon {
+        icon(self.el, DEFAULT_GROUP_ICON)
     }
 
     /// The group's own search setting: `Some(false)` keeps its entries (and those of its
@@ -239,6 +299,10 @@ impl<'a> Entry<'a> {
         })
     }
 
+    pub fn icon(&self) -> Icon {
+        icon(self.el, DEFAULT_ENTRY_ICON)
+    }
+
     /// The entry's tags as stored, separated by `;` or `,`.
     pub fn tags(&self) -> &'a str {
         self.el.child_text("Tags")
@@ -304,4 +368,90 @@ pub fn uuid_from_hex(hex: &str) -> Option<[u8; 16]> {
 
 fn decode_uuid(text: &str) -> Option<[u8; 16]> {
     BASE64.decode(text.trim()).ok()?.try_into().ok()
+}
+
+#[cfg(test)]
+mod icon_tests {
+    use super::*;
+    use crate::xml::Element;
+
+    fn database() -> Database {
+        let file = std::fs::read(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/fixtures/icons.kdbx"
+        ))
+        .unwrap();
+        let key = CompositeKey::new(Some(b"test-password"), None).unwrap();
+        Database::open(&file, &key).unwrap()
+    }
+
+    /// The entry "Bank" (`41`), the first in the root group.
+    fn bank(db: &mut Database) -> &mut Element {
+        let root = db.inner.xml.child_mut("Root").unwrap();
+        let group = root.child_mut("Group").unwrap();
+        group.child_mut("Entry").unwrap()
+    }
+
+    fn set(el: &mut Element, name: &str, text: &str) {
+        match el.child_mut(name) {
+            Some(child) => *child.text = text.to_owned(),
+            None => {
+                let mut child = Element::new(name);
+                *child.text = text.to_owned();
+                el.children.push(child);
+            }
+        }
+    }
+
+    fn bank_icon(db: &Database) -> Icon {
+        db.root().entries().next().unwrap().icon()
+    }
+
+    #[test]
+    fn unusable_icon_numbers_read_as_the_default() {
+        let mut db = database();
+        for text in ["69", "4294967296", "-1", "key", ""] {
+            set(bank(&mut db), "IconID", text);
+            assert_eq!(bank_icon(&db).standard, DEFAULT_ENTRY_ICON, "{text:?}");
+        }
+        set(bank(&mut db), "IconID", " 12 ");
+        assert_eq!(bank_icon(&db).standard, 12);
+        bank(&mut db).children.retain(|c| c.name != "IconID");
+        assert_eq!(bank_icon(&db).standard, DEFAULT_ENTRY_ICON);
+    }
+
+    #[test]
+    fn an_all_zero_or_malformed_custom_uuid_is_no_custom_icon() {
+        let mut db = database();
+        for text in ["AAAAAAAAAAAAAAAAAAAAAA==", "not base64", "AQID"] {
+            set(bank(&mut db), "CustomIconUUID", text);
+            assert_eq!(bank_icon(&db).custom, None, "{text:?}");
+        }
+    }
+
+    fn set_icon_data(db: &mut Database, data: &str) {
+        let icons = db.inner.xml.child_mut("Meta").unwrap();
+        let icons = icons.child_mut("CustomIcons").unwrap();
+        let icon = icons.child_mut("Icon").unwrap(); // 51
+        set(icon, "Data", data);
+    }
+
+    #[test]
+    fn oversized_or_broken_image_data_is_refused() {
+        let mut db = database();
+        let uuid = [0x51; 16];
+
+        let just_fits = BASE64.encode(vec![7; MAX_CUSTOM_ICON_BYTES]);
+        set_icon_data(&mut db, &just_fits);
+        assert_eq!(db.custom_icon(&uuid).unwrap().len(), MAX_CUSTOM_ICON_BYTES);
+
+        let too_big = BASE64.encode(vec![7; MAX_CUSTOM_ICON_BYTES + 1]);
+        set_icon_data(&mut db, &too_big);
+        assert!(db.custom_icon(&uuid).is_none());
+
+        for data in ["", "!!!not base64!!!"] {
+            set_icon_data(&mut db, data);
+            assert_eq!(db.custom_icon(&uuid), None, "{data:?}");
+        }
+    }
 }

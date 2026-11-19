@@ -29,6 +29,7 @@ import mn.lls.pocketkeepass.files.Document
 import mn.lls.pocketkeepass.files.Documents
 import mn.lls.pocketkeepass.files.WriteCheckException
 import mn.lls.pocketkeepass.files.fingerprint
+import mn.lls.pocketkeepass.icons.CustomIcons
 import mn.lls.pocketkeepass.security.AutoLock
 import mn.lls.pocketkeepass.security.wipe
 
@@ -177,6 +178,9 @@ class Session(
 
     /** Goes up by one after every change to the open database, so screens know to re-read it. */
     val revision: StateFlow<Long> = _revision.asStateFlow()
+
+    /** The open database's custom icons, decoded once each. Emptied on lock. */
+    val customIcons = CustomIcons()
 
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Saved)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
@@ -401,6 +405,7 @@ class Session(
         _open.value = null
         _saveState.value = SaveState.Saved
         _sync.value = SyncStatus()
+        customIcons.reset()
         scope.launch(Dispatchers.Default + NonCancellable) { wipe(open) }
     }
 

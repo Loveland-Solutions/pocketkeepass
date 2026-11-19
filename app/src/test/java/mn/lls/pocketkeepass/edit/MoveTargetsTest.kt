@@ -1,6 +1,7 @@
 package mn.lls.pocketkeepass.edit
 
 import mn.lls.pocketkeepass.core.GroupChoice
+import mn.lls.pocketkeepass.core.ItemIcon
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -23,7 +24,7 @@ class MoveTargetsTest {
     )
 
     private fun group(id: String, depth: UInt, isBin: Boolean = false, inBin: Boolean = false) =
-        GroupChoice(id, id, depth, isRecycleBin = isBin, isInRecycleBin = inBin)
+        GroupChoice(id, id, depth, isRecycleBin = isBin, isInRecycleBin = inBin, ItemIcon(48u, null))
 
     private fun targets(item: Item) = moveTargets(item, groups).map { it.id }
 
