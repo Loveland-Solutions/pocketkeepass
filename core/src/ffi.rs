@@ -806,6 +806,36 @@ impl UnlockedDatabase {
         })
     }
 
+    /// Merges `file`, a version of this database that this phone saved earlier and kept in the
+    /// app's own storage, into the database as it was just opened, so a change saved here
+    /// survives the file being overwritten elsewhere without it (see
+    /// `Database::merge_saved_copy`). Runs the key derivation, so call it off the main thread.
+    ///
+    /// `merged` in the report says whether the copy added anything, so the result needs
+    /// saving. Fails with `WrongKey` if the copy was saved with another master key, `Invalid`
+    /// if it's another database, and `NeedsUpgrade` if this one is KDBX 3. On an error,
+    /// nothing has changed.
+    pub fn merge_saved_copy(&self, file: Vec<u8>) -> Result<SyncReport> {
+        let key = self.with(|db| Ok(Zeroizing::new(*db.key_hash())))?;
+        // The slow part, without holding the lock. The copy is our own file, written by this
+        // app into its private storage, so its key derivation settings are ones we already ran.
+        let copy = Database::open_with_key_hash(&file, &key)?;
+        let mut guard = self.db.write().unwrap_or_else(PoisonError::into_inner);
+        let db = guard.as_mut().ok_or(Error::Locked)?;
+        let (changes, merged) = db.merge_saved_copy(copy)?;
+        if merged {
+            self.changes.fetch_add(1, Ordering::SeqCst);
+        }
+        Ok(SyncReport {
+            merged,
+            change_count: self.changes.load(Ordering::SeqCst),
+            entries_added: changes.entries_added,
+            entries_changed: changes.entries_changed,
+            entries_removed: changes.entries_removed,
+            groups_changed: changes.groups_changed,
+        })
+    }
+
     /// Encrypts the database into the bytes of a complete `.kdbx` file. The engine has already
     /// read the result back and checked it. Replacing the old file safely is the caller's job.
     pub fn save(&self) -> Result<Vec<u8>> {

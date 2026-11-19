@@ -149,6 +149,38 @@ impl Database {
         Ok(changes)
     }
 
+    /// Merges `copy`, a version of this database that this phone saved earlier (kept in the
+    /// app's own storage), into this one, as it was just read from its file. Says what that
+    /// changed here, and whether it changed anything at all: if so, the result has to be saved.
+    ///
+    /// This is how a change saved here survives the file being overwritten elsewhere without
+    /// it. A cloud storage app that uploads whichever copy arrives last, or another app that
+    /// doesn't merge, can drop what this phone saved; merging our copy back brings it back,
+    /// while what was deleted on purpose stays deleted (`DeletedObjects`), as in any sync.
+    ///
+    /// Unlike [`Database::sync_from`], this database stays the base: the file's header and
+    /// tree are kept as read, and nothing is marked changed unless the copy adds something.
+    /// Fails with `Invalid` if `copy` is a different database, and with `NeedsUpgrade` if
+    /// this one is KDBX 3. On an error, nothing has changed.
+    pub fn merge_saved_copy(&mut self, mut copy: Database) -> Result<(SyncChanges, bool)> {
+        if self.needs_upgrade() {
+            return Err(Error::NeedsUpgrade);
+        }
+        self.same_database(&copy)?;
+        copy.upgrade_to_kdbx4()?;
+
+        let before = self.snapshot();
+        let as_read = self.inner.xml.clone();
+        let attachments = self.inner.binaries.len();
+        self.merge_core(&copy);
+        let changed =
+            self.inner.binaries.len() != attachments || !same_tree(&self.inner.xml, &as_read);
+        if changed {
+            self.mark_changed();
+        }
+        Ok((compare(&before, &self.snapshot()), changed))
+    }
+
     /// The merge itself. Both databases are KDBX 4 and have the same root group. Where `theirs`
     /// has nothing this one lacks, this one's tree is left exactly as it was.
     fn merge_core(&mut self, theirs: &Database) {
