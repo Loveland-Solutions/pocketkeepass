@@ -232,6 +232,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                         clipboardTimeoutSeconds = clipboardTimeout,
                         onChangeClipboardTimeout = viewModel::setClipboardTimeout,
                         onChangeQuickUnlock = viewModel::setQuickUnlock,
+                        onChangeQuickUnlockInterval = viewModel::setQuickUnlockInterval,
                         onOpenSettings = viewModel::refreshQuickUnlock,
                         saveState = saveState,
                         justSaved = justSaved,

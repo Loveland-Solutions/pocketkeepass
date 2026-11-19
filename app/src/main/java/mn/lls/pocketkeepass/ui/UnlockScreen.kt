@@ -39,6 +39,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -198,6 +199,13 @@ fun UnlockScreen(
                 OutlinedButton(onClick = onQuickUnlock, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.unlock_with_biometrics))
                 }
+            }
+            state.passwordDueDays?.let { days ->
+                Text(
+                    pluralStringResource(R.plurals.biometric_password_due, days, days),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             if (state.unlocking) {
                 Text(

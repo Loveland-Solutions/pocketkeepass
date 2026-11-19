@@ -46,6 +46,10 @@
     <string name="use_master_password">Use master password</string>
     <string name="biometric_invalidated">Biometric unlock was turned off because the fingerprints, face, or screen lock on this device changed. Unlock with your master password, then turn it back on in settings.</string>
     <string name="biometric_outdated">Biometric unlock was turned off because this database\'s master password or key file changed. Unlock with the new one, then turn it back on in settings.</string>
+    <plurals name="biometric_password_due">
+        <item quantity="one">Type your master password this time. PocketKeePass asks for it after the phone restarts and every day, so you don\'t forget it. Biometric unlock stays on.</item>
+        <item quantity="other">Type your master password this time. PocketKeePass asks for it after the phone restarts and every %d days, so you don\'t forget it. Biometric unlock stays on.</item>
+    </plurals>
     <string name="cant_read_key_file">PocketKeePass can\'t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.</string>
 
     <!-- Browse and search -->
@@ -227,6 +231,8 @@
     <string name="biometric_unlock_switch">Unlock this database with a fingerprint or face</string>
     <string name="biometric_unlock_explained">Anyone whose fingerprint or face is set up on this phone can then open it. Adding or removing one turns this off, and your master password is always needed to turn it back on.</string>
     <string name="biometric_unlock_unavailable">Set up a fingerprint (or a face unlock that Android rates as strong) in your phone\'s settings to use this.</string>
+    <string name="biometric_interval">Ask for the master password again every:</string>
+    <string name="biometric_interval_explained">And after every restart of the phone. Typing it now and then keeps you from forgetting it, and means a lost phone takes more than a fingerprint to open.</string>
     <string name="biometric_enable_title">Turn on biometric unlock</string>
     <string name="biometric_offer_title">Unlock with your fingerprint?</string>
     <string name="biometric_offer_explained">Next time, open %1$s with a fingerprint or face instead of typing your master password. You can change this any time in settings.</string>
@@ -258,6 +264,10 @@
     <plurals name="hours">
         <item quantity="one">%d hour</item>
         <item quantity="other">%d hours</item>
+    </plurals>
+    <plurals name="days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
     </plurals>
 
     <!-- Password generator -->

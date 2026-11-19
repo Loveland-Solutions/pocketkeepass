@@ -46,6 +46,7 @@ import mn.lls.pocketkeepass.passkey.PocketPasskeyService
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
 import mn.lls.pocketkeepass.security.AutoLockSettings
 import mn.lls.pocketkeepass.security.Clipboard
+import mn.lls.pocketkeepass.security.QuickUnlock
 import mn.lls.pocketkeepass.security.QuickUnlockSetting
 
 /**
@@ -60,6 +61,8 @@ fun SettingsDialog(
     onChangeClipboardTimeout: (Int) -> Unit,
     quickUnlock: QuickUnlockSetting,
     onChangeQuickUnlock: (Boolean) -> Unit,
+    quickUnlockIntervalDays: Int,
+    onChangeQuickUnlockInterval: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
@@ -87,6 +90,29 @@ fun SettingsDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (on) {
+                    Text(stringResource(R.string.biometric_interval), style = MaterialTheme.typography.bodyMedium)
+                    Column(Modifier.selectableGroup()) {
+                        for (days in QuickUnlock.INTERVALS) {
+                            val selected = days == quickUnlockIntervalDays
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .selectable(selected, role = Role.RadioButton) { onChangeQuickUnlockInterval(days) }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(selected = selected, onClick = null)
+                                Text(pluralStringResource(R.plurals.days, days, days), Modifier.padding(start = 12.dp))
+                            }
+                        }
+                    }
+                    Text(
+                        stringResource(R.string.biometric_interval_explained),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 AutofillSetting()
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
