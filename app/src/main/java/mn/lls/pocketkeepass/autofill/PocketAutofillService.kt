@@ -10,9 +10,11 @@ import android.service.autofill.FillRequest
 import android.service.autofill.FillResponse
 import android.service.autofill.SaveCallback
 import android.service.autofill.SaveRequest
+import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import kotlin.random.Random
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -51,16 +53,27 @@ class PocketAutofillService : AutofillService() {
         }
         val session = (application as PocketKeePassApp).session
         val job = scope.launch {
-            val response = withContext(Dispatchers.Default) {
-                val fill = Fill.find(structure, browsers) ?: return@withContext null
-                val matches = try {
-                    session.open.value?.database?.autofillMatches(fill.target)
-                } catch (_: KeePassException.Locked) {
-                    null
-                } catch (_: IllegalStateException) {
-                    null // closed by a lock before the call started
+            val response = try {
+                withContext(Dispatchers.Default) {
+                    val fill = Fill.find(structure, browsers) ?: return@withContext null
+                    val matches = try {
+                        session.open.value?.database?.autofillMatches(fill.target)
+                    } catch (_: KeePassException.Locked) {
+                        null
+                    } catch (_: IllegalStateException) {
+                        null // closed by a lock before the call started
+                    }
+                    if (matches == null) locked(fill) else suggestions(fill, matches)
                 }
-                if (matches == null) locked(fill) else suggestions(fill, matches)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // This runs whenever a field gets focus in any app, and other apps describe their
+                // screens in ways we can't foresee. A surprise there means no suggestions, never
+                // a "PocketKeePass keeps stopping" over someone else's app. The trace holds no
+                // field contents, only our own code's names.
+                Log.w(TAG, "Couldn't answer a fill request", e)
+                null
             }
             callback.onSuccess(response)
         }
@@ -120,5 +133,7 @@ class PocketAutofillService : AutofillService() {
     private companion object {
         /** More matches than this are a tap away, behind "Search PocketKeePass". */
         const val MAX_SUGGESTIONS = 4
+
+        const val TAG = "PocketAutofill"
     }
 }

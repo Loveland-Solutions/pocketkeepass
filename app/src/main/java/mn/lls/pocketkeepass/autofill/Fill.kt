@@ -101,7 +101,8 @@ class Fill(
                 val attribute = { name: String -> html?.attributes?.firstOrNull { it.first.equals(name, ignoreCase = true) }?.second }
                 out += FieldInfo(
                     id = id,
-                    hints = node.autofillHints?.toList().orEmpty(),
+                    // Apps can leave nulls in the array (Messenger's message box does).
+                    hints = node.autofillHints?.filterNotNull().orEmpty(),
                     htmlType = attribute("type"),
                     htmlAutocomplete = attribute("autocomplete"),
                     htmlName = listOfNotNull(attribute("name"), attribute("id")).joinToString(" ").ifEmpty { null },
