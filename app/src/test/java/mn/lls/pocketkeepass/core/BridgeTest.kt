@@ -312,4 +312,39 @@ class BridgeTest {
         assertThrows(KeePassException.Locked::class.java) { db.deleteEntry("02".repeat(16)) }
         db.close()
     }
+
+    @Test
+    fun `another phone's file replaces ours when nothing changed here, and merges when something did`() {
+        val file = fixture("kdbx41-keepassxc.kdbx")
+        UnlockedDatabase.open(file, password, null).use { theirs ->
+            val root = theirs.listGroup(null).group.id
+            val hers = theirs.createEntry(root, listOf(FieldEdit("Title", "Hers".toByteArray(), null, false)), emptyList())
+            val theirFile = theirs.save()
+
+            UnlockedDatabase.open(file, password, null).use { mine ->
+                val clean = mine.changeCount()
+                val replaced = mine.syncWithFile(theirFile, clean)
+                assertFalse(replaced.merged)
+                assertEquals(1u, replaced.entriesAdded)
+                assertEquals(clean, mine.changeCount())
+
+                mine.createEntry(root, listOf(FieldEdit("Title", "Mine".toByteArray(), null, false)), emptyList())
+                val copy = mine.duplicateEntry(hers)
+                assertEquals("Hers - Copy", mine.entry(copy).title)
+                val merged = mine.syncWithFile(theirFile, clean)
+                assertTrue(merged.merged)
+                assertEquals(0u, merged.entriesRemoved)
+                assertEquals(6u, mine.summary().entryCount) // 3 + hers + mine + the copy
+            }
+        }
+    }
+
+    @Test
+    fun `a file our key no longer opens is refused as WrongKey`() {
+        UnlockedDatabase.open(fixture("kdbx41-keepassxc.kdbx"), password, null).use { mine ->
+            assertThrows(KeePassException.WrongKey::class.java) {
+                mine.syncWithFile(fixture("keyfile-only.kdbx"), mine.changeCount())
+            }
+        }
+    }
 }

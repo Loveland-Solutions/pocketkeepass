@@ -17,6 +17,7 @@ pub mod ffi;
 mod generator;
 mod kdbx;
 mod key;
+mod merge;
 mod model;
 mod passkey;
 mod totp;
@@ -31,6 +32,7 @@ pub use error::Error;
 pub use generator::{PasswordOptions, Symbols};
 pub use kdbx::FormatVersion;
 pub use key::CompositeKey;
+pub use merge::SyncChanges;
 pub use model::{Database, Entry, Field, Group, uuid_from_hex, uuid_to_hex};
 pub use passkey::{
     AppTrust, CreatedPasskey, CreationSummary, PasskeyHit, PasskeyStatus, PasskeyTarget,

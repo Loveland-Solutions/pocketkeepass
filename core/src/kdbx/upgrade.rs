@@ -193,7 +193,7 @@ fn kdbx4_date(iso: &str) -> Result<String> {
 
 /// Parses `YYYY-MM-DDTHH:MM:SS`, optionally followed by fractional seconds (dropped, as KDBX 4
 /// stores whole seconds) and by `Z` or a `±HH:MM` offset. No zone means UTC.
-fn seconds_since_year_1(s: &str) -> Option<i64> {
+pub(crate) fn seconds_since_year_1(s: &str) -> Option<i64> {
     let b = s.as_bytes();
     if b.len() < 19 || !s.is_ascii() {
         return None;

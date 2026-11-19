@@ -55,6 +55,7 @@ sealed interface PendingEdit {
     data class EditGroup(val groupId: String) : PendingEdit
     data class Delete(val item: Item) : PendingEdit
     data class Move(val item: Item) : PendingEdit
+    data class Duplicate(val entry: Item.Entry) : PendingEdit
 }
 
 /**
@@ -97,6 +98,7 @@ data class EditState(
 /** What a change did, for the screens to follow (open the new entry, leave a deleted group). */
 sealed interface EditEvent {
     data class EntryCreated(val id: String) : EditEvent
+    data class Duplicated(val original: Item.Entry, val copyId: String) : EditEvent
     data class Deleted(val item: Item, val deletion: Deletion) : EditEvent
     data class Moved(val item: Item) : EditEvent
     data class CopySaved(val problem: SaveProblem?) : EditEvent
@@ -143,6 +145,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
     fun editGroup(groupId: String) = begin(PendingEdit.EditGroup(groupId))
     fun delete(item: Item) = begin(PendingEdit.Delete(item))
     fun move(item: Item) = begin(PendingEdit.Move(item))
+    fun duplicate(entry: Item.Entry) = begin(PendingEdit.Duplicate(entry))
 
     /** Starts an edit, after asking to upgrade if the file is KDBX 3 (which can't be saved). */
     private fun begin(edit: PendingEdit) {
@@ -189,6 +192,11 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
                 val groups = engine { db.allGroups() } ?: return
                 _state.update { it.copy(move = MoveChoice(edit.item, moveTargets(edit.item, groups))) }
             }
+            is PendingEdit.Duplicate -> change(
+                block = { it.duplicateEntry(edit.entry.id) to true },
+                onDone = { copyId -> _events.trySend(EditEvent.Duplicated(edit.entry, copyId)) },
+                inForm = false,
+            )
         }
     }
 

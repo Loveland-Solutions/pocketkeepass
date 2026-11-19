@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import mn.lls.pocketkeepass.core.Deletion
 import mn.lls.pocketkeepass.core.EntryDetails
+import mn.lls.pocketkeepass.core.GroupItem
 import mn.lls.pocketkeepass.core.GroupListing
 import mn.lls.pocketkeepass.core.engineVersion
 import mn.lls.pocketkeepass.edit.EditEvent
@@ -43,6 +44,8 @@ import mn.lls.pocketkeepass.ui.GeneratorDialog
 import mn.lls.pocketkeepass.ui.GroupDialog
 import mn.lls.pocketkeepass.ui.LockUnsavedDialog
 import mn.lls.pocketkeepass.ui.MoveDialog
+import mn.lls.pocketkeepass.ui.RowActions
+import mn.lls.pocketkeepass.ui.incomingMessage
 import mn.lls.pocketkeepass.ui.QuickUnlockOfferDialog
 import mn.lls.pocketkeepass.ui.SaveProblemDialog
 import mn.lls.pocketkeepass.ui.UpgradeDialog
@@ -82,6 +85,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val autoLock get() = (application as PocketKeePassApp).autoLock
+    private val session get() = (application as PocketKeePassApp).session
 
     // Every touch and key press, before the app sees it. Counts as using the app for auto-lock.
     override fun onUserInteraction() {
@@ -92,19 +96,21 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         autoLock.onAppVisible()
+        session.setVisible(true) // watches the file for changes made on other devices
         viewModel.refreshQuickUnlock() // biometrics may have been set up or removed meanwhile
     }
 
     override fun onStop() {
         super.onStop()
         autoLock.onAppHidden()
+        session.setVisible(false)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         // Closing the app for good (not a rotation) locks the database. The session would
         // otherwise keep it open for autofill until auto-lock's timeout.
-        if (isFinishing) (application as PocketKeePassApp).session.lock()
+        if (isFinishing) session.lock()
     }
 }
 
@@ -119,7 +125,18 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
     val edit by editor.state.collectAsStateWithLifecycle()
     val saveState by editor.saveState.collectAsStateWithLifecycle()
     val justSaved = rememberJustSaved(saveState)
+    val sync by viewModel.sync.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val rowActions = remember(editor) {
+        RowActions(
+            duplicateEntry = { editor.duplicate(Item.Entry(it.id, it.title, inRecycleBin = false)) },
+            moveEntry = { entry, inBin -> editor.move(Item.Entry(entry.id, entry.title, inBin)) },
+            deleteEntry = { entry, inBin -> editor.delete(Item.Entry(entry.id, entry.title, inBin)) },
+            editGroup = { editor.editGroup(it.id) },
+            moveGroup = { group, inBin -> editor.move(group.toItem(inBin)) },
+            deleteGroup = { group, inBin -> editor.delete(group.toItem(inBin)) },
+        )
+    }
     // Keeps the browse screen's scroll position while an entry is shown on top of it.
     val savedState = rememberSaveableStateHolder()
     val pickDatabase = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -143,6 +160,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
     val lock = { if (saveState is SaveState.Unsaved) confirmLock = true else viewModel.lock() }
 
     EditEvents(editor, viewModel, snackbar)
+    IncomingChanges(viewModel, snackbar)
 
     when (val current = state) {
         DatabaseState.NoDatabase -> WelcomeScreen(
@@ -192,6 +210,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                     onSaveDetails = { showSaveProblem = true },
                     snackbar = snackbar,
                     onEdit = { editor.editEntry(entry) },
+                    onDuplicate = { editor.duplicate(entry.toItem()) },
                     onMove = { editor.move(entry.toItem()) },
                     onDelete = { editor.delete(entry.toItem()) },
                 )
@@ -220,6 +239,9 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                         onEditGroup = { editor.editGroup(listing.group.id) },
                         onMoveGroup = { editor.move(listing.toItem()) },
                         onDeleteGroup = { editor.delete(listing.toItem()) },
+                        rowActions = rowActions,
+                        sync = sync,
+                        onCheckNow = viewModel::checkNow,
                     )
                 }
             }
@@ -295,6 +317,13 @@ private fun EditEvents(editor: EditViewModel, viewModel: DatabaseViewModel, snac
                     viewModel.openEntry(event.id)
                     null
                 }
+                is EditEvent.Duplicated -> {
+                    // From the entry's own screen, go on to the copy (to edit it, most likely).
+                    // From the list, stay there: the copy shows up right below the original.
+                    val showing = viewModel.state.value as? DatabaseState.Unlocked
+                    if (showing?.entry?.id == event.original.id) viewModel.openEntry(event.copyId)
+                    resources.getString(R.string.duplicated)
+                }
                 is EditEvent.Deleted -> {
                     viewModel.leave(event.item)
                     resources.getString(
@@ -312,6 +341,21 @@ private fun EditEvents(editor: EditViewModel, viewModel: DatabaseViewModel, snac
         }
     }
 }
+
+/** Says what came in when changes made on another device are taken in. */
+@Composable
+private fun IncomingChanges(viewModel: DatabaseViewModel, snackbar: SnackbarHostState) {
+    val resources by rememberUpdatedState(LocalResources.current)
+    LaunchedEffect(viewModel) {
+        viewModel.incoming.collect { incoming ->
+            val message = incomingMessage(incoming.report, viewModel.sync.value.storage, resources)
+            snackbar.currentSnackbarData?.dismiss()
+            snackbar.showSnackbar(message)
+        }
+    }
+}
+
+private fun GroupItem.toItem(inRecycleBin: Boolean) = Item.Group(id, name, inRecycleBin, isRecycleBin)
 
 private fun EntryDetails.toItem() = Item.Entry(id, title, inRecycleBin = isInRecycleBin)
 

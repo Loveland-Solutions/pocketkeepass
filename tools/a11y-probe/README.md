@@ -14,3 +14,5 @@ adb shell settings delete secure enabled_accessibility_services   # turn it off 
 ```
 
 It logs whatever it can read, passwords included, so only use it with test databases.
+
+The second service, `.ToolProbeService` (log tag `A11yProbeTool`), *is* registered as an assistive tool, so it sees what TalkBack sees. Each node it logs includes its on-screen bounds, which makes it the way to read and tap PocketKeePass's screen from a test script now that `uiautomator` can't see it.

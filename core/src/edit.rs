@@ -82,7 +82,7 @@ pub enum Deletion {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum Kind {
+pub(crate) enum Kind {
     Entry,
     Group,
 }
@@ -304,6 +304,69 @@ impl Database {
         Ok(Deletion::Deleted)
     }
 
+    /// Copies an entry into the same group, right after it, and returns the copy's UUID. The copy
+    /// has every field, tag, attachment, and setting of the original, with " - Copy" after the
+    /// title (as KeePass names copies), new dates, and no history.
+    ///
+    /// A passkey isn't copied: two entries holding one credential would both answer for it, and
+    /// deleting either would look like deleting the passkey. App links are kept.
+    pub fn duplicate_entry(&mut self, uuid: &[u8; 16]) -> Result<[u8; 16]> {
+        let path = self.locate(uuid, Kind::Entry).ok_or(Error::NotFound)?;
+        let new_uuid = self.new_uuid()?;
+        let now = self.now();
+        let mut copy = at(&self.inner.xml, &path).clone();
+
+        set_child_text(&mut copy, "UUID", &BASE64.encode(new_uuid), Some(0));
+        let mut had_passkey = false;
+        copy.children.retain(|c| {
+            let passkey = c.name == "String"
+                && crate::passkey::is_passkey_credential_field(c.child_text("Key"));
+            had_passkey |= passkey;
+            c.name != "PreviousParentGroup" && !passkey
+        });
+        if let Some(title) = (copy.children.iter_mut())
+            .find(|c| c.name == "String" && c.child_text("Key") == "Title")
+            .and_then(|c| c.child_mut("Value"))
+        {
+            let copied = format!("{} - Copy", title.text.as_str());
+            title.text = Zeroizing::new(copied);
+        }
+        if had_passkey && let Some(tags) = copy.child_mut("Tags") {
+            let kept: Vec<&str> = (tags.text.split([';', ',']))
+                .map(str::trim)
+                .filter(|t| !t.is_empty() && *t != crate::passkey::PASSKEY_TAG_NAME)
+                .collect();
+            let kept = kept.join(";");
+            tags.text = Zeroizing::new(kept);
+        }
+        set_times(
+            &mut copy,
+            &now,
+            &[
+                "CreationTime",
+                "LastModificationTime",
+                "LastAccessTime",
+                "LocationChanged",
+            ],
+        );
+        if let Some(count) = copy
+            .child_mut("Times")
+            .and_then(|t| t.child_mut("UsageCount"))
+        {
+            count.text = Zeroizing::new("0".into());
+        }
+        if let Some(history) = copy.child_mut("History") {
+            history.children.clear();
+        }
+
+        let (&at_index, parent) = path.split_last().expect("an entry is inside a group");
+        at_mut(&mut self.inner.xml, parent)
+            .children
+            .insert(at_index + 1, copy);
+        self.mark_changed();
+        Ok(new_uuid)
+    }
+
     /// Moves an entry into another group. Returns false if it's already there.
     pub fn move_entry(&mut self, uuid: &[u8; 16], to_group: &[u8; 16]) -> Result<bool> {
         self.move_item(uuid, Kind::Entry, to_group)
@@ -421,7 +484,7 @@ impl Database {
     }
 
     /// Records that the database was changed by us, the way every KeePass app does.
-    fn mark_changed(&mut self) {
+    pub(crate) fn mark_changed(&mut self) {
         let meta = meta_mut(&mut self.inner.xml);
         set_child_text(meta, "Generator", GENERATOR, Some(0));
     }
@@ -529,7 +592,7 @@ impl Database {
     }
 
     /// `Meta/HistoryMaxItems`: how many old versions to keep per entry. None means no limit.
-    fn history_max_items(&self) -> Option<usize> {
+    pub(crate) fn history_max_items(&self) -> Option<usize> {
         let text = self
             .inner
             .xml
@@ -542,7 +605,7 @@ impl Database {
     }
 
     /// The current time, written the way this database's format version writes dates.
-    fn now(&self) -> String {
+    pub(crate) fn now(&self) -> String {
         let unix = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |d| d.as_secs() as i64);
@@ -553,7 +616,7 @@ impl Database {
     }
 
     /// A random UUID that nothing in the database uses yet.
-    fn new_uuid(&self) -> Result<[u8; 16]> {
+    pub(crate) fn new_uuid(&self) -> Result<[u8; 16]> {
         loop {
             let bytes = random_bytes(16)?;
             let uuid: [u8; 16] = bytes.as_slice().try_into().expect("asked for 16 bytes");
@@ -566,7 +629,7 @@ impl Database {
         }
     }
 
-    fn locate_root(&self) -> Option<Vec<usize>> {
+    pub(crate) fn locate_root(&self) -> Option<Vec<usize>> {
         let file = &self.inner.xml;
         let root = file.children.iter().position(|c| c.name == "Root")?;
         let group = (file.children[root].children.iter()).position(|c| c.name == "Group")?;
@@ -575,7 +638,7 @@ impl Database {
 
     /// The child positions leading from the top of the XML tree to a group or entry. Entry
     /// history is never searched, so an old version can't be found (or changed) by mistake.
-    fn locate(&self, uuid: &[u8; 16], kind: Kind) -> Option<Vec<usize>> {
+    pub(crate) fn locate(&self, uuid: &[u8; 16], kind: Kind) -> Option<Vec<usize>> {
         fn search(group: &Element, uuid: &[u8; 16], kind: Kind, path: &mut Vec<usize>) -> bool {
             for (i, child) in group.children.iter().enumerate() {
                 let found = match child.name.as_str() {
@@ -608,28 +671,28 @@ impl Database {
 }
 
 /// The root group's path is `[Root, Group]`.
-const ROOT_GROUP_DEPTH: usize = 2;
+pub(crate) const ROOT_GROUP_DEPTH: usize = 2;
 
-fn at<'a>(mut el: &'a Element, path: &[usize]) -> &'a Element {
+pub(crate) fn at<'a>(mut el: &'a Element, path: &[usize]) -> &'a Element {
     for &i in path {
         el = &el.children[i];
     }
     el
 }
 
-fn at_mut<'a>(mut el: &'a mut Element, path: &[usize]) -> &'a mut Element {
+pub(crate) fn at_mut<'a>(mut el: &'a mut Element, path: &[usize]) -> &'a mut Element {
     for &i in path {
         el = &mut el.children[i];
     }
     el
 }
 
-fn remove_at(file: &mut Element, path: &[usize]) -> Element {
+pub(crate) fn remove_at(file: &mut Element, path: &[usize]) -> Element {
     let (&last, parent) = path.split_last().expect("never the whole file");
     at_mut(file, parent).children.remove(last)
 }
 
-fn uuid_of(el: &Element) -> Option<[u8; 16]> {
+pub(crate) fn uuid_of(el: &Element) -> Option<[u8; 16]> {
     BASE64
         .decode(el.child_text("UUID").trim())
         .ok()?
@@ -671,7 +734,7 @@ fn check_text(what: &str, text: &str) -> Result<()> {
     }
 }
 
-fn leaf(name: &str, text: &str) -> Element {
+pub(crate) fn leaf(name: &str, text: &str) -> Element {
     let mut el = Element::new(name);
     el.text = Zeroizing::new(text.to_owned());
     el
@@ -731,7 +794,7 @@ fn new_group(
 
 /// Sets the named dates under `Times`, creating what's missing. A missing `Times` goes where
 /// KeePass writes it: after the tags (entries) or the icon (groups).
-fn set_times(el: &mut Element, now: &str, names: &[&str]) {
+pub(crate) fn set_times(el: &mut Element, now: &str, names: &[&str]) {
     if el.child("Times").is_none() {
         let at = ["Tags", "IconID", "UUID"]
             .iter()
@@ -746,7 +809,7 @@ fn set_times(el: &mut Element, now: &str, names: &[&str]) {
 }
 
 /// Sets a child's text. A missing child is inserted at `at`, or at the end if that's None.
-fn set_child_text(el: &mut Element, name: &str, text: &str, at: Option<usize>) {
+pub(crate) fn set_child_text(el: &mut Element, name: &str, text: &str, at: Option<usize>) {
     if let Some(child) = el.child_mut(name) {
         child.text = Zeroizing::new(text.to_owned());
         return;
@@ -755,7 +818,7 @@ fn set_child_text(el: &mut Element, name: &str, text: &str, at: Option<usize>) {
     el.children.insert(at, leaf(name, text));
 }
 
-fn child_or_append<'a>(el: &'a mut Element, name: &str) -> &'a mut Element {
+pub(crate) fn child_or_append<'a>(el: &'a mut Element, name: &str) -> &'a mut Element {
     match el.children.iter().position(|c| c.name == name) {
         Some(i) => &mut el.children[i],
         None => {
@@ -765,7 +828,7 @@ fn child_or_append<'a>(el: &'a mut Element, name: &str) -> &'a mut Element {
     }
 }
 
-fn meta_mut(file: &mut Element) -> &mut Element {
+pub(crate) fn meta_mut(file: &mut Element) -> &mut Element {
     if file.child("Meta").is_none() {
         file.children.insert(0, Element::new("Meta"));
     }
@@ -773,7 +836,7 @@ fn meta_mut(file: &mut Element) -> &mut Element {
 }
 
 /// The position just after the named child, or the end if there's none.
-fn after(el: &Element, name: &str) -> usize {
+pub(crate) fn after(el: &Element, name: &str) -> usize {
     el.children
         .iter()
         .position(|c| c.name == name)

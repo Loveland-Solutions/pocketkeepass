@@ -3,7 +3,10 @@ package mn.lls.pocketkeepass.files
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.database.ContentObserver
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -23,6 +26,39 @@ data class Document(val uri: Uri, val name: String)
  */
 class Documents(context: Context) {
     private val resolver: ContentResolver = context.contentResolver
+    private val packages = context.packageManager
+
+    /**
+     * The name of the app that holds the file, as the user knows it ("Drive", "Dropbox"), or
+     * null if the file is on this phone. Android lets us see that app because it gave us access
+     * to one of its files, so no extra permission is needed.
+     */
+    fun storageName(uri: Uri): String? {
+        val authority = uri.authority ?: return null
+        if (authority in ON_THIS_PHONE) return null
+        return try {
+            packages.resolveContentProvider(authority, 0)?.loadLabel(packages)?.toString()?.takeIf { it.isNotBlank() }
+        } catch (_: RuntimeException) {
+            null
+        } ?: authority
+    }
+
+    /**
+     * Calls [onChange] (on the main thread) whenever the storage app says the file changed.
+     * Not every storage app says so, which is why the file is also checked on a timer. Returns
+     * a function that stops watching.
+     */
+    fun observe(uri: Uri, onChange: () -> Unit): () -> Unit {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) = onChange()
+        }
+        try {
+            resolver.registerContentObserver(uri, false, observer)
+        } catch (_: RuntimeException) {
+            return {} // a provider that doesn't allow it: the timer still checks
+        }
+        return { resolver.unregisterContentObserver(observer) }
+    }
 
     /**
      * Keeps access to [uri] after the app restarts. Asks for write access too when [write] is
@@ -111,3 +147,10 @@ class WriteCheckException : IOException("The file read back differently from wha
  * the database since it was opened. The file is encrypted, so this reveals nothing.
  */
 fun fingerprint(bytes: ByteArray): ByteArray = MessageDigest.getInstance("SHA-256").digest(bytes)
+
+/** Android's own storage apps, whose files are on this phone rather than in the cloud. */
+private val ON_THIS_PHONE = setOf(
+    "com.android.externalstorage.documents",
+    "com.android.providers.downloads.documents",
+    "com.android.providers.media.documents",
+)
