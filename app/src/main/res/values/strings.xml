@@ -166,6 +166,7 @@
     <string name="sync_checking_phone">Checking the file for changes…</string>
     <string name="sync_cant_read">Can\'t read the file right now. Changes from other devices will come in once it can.</string>
     <string name="sync_key_changed">The master password was changed on another device. Lock, then unlock with the new one.</string>
+    <string name="sync_settings_changed">The database\'s security settings were changed on another device. Lock, then unlock it again to take in the changes.</string>
     <string name="sync_other_database">The file now holds a different database. Lock, then unlock it again.</string>
     <string name="just_now">just now</string>
     <!-- %1$s is the storage app's name -->
@@ -206,13 +207,17 @@
     <string name="autofill_search">Search PocketKeePass</string>
     <string name="autofill_save_unsupported">PocketKeePass can\'t save new logins yet.</string>
     <!-- Autofill: choosing an entry. "Fill in" is a small label above the website or app name. -->
-    <string name="autofill_fill_in">Fill in</string>
+    <string name="app_with_package">%1$s (%2$s)</string>
+    <string name="autofill_fill_in">Fill in · %1$s</string>
+    <string name="autofill_kind_website">Website</string>
+    <string name="autofill_kind_website_http">Website, not secure (http)</string>
+    <string name="autofill_kind_app">App</string>
+    <string name="autofill_kind_app_page">Web page in an app</string>
     <!-- An app's name and its package name, e.g. "Example Bank (com.example.bank)" -->
-    <string name="autofill_app">%1$s (%2$s)</string>
     <string name="autofill_linked">These entries are saved for this app or site. Search to use a different one.</string>
     <string name="autofill_none_linked">No entry is saved for %1$s. Search for the one to use, and check first that this is the app or site you mean: its username and password will be filled in there.</string>
     <string name="autofill_pick_explained">The entry you pick will be filled in to %1$s.</string>
-    <string name="autofill_unverified_browser">PocketKeePass can\'t verify this browser, so it can\'t tell which website is open. Check the address bar yourself, then search for the entry to use.</string>
+    <string name="autofill_unverified_browser">This app says the page is from %1$s. PocketKeePass can\'t check that, so it only offers entries saved for both this app and that website. Check the address yourself before you search for another entry.</string>
     <string name="autofill_nothing_to_fill">That entry has nothing to fill in here.</string>
 
     <!-- Settings -->
@@ -286,6 +291,7 @@
     <!-- Passkeys -->
     <string name="passkey">Passkey</string>
     <string name="passkey_for">For %1$s</string>
+    <string name="passkey_choose">Choose a passkey in PocketKeePass</string>
     <string name="passkey_create_description">Save the passkey in this KeePass database</string>
     <string name="passkey_create_for">Create a passkey for</string>
     <string name="passkey_create">Create</string>
@@ -305,6 +311,7 @@ PocketKeePass can\'t check whether this app belongs to %2$s. Only allow it if yo
     <string name="passkey_verify_title">Use your passkey</string>
     <string name="passkey_needs_screen_lock">Passkeys need a screen lock, so PocketKeePass can check it\'s you before each use. Set one in Android\'s settings first.</string>
     <string name="passkey_saving">Saving the passkey…</string>
+    <string name="passkey_locked_before_saving">PocketKeePass was locked before the passkey was saved, so it wasn\'t created. Try again.</string>
     <string name="passkey_not_saved">The passkey couldn\'t be saved. %1$s</string>
     <string name="passkey_save_conflict">Another app or device changed the database file since PocketKeePass opened it. Open PocketKeePass to sort that out, then try again.</string>
     <string name="passkey_gone">That passkey isn\'t in the database anymore.</string>

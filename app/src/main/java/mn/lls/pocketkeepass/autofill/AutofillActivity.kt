@@ -3,6 +3,7 @@ package mn.lls.pocketkeepass.autofill
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.SystemClock
 import android.service.autofill.Dataset
 import android.view.View
 import android.view.WindowManager
@@ -33,7 +34,9 @@ import mn.lls.pocketkeepass.PocketKeePassApp
 import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.core.SearchResult
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
+import mn.lls.pocketkeepass.security.protectFromOverlays
 import mn.lls.pocketkeepass.ui.AutofillScreen
+import mn.lls.pocketkeepass.ui.FillDestination
 import mn.lls.pocketkeepass.ui.UnlockScreen
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
@@ -64,9 +67,13 @@ class AutofillActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        window.protectFromOverlays()
         window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
         val fill = Fill.from(intent)
-        if (fill == null) {
+        // Android hands the suggestion to the app being filled in, which can send it again
+        // whenever it likes. So a suggestion only works for a while after it was offered.
+        val age = SystemClock.elapsedRealtime() - intent.getLongExtra(EXTRA_CREATED, Long.MIN_VALUE / 2)
+        if (fill == null || age !in 0..SUGGESTION_LIFETIME_MS) {
             cancel()
             return
         }
@@ -108,7 +115,8 @@ class AutofillActivity : ComponentActivity() {
                             }
                             // Null means it was locked meanwhile: the unlock screen takes over.
                             val matches = viewModel.autofillMatches(fill.target) ?: return@LaunchedEffect
-                            if (matches.size == 1 && !search) {
+                            // Not without a look, where the site can't be verified.
+                            if (matches.size == 1 && !search && !fill.unverifiedBrowser) {
                                 fillIn(fill, matches[0].entry.id)
                             } else {
                                 viewModel.openSearch()
@@ -117,8 +125,8 @@ class AutofillActivity : ComponentActivity() {
                         }
                         linked?.let { matches ->
                             AutofillScreen(
-                                target = target,
-                                unverifiedBrowser = fill.unverifiedBrowser,
+                                destination = target,
+                                claimedDomain = fill.claimedDomain,
                                 linked = matches,
                                 searchQuery = viewModel.searchQuery,
                                 results = current.results,
@@ -147,6 +155,7 @@ class AutofillActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         autoLock.onAppHidden()
+        if (!isChangingConfigurations) viewModel.onAppHidden()
     }
 
     /**
@@ -185,15 +194,21 @@ class AutofillActivity : ComponentActivity() {
         finish()
     }
 
-    /** The website, or the app's name with its package name, for the user to check. */
-    private fun describe(fill: Fill): String {
-        fill.domain?.let { return it }
+    /** Where the entry will go, for the user to check. */
+    private fun describe(fill: Fill): FillDestination {
+        fill.domain?.let { domain ->
+            val kind = if (fill.plainHttp) R.string.autofill_kind_website_http else R.string.autofill_kind_website
+            return FillDestination(getString(kind), domain, label = null, isWebsite = true)
+        }
+        // The app picks its own name, up to a thousand characters with line breaks, so it could
+        // pretend to be a website. Only its first line is shown, short, below the package name.
         val label = try {
             packageManager.getApplicationLabel(packageManager.getApplicationInfo(fill.packageName, 0)).toString()
         } catch (_: PackageManager.NameNotFoundException) {
             null // Android only shows us some of the installed apps
-        }
-        return if (label == null || label == fill.packageName) fill.packageName else getString(R.string.autofill_app, label, fill.packageName)
+        }?.lineSequence()?.firstOrNull()?.trim()?.take(40)?.takeIf { it.isNotEmpty() && it != fill.packageName }
+        val kind = if (fill.unverifiedBrowser) R.string.autofill_kind_app_page else R.string.autofill_kind_app
+        return FillDestination(getString(kind), fill.packageName, label, isWebsite = false)
     }
 
     companion object {
@@ -202,5 +217,11 @@ class AutofillActivity : ComponentActivity() {
 
         /** Show the chooser even if exactly one entry is linked. */
         const val EXTRA_SEARCH = "search"
+
+        /** When the suggestion was offered (`SystemClock.elapsedRealtime`). */
+        const val EXTRA_CREATED = "created"
+
+        /** How long a suggestion works after it was offered. */
+        private const val SUGGESTION_LIFETIME_MS = 10 * 60 * 1000L
     }
 }

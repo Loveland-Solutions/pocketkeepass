@@ -29,6 +29,7 @@ import mn.lls.pocketkeepass.PocketKeePassApp
 import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.SaveProblem
 import mn.lls.pocketkeepass.SaveState
+import mn.lls.pocketkeepass.Session
 import mn.lls.pocketkeepass.autofill.TrustedBrowsers
 import mn.lls.pocketkeepass.core.AppTrust
 import mn.lls.pocketkeepass.core.GroupChoice
@@ -125,7 +126,11 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
     private var verification: CompletableDeferred<Boolean>? = null
     private var started = false
 
-    /** The database was locked when this request began, so unlocking it verified the user. */
+    /**
+     * The database was unlocked within this request, so the user was verified. Set by the
+     * activity when the unlock screen it showed is followed by an open database, not merely
+     * when it shows the unlock screen.
+     */
     var unlockedHere = false
 
     /** The user's answer on the current screen. */
@@ -164,7 +169,7 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun entries(request: BeginGetCredentialRequest): Outcome {
         val response = withContext(Dispatchers.Default) {
-            PocketPasskeyService.signInEntries(getApplication(), request, database, browsers)
+            PocketPasskeyService.signInEntries(getApplication(), request, database, browsers, includeUnlinked = true)
         } ?: throw Locked()
         return Outcome.Entries(response)
     }
@@ -229,12 +234,14 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
 
         // From here on nothing is cancelled halfway: the passkey is made, saved, or taken back.
         return withContext(NonCancellable) {
+            val open = session.open.value ?: throw Locked()
             val created = engine { db ->
                 if (needsUpgrade) db.upgradeToKdbx4()
                 db.createPasskey(target, call.requestJson, client)
             }
+            val count = engine { it.changeCount() }
             session.changed()
-            saved(created.entryId, created.responseJson)
+            saved(open, count, created.entryId, created.responseJson)
         }
     }
 
@@ -242,12 +249,25 @@ class PasskeyViewModel(app: Application) : AndroidViewModel(app) {
      * Waits for the new passkey to be saved, and only then answers the site: a site must never
      * keep a passkey that isn't in the file. If saving fails, the user can try again, or give up,
      * which takes the passkey back out of the database.
+     *
+     * "Saved" counts only for the database the passkey went into ([open]), and only once the
+     * file holds the change that made it ([count], the engine's change count just after): a
+     * save that was already running, or one of a database unlocked again after a lock, isn't it.
      */
-    private suspend fun saved(entryId: String, responseJson: String): Outcome {
+    private suspend fun saved(open: Session.Open, count: ULong, entryId: String, responseJson: String): Outcome {
         while (true) {
             _step.value = Step.Saving
             val state = session.saveState.first { it != SaveState.Saving }
-            val problem = (state as? SaveState.Unsaved)?.problem ?: return Outcome.Created(responseJson)
+            if (session.open.value !== open) {
+                // Locked meanwhile: the passkey, never saved, went with the rest of the database.
+                return fail(ErrorKind.Unknown, string(R.string.passkey_not_saved, string(R.string.passkey_locked_before_saving)))
+            }
+            val problem = (state as? SaveState.Unsaved)?.problem
+            if (problem == null) {
+                if (open.cleanCount >= count) return Outcome.Created(responseJson)
+                session.save() // the save that finished didn't have it yet
+                continue
+            }
             if (ask<Boolean>(Step.SaveFailed(problem))) {
                 session.save()
                 continue

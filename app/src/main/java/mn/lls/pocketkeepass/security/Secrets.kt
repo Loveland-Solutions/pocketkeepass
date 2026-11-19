@@ -1,5 +1,6 @@
 package mn.lls.pocketkeepass.security
 
+import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
@@ -110,12 +111,16 @@ fun ByteArray.decodeUtf8(): CharArray {
  * Reads the whole stream into an array of exactly the right size. Unlike `readBytes()`, every
  * intermediate buffer is wiped, so a key file leaves no stray copies behind.
  */
-fun InputStream.readAllWiping(): ByteArray {
+fun InputStream.readAllWiping(limit: Int = Int.MAX_VALUE): ByteArray {
     var buffer = ByteArray(16 * 1024)
     var size = 0
     while (true) {
         if (size == buffer.size) {
-            val bigger = buffer.copyOf(buffer.size * 2)
+            if (size >= limit) {
+                buffer.wipe()
+                throw IOException("The file is too large.")
+            }
+            val bigger = buffer.copyOf(minOf(buffer.size.toLong() * 2, limit.toLong() + 1).toInt())
             buffer.wipe()
             buffer = bigger
         }

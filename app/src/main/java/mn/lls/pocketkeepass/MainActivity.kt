@@ -37,6 +37,7 @@ import mn.lls.pocketkeepass.edit.EditEvent
 import mn.lls.pocketkeepass.edit.EditViewModel
 import mn.lls.pocketkeepass.edit.Item
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
+import mn.lls.pocketkeepass.security.protectFromOverlays
 import mn.lls.pocketkeepass.ui.BrowseScreen
 import mn.lls.pocketkeepass.ui.DeleteDialog
 import mn.lls.pocketkeepass.ui.EntryEditScreen
@@ -70,6 +71,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // No screenshots, screen recording, or previews in the recent-apps list.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        window.protectFromOverlays()
         // Keep other autofill services away from the master password: they would offer to save it.
         window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
         enableEdgeToEdge()
@@ -103,6 +105,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         autoLock.onAppHidden()
+        if (!isChangingConfigurations) viewModel.onAppHidden()
         session.setVisible(false)
     }
 

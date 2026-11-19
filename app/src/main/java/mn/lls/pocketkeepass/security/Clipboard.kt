@@ -80,7 +80,7 @@ class Clipboard(private val app: Application) {
         prefs.edit { putLong(PENDING_STAMP, stamp).putBoolean(PENDING, true) }
         handler.removeCallbacks(timer)
         handler.postDelayed(timer, timeoutMs)
-        alarms.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + timeoutMs, alarm)
+        alarms.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + timeoutMs, alarm)
     }
 
     /** Clears the clipboard if a copy is pending and nothing else was copied since. */

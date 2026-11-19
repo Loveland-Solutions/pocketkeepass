@@ -30,5 +30,9 @@ class PocketKeePassApp : Application() {
         backups = Backups(File(noBackupFilesDir, "backups"))
         session = Session(autoLock, Documents(this), backups)
         clipboard = Clipboard(this)
+        // A fresh process with a clear still pending: the app was stopped before it happened, and
+        // a force stop (some phones do one when an app is swiped away) cancels its alarm too.
+        // Clearing a little early is better than not at all.
+        clipboard.clearIfOurs()
     }
 }

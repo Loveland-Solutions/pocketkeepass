@@ -145,6 +145,7 @@ private fun problemText(problem: SyncProblem) = when (problem) {
     SyncProblem.CANT_READ -> R.string.sync_cant_read
     SyncProblem.KEY_CHANGED -> R.string.sync_key_changed
     SyncProblem.OTHER_DATABASE -> R.string.sync_other_database
+    SyncProblem.SETTINGS_CHANGED -> R.string.sync_settings_changed
 }
 
 @Composable
