@@ -151,11 +151,7 @@ fun GroupPickerDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Icon(
-                            painterResource(R.drawable.ic_folder),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
+                        GroupIcon(group.icon, group.isRecycleBin)
                         Text(groupName(group, databaseName), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }

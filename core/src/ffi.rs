@@ -77,6 +77,28 @@ pub struct GroupItem {
     /// Direct entries, not counting those in subgroups.
     pub entry_count: u32,
     pub is_recycle_bin: bool,
+    pub icon: ItemIcon,
+}
+
+/// A group's or entry's icon. Lists carry no image data: fetch a custom icon's with
+/// `custom_icon`, once per id.
+#[derive(uniffi::Record)]
+pub struct ItemIcon {
+    /// One of KeePass's standard icons, 0 to 68 (`IconID`). The images aren't in the file; the
+    /// app draws its own.
+    pub standard: u32,
+    /// A custom icon's UUID as 32 hex digits, shown instead of the standard icon when its image
+    /// can be found and decoded.
+    pub custom_id: Option<String>,
+}
+
+impl From<crate::model::Icon> for ItemIcon {
+    fn from(icon: crate::model::Icon) -> Self {
+        ItemIcon {
+            standard: icon.standard,
+            custom_id: icon.custom.as_ref().map(uuid_to_hex),
+        }
+    }
 }
 
 /// An entry, for showing in a list. Protected fields are left empty: a list never carries a
@@ -88,6 +110,7 @@ pub struct EntryItem {
     pub title: String,
     pub username: String,
     pub url: String,
+    pub icon: ItemIcon,
 }
 
 /// One group's contents, as the app shows them.
@@ -322,6 +345,7 @@ pub struct GroupChoice {
     pub is_recycle_bin: bool,
     /// Whether it's inside the recycle bin (at any depth).
     pub is_in_recycle_bin: bool,
+    pub icon: ItemIcon,
 }
 
 #[uniffi::export]
@@ -416,6 +440,13 @@ impl UnlockedDatabase {
                 entries: listing.entries.iter().map(entry_item).collect(),
             })
         })
+    }
+
+    /// A custom icon's image data, usually PNG, for an `ItemIcon.custom_id`. `None` if the
+    /// database has no such icon or it's over the engine's size limit (256 KiB); then show the
+    /// standard icon. The data comes from the file and isn't checked: decode it defensively.
+    pub fn custom_icon(&self, id: String) -> Result<Option<Vec<u8>>> {
+        self.with(|db| Ok(uuid_from_hex(&id).and_then(|uuid| db.custom_icon(&uuid))))
     }
 
     /// Searches every entry's title, username, URL, notes, and tags. See the engine's
@@ -735,6 +766,7 @@ impl UnlockedDatabase {
                 depth,
                 is_recycle_bin: is_bin,
                 is_in_recycle_bin: in_bin,
+                icon: group.icon().into(),
             });
             let (mut children, bins): (Vec<_>, Vec<_>) =
                 group.groups().partition(|g| !db.is_recycle_bin(g));
@@ -992,6 +1024,7 @@ fn group_item(db: &Database, group: &Group<'_>) -> GroupItem {
         group_count: group.groups().count() as u32,
         entry_count: group.entries().count() as u32,
         is_recycle_bin: db.is_recycle_bin(group),
+        icon: group.icon().into(),
     }
 }
 
@@ -1041,6 +1074,7 @@ fn entry_item(entry: &Entry<'_>) -> EntryItem {
         title: entry.unprotected_field("Title").to_owned(),
         username: entry.unprotected_field("UserName").to_owned(),
         url: entry.unprotected_field("URL").to_owned(),
+        icon: entry.icon().into(),
     }
 }
 
@@ -1105,6 +1139,22 @@ mod tests {
 
     fn open(name: &str) -> Arc<UnlockedDatabase> {
         UnlockedDatabase::open(fixture(name), Some(b"test-password".to_vec()), None).unwrap()
+    }
+
+    #[test]
+    fn listings_carry_icons_and_custom_images_are_fetched_by_id() {
+        let db = open("icons.kdbx");
+        let listing = db.list_group(None).unwrap();
+        assert_eq!(listing.group.icon.standard, 48);
+        let custom = &listing.entries[1].icon;
+        assert_eq!(custom.custom_id.as_deref(), Some("51".repeat(16).as_str()));
+        let image = db.custom_icon("51".repeat(16)).unwrap().unwrap();
+        assert!(image.starts_with(b"\x89PNG"));
+        assert_eq!(listing.entries[0].icon.custom_id, None);
+        assert_eq!(db.custom_icon("52".repeat(16)).unwrap(), None); // missing from the file
+        assert_eq!(db.custom_icon("not hex".to_owned()).unwrap(), None);
+        let choices = db.all_groups().unwrap();
+        assert_eq!(choices.last().unwrap().icon.standard, 43); // the recycle bin
     }
 
     #[test]

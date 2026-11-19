@@ -130,11 +130,11 @@ class BridgeTest {
             assertTrue(root.isRoot)
             assertEquals(listOf("Work", "Banking", "Archive", "Recycle Bin"), root.groups.map { it.name })
             assertTrue(root.groups.last().isRecycleBin)
-            assertEquals(EntryItem("02".repeat(16), "Email", "me@example.com", "https://mail.example.com"), root.entries.single())
+            assertEquals(EntryItem("02".repeat(16), "Email", "me@example.com", "https://mail.example.com", ItemIcon(19u, null)), root.entries.single())
 
             val work = db.listGroup(root.groups.first().id)
             assertEquals(listOf("Root"), work.parents.map { it.name })
-            assertEquals(GroupItem("05".repeat(16), "Servers", 0u, 1u, isRecycleBin = false), work.groups.single())
+            assertEquals(GroupItem("05".repeat(16), "Servers", 0u, 1u, isRecycleBin = false, ItemIcon(48u, null)), work.groups.single())
 
             val hit = db.search("rack 4").single()
             assertEquals("Database Server", hit.entry.title)

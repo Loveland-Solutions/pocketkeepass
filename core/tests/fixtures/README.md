@@ -69,6 +69,22 @@ Hand-written XML gives every group and entry a fixed UUID (all 16 bytes the same
 | Banking (`07`) | "Crédit Union" (`08`): tags `money;bank`, and a **protected username** | Protected fields stay out of lists and search |
 | Archive (`09`), `EnableSearching` false | "Archived Email" (`0a`) | Unsearchable groups |
 
+## Icons
+
+`icons.kdbx` unlocks with password `test-password`. Like `browse.kdbx`, it's **written by KeePassXC** from the hand-written `icons.source.xml` with the same two commands. Groups are `01` (root), `46`, `47`, and `4f` (the recycle bin); entries are `41` to `44`. The two custom icons (`51`, a red 16×16 PNG, and `53`, a blue 32×32 PNG) were made with Python's `zlib`.
+
+| Item | Icon | What it tests |
+|---|---|---|
+| Root | standard 48 (folder) | |
+| "Bank" (`41`) | standard 37 | A plain standard icon |
+| "Custom" (`42`) | custom `51` | KeePassXC sets `IconID` to 0 when there's a custom icon |
+| "Missing Custom" (`43`) | custom `52`, which isn't in `Meta/CustomIcons` | KeePassXC keeps the dangling reference; we show the standard icon |
+| "Last Standard" (`44`) | standard 68 | The highest number |
+| Games (`46`) | custom `53` | Groups have custom icons too |
+| Mail (`47`), Recycle Bin (`4f`) | standard 19 and 43 | |
+
+Out-of-range numbers and oversized or broken image data are tested by editing the tree in memory (`model.rs`), since KeePassXC fixes or refuses them on import.
+
 ## Autofill
 
 `autofill.kdbx` unlocks with password `test-password`. Like `browse.kdbx`, it's KDBX 3.1, **written by KeePassXC** from the hand-written `autofill.source.xml`, with the same two commands (`-t 100` is the lowest key derivation time KeePassXC accepts). Its UUIDs are fixed the same way: `01` to `04` for groups, `11` to `1d` for entries.

@@ -33,7 +33,10 @@ pub use generator::{PasswordOptions, Symbols};
 pub use kdbx::FormatVersion;
 pub use key::CompositeKey;
 pub use merge::SyncChanges;
-pub use model::{Database, Entry, Field, Group, uuid_from_hex, uuid_to_hex};
+pub use model::{
+    DEFAULT_ENTRY_ICON, DEFAULT_GROUP_ICON, Database, Entry, Field, Group, Icon,
+    MAX_CUSTOM_ICON_BYTES, STANDARD_ICON_COUNT, uuid_from_hex, uuid_to_hex,
+};
 pub use passkey::{
     AppTrust, CreatedPasskey, CreationSummary, PasskeyHit, PasskeyStatus, PasskeyTarget,
     PasskeyView, has_passkey, is_passkey_field, passkey_of,
