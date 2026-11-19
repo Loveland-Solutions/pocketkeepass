@@ -63,6 +63,11 @@ sealed interface DatabaseState {
         val keyFile: Document?,
         /** Whether biometric quick unlock is turned on for this database and usable right now. */
         val quickUnlock: Boolean = false,
+        /**
+         * Quick unlock is on, but waits for the master password to be typed once: the phone
+         * restarted, or it's been [quickUnlockIntervalDays] days. Null otherwise.
+         */
+        val passwordDueDays: Int? = null,
         val unlocking: Boolean = false,
         val error: UnlockError? = null,
         /**
@@ -93,6 +98,8 @@ sealed interface DatabaseState {
         val entry: EntryDetails? = null,
         /** Quick unlock's switch in the settings dialog. */
         val quickUnlock: QuickUnlockSetting = QuickUnlockSetting.Unavailable,
+        /** How many days quick unlock works before the master password is needed again. */
+        val quickUnlockIntervalDays: Int = QuickUnlock.DEFAULT_INTERVAL,
         /**
          * Ask whether to turn quick unlock on: the database was just unlocked with the master
          * password, for the first time since it was picked, on a phone with biometrics set up.
@@ -392,6 +399,10 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     fun quickUnlock() {
         val locked = _state.value as? DatabaseState.Locked ?: return
         if (locked.unlocking || locked.restoring || !locked.quickUnlock) return
+        if (quickUnlock.isPasswordDue(locked.database.uri)) {
+            _state.value = locked(locked.database, locked.keyFile).copy(error = locked.error, backup = locked.backup)
+            return
+        }
         val cipher = quickUnlock.decryptingCipher(locked.database.uri)
         if (cipher == null) {
             _state.value = locked.copy(quickUnlock = false, error = UnlockError.QuickUnlockInvalidated)
@@ -416,6 +427,14 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
             return
         }
         prompt(BiometricPurpose.Enable(unlocked.database.uri), cipher, R.string.biometric_enable_title, R.string.cancel)
+    }
+
+    /** Sets how many days quick unlock works before the master password is needed again. */
+    fun setQuickUnlockInterval(days: Int) {
+        if (days !in QuickUnlock.INTERVALS) return
+        quickUnlock.intervalDays = days
+        autoLock.onUserInteraction() // taps in a dialog don't reach the activity
+        _state.update { (it as? DatabaseState.Unlocked)?.copy(quickUnlockIntervalDays = days) ?: it }
     }
 
     /** The answer to [DatabaseState.Unlocked.offerQuickUnlock]. Either way, it isn't asked again for this database. */
@@ -445,7 +464,10 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         }
         _state.update { current ->
             when (current) {
-                is DatabaseState.Locked -> current.copy(quickUnlock = quickUnlockReady(current.database))
+                is DatabaseState.Locked -> {
+                    val fresh = locked(current.database, current.keyFile)
+                    current.copy(quickUnlock = fresh.quickUnlock, passwordDueDays = fresh.passwordDueDays)
+                }
                 is DatabaseState.Unlocked -> current.copy(quickUnlock = quickUnlock.setting(current.database.uri))
                 DatabaseState.NoDatabase -> current
             }
@@ -573,10 +595,12 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 val damaged = e is KeePassException.NotKeePass || e is KeePassException.Corrupt ||
                     (e is CantReadException && !e.keyFile)
                 val backup = if (damaged) withContext(Dispatchers.IO) { backups.find(locked.database.uri.toString()) } else null
+                val fresh = locked(locked.database, locked.keyFile)
                 _state.value = locked.copy(
                     unlocking = false,
                     error = error,
-                    quickUnlock = quickUnlockReady(locked.database),
+                    quickUnlock = fresh.quickUnlock,
+                    passwordDueDays = fresh.passwordDueDays,
                     backup = backup,
                     restored = false,
                 )
@@ -588,6 +612,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
                 opened.close()
                 return@launch
             }
+            if (!viaQuickUnlock) quickUnlock.passwordTyped(locked.database.uri)
             val open = Session.Open(opened, locked.database, locked.keyFile, unlocked.summary, unlocked.root, unlocked.fingerprint)
             session.start(open)
             follow(open)
@@ -626,6 +651,7 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         open.summary,
         open.root,
         quickUnlock = quickUnlock.setting(open.document.uri),
+        quickUnlockIntervalDays = quickUnlock.intervalDays,
     )
 
     /** Shows a group's contents. `id` comes from a [GroupListing]; null means the root group. */
@@ -940,10 +966,17 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun locked(database: Document, keyFile: Document?) =
-        DatabaseState.Locked(database, keyFile, quickUnlock = quickUnlockReady(database))
-
-    private fun quickUnlockReady(database: Document) = quickUnlock.isAvailable && quickUnlock.isEnabledFor(database.uri)
+    /** The unlock screen for [database], with quick unlock offered if it's on, usable, and not waiting for the password. */
+    private fun locked(database: Document, keyFile: Document?): DatabaseState.Locked {
+        val on = quickUnlock.isAvailable && quickUnlock.isEnabledFor(database.uri)
+        val due = on && quickUnlock.isPasswordDue(database.uri)
+        return DatabaseState.Locked(
+            database,
+            keyFile,
+            quickUnlock = on && !due,
+            passwordDueDays = if (due) quickUnlock.intervalDays else null,
+        )
+    }
 
     private fun read(uri: Uri, isKeyFile: Boolean): ByteArray = try {
         documents.read(uri)

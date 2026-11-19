@@ -54,6 +54,10 @@
     <string name="use_master_password">Үндсэн нууц үг ашиглах</string>
     <string name="biometric_invalidated">Энэ төхөөрөмжийн хурууны хээ, царай эсвэл дэлгэцийн түгжээ өөрчлөгдсөн тул биометрээр түгжээ тайлахыг унтраалаа. Үндсэн нууц үгээрээ түгжээг тайлаад, тохиргооноос дахин асаана уу.</string>
     <string name="biometric_outdated">Энэ өгөгдлийн сангийн үндсэн нууц үг эсвэл түлхүүр файл өөрчлөгдсөн тул биометрээр түгжээ тайлахыг унтраалаа. Шинэ нууц үгээрээ түгжээг тайлаад, тохиргооноос дахин асаана уу.</string>
+    <plurals name="biometric_password_due">
+        <item quantity="one">Энэ удаа үндсэн нууц үгээ бичнэ үү. Мартахгүйн тулд PocketKeePass үүнийг утсыг дахин асаасны дараа болон өдөр бүр асуудаг. Биометрээр тайлах тохиргоо асаалттай хэвээр байна.</item>
+        <item quantity="other">Энэ удаа үндсэн нууц үгээ бичнэ үү. Мартахгүйн тулд PocketKeePass үүнийг утсыг дахин асаасны дараа болон %d өдөр тутам асуудаг. Биометрээр тайлах тохиргоо асаалттай хэвээр байна.</item>
+    </plurals>
     <string name="cant_read_key_file">PocketKeePass түлхүүр файлыг нээж чадахгүй байна. Файлыг зөөсөн, нэрийг нь өөрчилсөн эсвэл устгасан байж магадгүй. Хасаад дахин нэмнэ үү.</string>
 
     <!-- Browse and search -->
@@ -223,6 +227,8 @@
     <string name="biometric_unlock_switch">Энэ өгөгдлийн санг хурууны хээ эсвэл царайгаар нээх</string>
     <string name="biometric_unlock_explained">Ингэвэл энэ утсанд хурууны хээ эсвэл царай нь бүртгэлтэй хэн ч үүнийг нээж чадна. Хурууны хээ эсвэл царай нэмэх, хасахад энэ тохиргоо унтарч, дахин асаахад үргэлж үндсэн нууц үг шаардлагатай.</string>
     <string name="biometric_unlock_unavailable">Үүнийг ашиглахын тулд утасныхаа тохиргоонд хурууны хээ (эсвэл Android хүчтэй гэж үнэлдэг царайгаар түгжээ тайлах) тохируулна уу.</string>
+    <string name="biometric_interval">Үндсэн нууц үгийг дахин асуух давтамж:</string>
+    <string name="biometric_interval_explained">Мөн утсыг дахин асаах бүрд асууна. Ингэснээр та нууц үгээ мартахгүй, гээгдсэн утсыг зөвхөн хурууны хээгээр нээх боломжгүй болно.</string>
     <string name="biometric_enable_title">Биометрээр түгжээ тайлахыг асаах</string>
     <string name="biometric_offer_title">Хурууны хээгээр нээх үү?</string>
     <!-- %1$s is the database's file name -->
@@ -256,6 +262,10 @@
     <plurals name="hours">
         <item quantity="one">%d цаг</item>
         <item quantity="other">%d цаг</item>
+    </plurals>
+    <plurals name="days">
+        <item quantity="one">%d өдөр</item>
+        <item quantity="other">%d өдөр</item>
     </plurals>
 
     <!-- Password generator -->

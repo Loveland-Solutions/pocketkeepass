@@ -121,6 +121,7 @@ fun BrowseScreen(
     clipboardTimeoutSeconds: Int,
     onChangeClipboardTimeout: (Int) -> Unit,
     onChangeQuickUnlock: (Boolean) -> Unit,
+    onChangeQuickUnlockInterval: (Int) -> Unit,
     onOpenSettings: () -> Unit,
     saveState: SaveState,
     /** A save just finished: say so for a moment. */
@@ -147,6 +148,8 @@ fun BrowseScreen(
             onChangeClipboardTimeout,
             quickUnlock = state.quickUnlock,
             onChangeQuickUnlock = onChangeQuickUnlock,
+            quickUnlockIntervalDays = state.quickUnlockIntervalDays,
+            onChangeQuickUnlockInterval = onChangeQuickUnlockInterval,
             onDismiss = { showSettings = false },
         )
     }
@@ -508,6 +511,7 @@ private fun BrowseScreenPreview() {
             clipboardTimeoutSeconds = 30,
             onChangeClipboardTimeout = {},
             onChangeQuickUnlock = {},
+            onChangeQuickUnlockInterval = {},
             onOpenSettings = {},
             saveState = SaveState.Saved,
             justSaved = false,
