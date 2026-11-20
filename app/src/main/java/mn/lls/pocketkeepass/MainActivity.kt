@@ -197,6 +197,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                     onClose = editor::closeEntryForm,
                     onBeginEditing = editor::beginEditing,
                     onGenerate = editor::openGenerator,
+                    onCopy = editor::copyValue,
                 )
                 entry != null -> EntryScreen(
                     entry = entry,
@@ -256,6 +257,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                     onChangeOptions = editor::setGeneratorOptions,
                     onGenerateAgain = editor::generateAgain,
                     onUse = editor::useGenerated,
+                    onCopy = editor::copyGenerated,
                     onDismiss = editor::closeGenerator,
                 )
             }

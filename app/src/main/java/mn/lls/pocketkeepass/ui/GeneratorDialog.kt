@@ -55,6 +55,7 @@ fun GeneratorDialog(
     onChangeOptions: (PasswordOptions) -> Unit,
     onGenerateAgain: () -> Unit,
     onUse: () -> Unit,
+    onCopy: (label: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val options = state.options
@@ -67,7 +68,9 @@ fun GeneratorDialog(
                 Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                GeneratedPassword(state, onGenerateAgain)
+                val label = state.field.standardKey?.let { fieldLabel(it) }
+                    ?: state.field.name.text.toString().ifEmpty { stringResource(R.string.field_value) }
+                GeneratedPassword(state, onGenerateAgain, onCopy = { onCopy(label) }, copyDescription = stringResource(R.string.copy_field, label))
 
                 Column {
                     Text(stringResource(R.string.password_length, options.length.toInt()))
@@ -146,9 +149,9 @@ fun GeneratorDialog(
     )
 }
 
-/** The password in monospace (so l, I, 1, O, and 0 can be told apart), its strength, and "again". */
+/** The password in monospace (so l, I, 1, O, and 0 can be told apart), its strength, "copy", and "again". */
 @Composable
-private fun GeneratedPassword(state: GeneratorState, onGenerateAgain: () -> Unit) {
+private fun GeneratedPassword(state: GeneratorState, onGenerateAgain: () -> Unit, onCopy: () -> Unit, copyDescription: String) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest, shape = MaterialTheme.shapes.medium) {
         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(
@@ -171,6 +174,9 @@ private fun GeneratedPassword(state: GeneratorState, onGenerateAgain: () -> Unit
                 } else {
                     Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
                 }
+            }
+            IconButton(onClick = onCopy, enabled = state.password != null) {
+                Icon(painterResource(R.drawable.ic_content_copy), copyDescription)
             }
             IconButton(onClick = onGenerateAgain, enabled = state.password != null) {
                 Icon(painterResource(R.drawable.ic_refresh), stringResource(R.string.generate_again))
