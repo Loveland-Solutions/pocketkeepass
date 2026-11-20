@@ -2,6 +2,8 @@ package mn.lls.pocketkeepass.edit
 
 import android.app.Application
 import android.net.Uri
+import android.os.Build
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.nio.CharBuffer
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mn.lls.pocketkeepass.PocketKeePassApp
+import mn.lls.pocketkeepass.R
 import mn.lls.pocketkeepass.SaveProblem
 import mn.lls.pocketkeepass.core.Deletion
 import mn.lls.pocketkeepass.core.EntryDetails
@@ -117,6 +120,7 @@ sealed interface EditEvent {
  */
 class EditViewModel(app: Application) : AndroidViewModel(app) {
     private val session = (app as PocketKeePassApp).session
+    private val clipboard = (app as PocketKeePassApp).clipboard
 
     private val _state = MutableStateFlow(EditState())
     val state: StateFlow<EditState> = _state.asStateFlow()
@@ -267,6 +271,44 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
         val chars = generated ?: return
         generator.field.beginEditing(CharBuffer.wrap(chars))
         closeGenerator()
+    }
+
+    /**
+     * Copies the generator's password, so it can be pasted into a site's "new password" form
+     * before the entry is saved. Marked sensitive and cleared after the usual timeout, like any
+     * copy from the entry screen.
+     */
+    fun copyGenerated(label: String) {
+        val chars = generated ?: return
+        copySecret(label, CharBuffer.wrap(chars))
+    }
+
+    /**
+     * Copies a protected value being edited. Android's secure text field won't copy its own
+     * text, so without this a new password couldn't be pasted anywhere until the entry was saved
+     * and opened again.
+     */
+    fun copyValue(field: FormField, label: String) {
+        val value = field.value ?: return // not fetched: nothing to copy
+        copySecret(label, value.text)
+    }
+
+    /** Copies straight from the buffer we hold; Android makes its own copy, which we can't wipe. */
+    private fun copySecret(label: String, text: CharSequence) {
+        if (text.isEmpty()) return
+        clipboard.copy(label, text, sensitive = true)
+        // Android 13+ confirms a copy itself. Older versions don't. A toast, because the
+        // generator is a dialog, which would cover a snackbar.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            val resources = getApplication<Application>().resources
+            val seconds = clipboard.timeoutSeconds.value
+            val clearsIn = if (seconds % 60 == 0) {
+                resources.getQuantityString(R.plurals.minutes, seconds / 60, seconds / 60)
+            } else {
+                resources.getQuantityString(R.plurals.seconds, seconds, seconds)
+            }
+            Toast.makeText(getApplication(), resources.getString(R.string.copied, label, clearsIn), Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun closeGenerator() {

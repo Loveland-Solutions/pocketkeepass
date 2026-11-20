@@ -66,6 +66,7 @@ fun EntryEditScreen(
     onClose: () -> Unit,
     onBeginEditing: (FormField) -> Unit,
     onGenerate: (FormField) -> Unit,
+    onCopy: (FormField, label: String) -> Unit,
 ) {
     var confirmDiscard by remember { mutableStateOf(false) }
     val close = { if (form.isModified()) confirmDiscard = true else onClose() }
@@ -119,6 +120,7 @@ fun EntryEditScreen(
                         field,
                         onBeginEditing = { onBeginEditing(field) },
                         onGenerate = { onGenerate(field) },
+                        onCopy = { label -> onCopy(field, label) },
                         onRemove = { form.removeField(field) },
                     )
                 }
@@ -144,7 +146,13 @@ fun EntryEditScreen(
  * The password, and any other protected field, can be filled in by the generator.
  */
 @Composable
-private fun FieldEditor(field: FormField, onBeginEditing: () -> Unit, onGenerate: () -> Unit, onRemove: () -> Unit) {
+private fun FieldEditor(
+    field: FormField,
+    onBeginEditing: () -> Unit,
+    onGenerate: () -> Unit,
+    onCopy: (label: String) -> Unit,
+    onRemove: () -> Unit,
+) {
     val isCustom = field.standardKey == null
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (isCustom) {
@@ -160,7 +168,7 @@ private fun FieldEditor(field: FormField, onBeginEditing: () -> Unit, onGenerate
         val value = field.value
         when {
             value == null -> UnfetchedField(label, onBeginEditing)
-            field.protected -> SecretField(value, label)
+            field.protected -> SecretField(value, label, onCopy = { onCopy(label) })
             else -> OutlinedTextField(
                 state = value,
                 modifier = Modifier.fillMaxWidth(),
@@ -215,9 +223,12 @@ private fun UnfetchedField(label: String, onBeginEditing: () -> Unit) {
     )
 }
 
-/** A protected value being edited: masked unless the user chooses to see it. */
+/**
+ * A protected value being edited: masked unless the user chooses to see it. It has its own copy
+ * button, because a secure text field doesn't let its text be selected and copied.
+ */
 @Composable
-private fun SecretField(state: TextFieldState, label: String) {
+private fun SecretField(state: TextFieldState, label: String, onCopy: () -> Unit) {
     var shown by rememberSaveable { mutableStateOf(false) }
     OutlinedSecureTextField(
         state = state,
@@ -228,11 +239,16 @@ private fun SecretField(state: TextFieldState, label: String) {
         // Shown passwords in monospace, so that l, I, 1, O, and 0 can be told apart.
         textStyle = if (shown) LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace) else LocalTextStyle.current,
         trailingIcon = {
-            IconButton(onClick = { shown = !shown }) {
-                Icon(
-                    painterResource(if (shown) R.drawable.ic_visibility_off else R.drawable.ic_visibility),
-                    stringResource(if (shown) R.string.hide_field else R.string.show_field, label),
-                )
+            Row {
+                IconButton(onClick = onCopy, enabled = state.text.isNotEmpty()) {
+                    Icon(painterResource(R.drawable.ic_content_copy), stringResource(R.string.copy_field, label))
+                }
+                IconButton(onClick = { shown = !shown }) {
+                    Icon(
+                        painterResource(if (shown) R.drawable.ic_visibility_off else R.drawable.ic_visibility),
+                        stringResource(if (shown) R.string.hide_field else R.string.show_field, label),
+                    )
+                }
             }
         },
     )
