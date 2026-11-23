@@ -1,0 +1,718 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@, %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%lld entries": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld entry"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld entries"
+                }
+              }
+            }
+          }
+        },
+        "mn": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld бичлэг"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld groups": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld group"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld groups"
+                }
+              }
+            }
+          }
+        },
+        "mn": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld бүлэг"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "(no name)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(нэргүй)"
+          }
+        }
+      }
+    },
+    "(no title)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(гарчиггүй)"
+          }
+        }
+      }
+    },
+    "A passkey for this account is already in the database.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бүртгэлийн нэвтрэх түлхүүр өгөгдлийн санд аль хэдийн байна."
+          }
+        }
+      }
+    },
+    "About": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тухай"
+          }
+        }
+      }
+    },
+    "Add key file": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түлхүүр файл нэмэх"
+          }
+        }
+      }
+    },
+    "An independent app for KeePass databases. Written with Claude.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KeePass өгөгдлийн санд зориулсан бие даасан апп. Claude ашиглан бичсэн."
+          }
+        }
+      }
+    },
+    "Auto-lock": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автомат түгжээ"
+          }
+        }
+      }
+    },
+    "Change": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Солих"
+          }
+        }
+      }
+    },
+    "Changes in %lld seconds": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Changes in %lld second"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Changes in %lld seconds"
+                }
+              }
+            }
+          }
+        },
+        "mn": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld секундын дараа солигдоно"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Choose a .kdbx file from this iPhone or from any cloud storage app.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ iPhone дээрээс эсвэл дурын үүлэн хадгалах сангийн аппаас .kdbx файл сонгоно уу."
+          }
+        }
+      }
+    },
+    "Clear copied fields after": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуулсан талбарыг арилгах хугацаа"
+          }
+        }
+      }
+    },
+    "Clipboard": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түр санах ой"
+          }
+        }
+      }
+    },
+    "Copied %@. It clears in %@.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуулсан: %1$@. %2$@ өнгөрөхөд арилна."
+          }
+        }
+      }
+    },
+    "Copied fields stay on this iPhone: they aren’t sent to your other devices through Universal Clipboard.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуулсан талбарууд энэ iPhone дээр үлдэнэ. Universal Clipboard ашиглан таны бусад төхөөрөмж рүү илгээгдэхгүй."
+          }
+        }
+      }
+    },
+    "Copy %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ хуулах"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Болсон"
+          }
+        }
+      }
+    },
+    "Engine": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хөдөлгүүр"
+          }
+        }
+      }
+    },
+    "For %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сайт: %@"
+          }
+        }
+      }
+    },
+    "Free and open-source software, licensed under the GPLv3.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GPLv3 лицензтэй, үнэгүй, нээлттэй эхийн програм хангамж."
+          }
+        }
+      }
+    },
+    "Hidden": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нуусан"
+          }
+        }
+      }
+    },
+    "Hidden while the screen is being recorded or shared.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дэлгэцийг бичиж эсвэл хуваалцаж байх үед нуугдана."
+          }
+        }
+      }
+    },
+    "Hide %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ нуух"
+          }
+        }
+      }
+    },
+    "Hide password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үгийг нуух"
+          }
+        }
+      }
+    },
+    "Key file: %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түлхүүр файл: %@"
+          }
+        }
+      }
+    },
+    "Lock": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжих"
+          }
+        }
+      }
+    },
+    "Lock after": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжих хугацаа"
+          }
+        }
+      }
+    },
+    "Lock after this long without use, even in the background.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ашиглахгүй байх үед (ар талд байсан ч) энэ хугацааны дараа түгжинэ."
+          }
+        }
+      }
+    },
+    "Lock when the iPhone locks": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone түгжигдэхэд түгжих"
+          }
+        }
+      }
+    },
+    "Master password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үндсэн нууц үг"
+          }
+        }
+      }
+    },
+    "Notes": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тэмдэглэл"
+          }
+        }
+      }
+    },
+    "One-time code": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэг удаагийн код"
+          }
+        }
+      }
+    },
+    "Open database": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өгөгдлийн сан нээх"
+          }
+        }
+      }
+    },
+    "Passkey": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэвтрэх түлхүүр"
+          }
+        }
+      }
+    },
+    "Password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үг"
+          }
+        }
+      }
+    },
+    "PocketKeePass can’t open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass өгөгдлийн сангийн файлыг нээж чадахгүй байна. Файлыг зөөсөн, нэрийг нь өөрчилсөн эсвэл устгасан байж магадгүй. Дахин сонгоно уу."
+          }
+        }
+      }
+    },
+    "PocketKeePass can’t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass түлхүүр файлыг нээж чадахгүй байна. Файлыг зөөсөн, нэрийг нь өөрчилсөн эсвэл устгасан байж магадгүй. Хасаад дахин нэмнэ үү."
+          }
+        }
+      }
+    },
+    "PocketKeePass is written with Claude, an AI model made by Anthropic.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass нь Anthropic компанийн бүтээсэн хиймэл оюуны загвар болох Claude ашиглан бичигдсэн."
+          }
+        }
+      }
+    },
+    "PocketKeePass opens and saves KeePass databases (.kdbx). KeePass and its file format were created by Dominik Reichl (keepass.info). PocketKeePass is an independent app. It isn’t made or endorsed by the KeePass project and uses none of its code.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass нь KeePass өгөгдлийн санг (.kdbx) нээж, хадгалдаг. KeePass болон түүний файлын форматыг Dominik Reichl (keepass.info) бүтээсэн. PocketKeePass бол бие даасан апп. Үүнийг KeePass төсөл хийгээгүй, дэмжээгүй бөгөөд тэдний кодыг огт ашигладаггүй."
+          }
+        }
+      }
+    },
+    "Privacy policy": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууцлалын бодлого"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хасах"
+          }
+        }
+      }
+    },
+    "Search entries": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бичлэг хайх"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тохиргоо"
+          }
+        }
+      }
+    },
+    "Show %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ харуулах"
+          }
+        }
+      }
+    },
+    "Show password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үгийг харуулах"
+          }
+        }
+      }
+    },
+    "Tags": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шошго"
+          }
+        }
+      }
+    },
+    "That group or entry isn’t in the database anymore.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тэр бүлэг эсвэл бичлэг өгөгдлийн санд байхгүй болсон байна."
+          }
+        }
+      }
+    },
+    "That key file couldn’t be read.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тэр түлхүүр файлыг уншиж чадсангүй."
+          }
+        }
+      }
+    },
+    "The database is locked.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өгөгдлийн сан түгжээтэй байна."
+          }
+        }
+      }
+    },
+    "The new copy of the database failed its safety check, so it wasn’t saved.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өгөгдлийн сангийн шинэ хуулбар аюулгүй байдлын шалгалтад тэнцээгүй тул хадгалсангүй."
+          }
+        }
+      }
+    },
+    "The password or key file is incorrect.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үг эсвэл түлхүүр файл буруу байна."
+          }
+        }
+      }
+    },
+    "This database uses the older KDBX 3 format. It has to be upgraded to KDBX 4 before it can be saved.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ өгөгдлийн сан хуучин KDBX 3 форматтай. Хадгалахаас өмнө KDBX 4 болгон шинэчлэх шаардлагатай."
+          }
+        }
+      }
+    },
+    "This device couldn’t provide secure random numbers, so the database wasn’t saved.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ төхөөрөмж найдвартай санамсаргүй тоо гаргаж чадаагүй тул өгөгдлийн санг хадгалсангүй."
+          }
+        }
+      }
+    },
+    "This entry is in the recycle bin.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бичлэг хогийн саванд байна."
+          }
+        }
+      }
+    },
+    "This group is empty.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бүлэг хоосон байна."
+          }
+        }
+      }
+    },
+    "This isn’t a KeePass database.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ нь KeePass өгөгдлийн сан биш байна."
+          }
+        }
+      }
+    },
+    "URL": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "URL"
+          }
+        }
+      }
+    },
+    "Unlock": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжээ тайлах"
+          }
+        }
+      }
+    },
+    "Unlocking… This can take a few seconds.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжээг тайлж байна… Хэдэн секунд болж магадгүй."
+          }
+        }
+      }
+    },
+    "Username": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хэрэглэгчийн нэр"
+          }
+        }
+      }
+    },
+    "Version": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хувилбар"
+          }
+        }
+      }
+    },
+    "Your KeePass passwords, free and offline.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таны KeePass нууц үгнүүд — үнэгүй, интернэтгүй."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

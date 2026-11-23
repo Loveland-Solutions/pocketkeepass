@@ -17,3 +17,12 @@ build/
 !core/tests/fixtures/**
 *service-account*.json
 .env
+# Apple: build output of apple/build-engine.sh, and Xcode's per-user files.
+/apple/PocketKeePassCore/PocketKeePassCoreFFI.xcframework/
+/apple/PocketKeePassCore/Sources/PocketKeePassCore/PocketKeePassCore.swift
+/apple/PocketKeePassCore/.build/
+/apple/PocketKeePassCore/.swiftpm/
+xcuserdata/
+DerivedData/
+/apple/PocketKeePassCore/.build-engine.log
+/apple/build/
