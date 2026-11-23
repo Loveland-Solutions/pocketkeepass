@@ -362,7 +362,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass;
 				PRODUCT_NAME = PocketKeePass;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -394,7 +394,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass;
 				PRODUCT_NAME = PocketKeePass;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -424,7 +424,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac.autofill;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.autofill;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -455,7 +455,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac.autofill;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.autofill;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

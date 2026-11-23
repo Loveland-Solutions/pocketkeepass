@@ -13,8 +13,9 @@
 #   3. uploads it, signed the same way.
 #
 # Giving a build to testers, and submitting it for review, stay the owner's clicks in App Store
-# Connect. Run from a clean commit. Needs, once: the Mac app made in App Store Connect with the
-# bundle ID mn.lls.pocketkeepass.mac, and the team's App Store Connect API key (see
+# Connect. Run from a clean commit. Needs, once: a macOS version in the PocketKeePass app record
+# (the iPhone's: one listing for both, Apple's "universal purchase", with the same bundle IDs
+# mn.lls.pocketkeepass and mn.lls.pocketkeepass.autofill), and the team's App Store Connect API key (see
 # tools/release_ios.sh). Unlike the iPhone's, the archive is signed properly: a Mac needs no
 # registered device for that.
 set -eu
