@@ -50,6 +50,16 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AA0000000000000000000703"
+               BuildableName = "PocketKeePassUnitTests.xctest"
+               BlueprintName = "PocketKeePassUnitTests"
+               ReferencedContainer = "container:PocketKeePass.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "AA0000000000000000000702"
                BuildableName = "PocketKeePassUITests.xctest"
                BlueprintName = "PocketKeePassUITests"

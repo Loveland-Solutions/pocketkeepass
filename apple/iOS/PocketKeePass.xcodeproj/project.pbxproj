@@ -18,11 +18,19 @@
 			remoteGlobalIDString = AA0000000000000000000701;
 			remoteInfo = PocketKeePass;
 		};
+		AA0000000000000000000B02 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA0000000000000000000801 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA0000000000000000000701;
+			remoteInfo = PocketKeePass;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		AA0000000000000000000201 /* PocketKeePass.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PocketKeePass.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000202 /* PocketKeePassUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PocketKeePassUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000203 /* PocketKeePassUnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PocketKeePassUnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -34,6 +42,11 @@
 		AA0000000000000000000402 /* PocketKeePassUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PocketKeePassUITests;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000403 /* PocketKeePassUnitTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PocketKeePassUnitTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -54,6 +67,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0000000000000000000521 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -62,6 +82,7 @@
 			children = (
 				AA0000000000000000000401 /* PocketKeePass */,
 				AA0000000000000000000402 /* PocketKeePassUITests */,
+				AA0000000000000000000403 /* PocketKeePassUnitTests */,
 				AA0000000000000000000602 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -71,6 +92,7 @@
 			children = (
 				AA0000000000000000000201 /* PocketKeePass.app */,
 				AA0000000000000000000202 /* PocketKeePassUITests.xctest */,
+				AA0000000000000000000203 /* PocketKeePassUnitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -121,6 +143,26 @@
 			productReference = AA0000000000000000000202 /* PocketKeePassUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		AA0000000000000000000703 /* PocketKeePassUnitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000904 /* Build configuration list for PBXNativeTarget "PocketKeePassUnitTests" */;
+			buildPhases = (
+				AA0000000000000000000522 /* Sources */,
+				AA0000000000000000000521 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA0000000000000000000C02 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AA0000000000000000000403 /* PocketKeePassUnitTests */,
+			);
+			name = PocketKeePassUnitTests;
+			productName = PocketKeePassUnitTests;
+			productReference = AA0000000000000000000203 /* PocketKeePassUnitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -132,6 +174,9 @@
 				LastUpgradeCheck = 2720;
 				TargetAttributes = {
 					AA0000000000000000000702 = {
+						TestTargetID = AA0000000000000000000701;
+					};
+					AA0000000000000000000703 = {
 						TestTargetID = AA0000000000000000000701;
 					};
 				};
@@ -156,6 +201,7 @@
 			targets = (
 				AA0000000000000000000701 /* PocketKeePass */,
 				AA0000000000000000000702 /* PocketKeePassUITests */,
+				AA0000000000000000000703 /* PocketKeePassUnitTests */,
 			);
 		};
 /* End PBXProject section */
@@ -185,6 +231,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0000000000000000000522 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -192,6 +245,11 @@
 			isa = PBXTargetDependency;
 			target = AA0000000000000000000701 /* PocketKeePass */;
 			targetProxy = AA0000000000000000000B01 /* PBXContainerItemProxy */;
+		};
+		AA0000000000000000000C02 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA0000000000000000000701 /* PocketKeePass */;
+			targetProxy = AA0000000000000000000B02 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -258,6 +316,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = PocketKeePass;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "PocketKeePass uses Face ID to open your database without the master password, once you turn that on.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -289,6 +348,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = PocketKeePass;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "PocketKeePass uses Face ID to open your database without the master password, once you turn that on.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -338,9 +398,54 @@
 			};
 			name = Release;
 		};
+		AA0000000000000000000A07 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.unittests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PocketKeePass.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PocketKeePass";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000A08 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.unittests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PocketKeePass.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PocketKeePass";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AA0000000000000000000904 /* Build configuration list for PBXNativeTarget "PocketKeePassUnitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000A07 /* Debug */,
+				AA0000000000000000000A08 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AA0000000000000000000901 /* Build configuration list for PBXNativeTarget "PocketKeePass" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

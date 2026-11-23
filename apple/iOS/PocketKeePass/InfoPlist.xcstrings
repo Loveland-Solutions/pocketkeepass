@@ -1,0 +1,24 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSFaceIDUsageDescription": {
+      "comment": "Shown by iOS when the app first uses Face ID.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass uses Face ID to open your database without the master password, once you turn that on."
+          }
+        },
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Та асаасан тохиолдолд PocketKeePass нь Face ID ашиглан өгөгдлийн санг үндсэн нууц үггүйгээр нээнэ."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
