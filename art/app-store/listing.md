@@ -101,6 +101,6 @@ with its `ITSEncryptionExportComplianceCode`; YES without a code fails the uploa
 
 ## Screenshots
 
-`art/app-store/screenshots/iphone-1-unlock.png` … `iphone-6-settings.png`, 6.9-inch iPhone (1320 × 2868),
-in that order: unlock, browse, an entry, the password generator, search, settings. How they're taken is in
+`art/app-store/screenshots/6.3-inch-1-unlock.png` … `6.3-inch-6-settings.png` (1206 × 2622, for "iPhone with
+Dynamic Island, medium display"), and the same as `6.9-inch-*` (1320 × 2868), in that order: unlock, browse, an entry, the password generator, search, settings. How they're taken is in
 that folder's README. No iPad screenshots: see the open item on iPad in CLAUDE.md.

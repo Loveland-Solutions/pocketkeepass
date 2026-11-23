@@ -1,14 +1,15 @@
 # App Store screenshots
 
-iPhone screenshots for the App Store's 6.9-inch size, 1320 × 2868, taken in an iPhone 17 Pro Max simulator
-(iOS 27.2) with `art/demo/Demo.kdbx`, renamed `Personal.kdbx` in the simulator's "On My iPhone" folder, as
+iPhone screenshots in two sizes: `6.3-inch-*` (1206 × 2622, an iPhone 17 Pro simulator), which App Store
+Connect asks for first ("iPhone with Dynamic Island, medium display"; it refused the 6.9-inch ones there),
+and `6.9-inch-*` (1320 × 2868, an iPhone 17 Pro Max simulator), both iOS 27.2, with `art/demo/Demo.kdbx`, renamed `Personal.kdbx` in the simulator's "On My iPhone" folder, as
 for Google Play.
 
 They're taken by a UI test, `StoreScreenshots` (`apple/iOS/PocketKeePassUITests`), which runs only when
 asked. To take them again:
 
 ```sh
-id=$(xcrun simctl create "PKP Shots iPhone" com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max com.apple.CoreSimulator.SimRuntime.iOS-27-2)
+id=$(xcrun simctl create "PKP Shots iPhone" com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro com.apple.CoreSimulator.SimRuntime.iOS-27-2)   # or iPhone-17-Pro-Max
 xcrun simctl boot $id
 xcrun simctl launch $id com.apple.DocumentsApp      # makes "On My iPhone"; then copy Demo.kdbx in as
                                                     # Personal.kdbx (where: apple/README.md, UI tests)
