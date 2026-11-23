@@ -10,6 +10,8 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            QuickUnlockSection()
+
             Section {
                 Picker("Lock after", selection: $autoLockSeconds) {
                     ForEach(Preferences.autoLockChoices, id: \.self) { seconds in

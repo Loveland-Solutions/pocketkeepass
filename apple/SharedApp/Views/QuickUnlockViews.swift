@@ -29,17 +29,33 @@ struct QuickUnlockSection: View {
                     }
                 }
             case .notEnrolled:
+                #if os(macOS)
+                Text("Set up \(name) in the Mac’s System Settings to use this.")
+                #else
                 Text("Set up \(name) in the iPhone’s Settings to use this.")
+                #endif
             case .unavailable:
+                #if os(macOS)
+                Text("\(name) can’t be used by PocketKeePass right now. Check in the Mac’s System Settings that \(name) is set up.")
+                #else
                 Text("\(name) can’t be used by PocketKeePass right now. Check in the iPhone’s Settings that a passcode and \(name) are set up, and that PocketKeePass is allowed to use \(name).")
+                #endif
             }
         } header: {
             Text(verbatim: name)
         } footer: {
             VStack(alignment: .leading, spacing: 8) {
+                #if os(macOS)
+                Text("Anyone whose fingerprint is set up on this Mac can then open it. Changing those turns this off, and your master password is always needed to turn it back on.")
+                #else
                 Text("Anyone whose face or fingerprint is set up on this iPhone can then open it. Changing those turns this off, and your master password is always needed to turn it back on.")
+                #endif
                 if isOn {
+                    #if os(macOS)
+                    Text("It’s also needed after every restart of the Mac. Typing it now and then keeps you from forgetting it, and means a lost Mac takes more than a fingerprint to open.")
+                    #else
                     Text("It’s also needed after every restart of the iPhone. Typing it now and then keeps you from forgetting it, and means a lost iPhone takes more than a face or fingerprint to open.")
+                    #endif
                 }
                 if let error {
                     Text(error).foregroundStyle(.red)

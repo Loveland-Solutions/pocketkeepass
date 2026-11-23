@@ -70,6 +70,7 @@ struct RootView: View {
                 UnlockView()
             }
         }
+        .modifier(QuickUnlockOffer())
         .background { WindowGuard() }
         .onChange(of: session.isUnlocked) { _, unlocked in
             if unlocked { autoLock.restart() }
