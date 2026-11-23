@@ -5,8 +5,8 @@
 #   tools/release_ios.sh            builds, checks, and uploads
 #   tools/release_ios.sh --check    builds and checks, uploads nothing
 #
-#   1. builds the Rust engine and archives the app with its AutoFill extension, signed ad hoc
-#      (the build number is the commit count, as on Android; the version is MARKETING_VERSION);
+#   1. builds the Rust engine and archives the app with its AutoFill extension, then signs it
+#      ad hoc with its entitlements (the build number is the commit count, as on Android; the version is MARKETING_VERSION);
 #   2. has Apple sign a copy for the App Store and checks it: version and build number, the
 #      privacy manifest, the App Group and AutoFill entitlements, and no paths from this Mac in
 #      the binaries;
@@ -15,10 +15,10 @@
 # Giving a build to testers, and submitting it for review, stay the owner's clicks in App Store
 # Connect. Run from a clean commit. Needs, once: the app made in App Store Connect with the
 # bundle ID mn.lls.pocketkeepass, and the Loveland Solutions team's App Store Connect API key
-# (below). The archive is signed ad hoc, not with a certificate, because a properly signed one
-# needs a registered iPhone; Apple keeps the certificate that signs the export. Ad hoc rather
-# than unsigned (as BetterBudget does) because the export takes the entitlements from the
-# archive's signature: unsigned, the App Group and AutoFill entitlements were lost. The first export registers the bundle IDs, the App
+# (below). The archive is built unsigned, because a properly signed one needs a registered
+# iPhone (Apple keeps the certificate that signs the export), then signed ad hoc with each
+# bundle's entitlements file: the export takes the entitlements from the archive's signature,
+# and without one the App Group and AutoFill entitlements were lost. The first export registers the bundle IDs, the App
 # Group, and the AutoFill capability with Apple.
 #
 # The same approach as BetterBudget's tool/release_ios.sh.
@@ -93,8 +93,13 @@ EOF
 apple/build-engine.sh >"$work/engine.log" 2>&1 || { tail -20 "$work/engine.log" >&2; exit 1; }
 xcodebuild -quiet -project "$project" -scheme PocketKeePass -configuration Release \
   -destination generic/platform=iOS -archivePath "$work/PocketKeePass.xcarchive" \
-  archive CURRENT_PROJECT_VERSION="$build" \
-  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- PROVISIONING_PROFILE_SPECIFIER= DEVELOPMENT_TEAM="$team"
+  archive CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION="$build"
+# The export takes each bundle's entitlements from its signature, so sign them ad hoc with
+# theirs (the extension first: it's inside the app).
+archived=$work/PocketKeePass.xcarchive/Products/Applications/PocketKeePass.app
+codesign --force --sign - --entitlements apple/iOS/Config/PocketKeePassAutoFill.entitlements \
+  "$archived/PlugIns/PocketKeePassAutoFill.appex"
+codesign --force --sign - --entitlements apple/iOS/Config/PocketKeePass.entitlements "$archived"
 
 # 2. Sign a copy and check it.
 options export
