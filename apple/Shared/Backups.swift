@@ -14,7 +14,7 @@ nonisolated struct Backup: Equatable, Sendable {
 ///
 /// The file picker gives access to one file, not its folder, so saving can't write a temporary
 /// file beside the database and swap it in: it has to overwrite the file in place. If the
-/// iPhone dies or the storage app crashes halfway through, the file is damaged. So every save
+/// device dies or the storage app crashes halfway through, the file is damaged. So every save
 /// keeps two copies here first:
 ///
 /// - the **previous** version: the file as it was before the save. It stays until the next save
@@ -23,7 +23,7 @@ nonisolated struct Backup: Equatable, Sendable {
 ///   becomes the saved copy (`saved`), so it only survives a save that was cut short or held
 ///   back (offline), and then it holds the changes that save was writing.
 ///
-/// A third copy, the **saved** one, is what this iPhone last wrote to the file. It's how our
+/// A third copy, the **saved** one, is what this device last wrote to the file. It's how our
 /// changes survive the file being overwritten elsewhere without them: a storage app that
 /// uploads whichever copy arrives last, or another app that doesn't merge. Each unlock merges
 /// it (or an unfinished save, which is newer) into the file as read (`ours`).
@@ -47,7 +47,7 @@ nonisolated struct Backups: Sendable {
 
     let directory: URL
 
-    /// In the App Group, so the AutoFill extension can read what this iPhone saved (`ours`).
+    /// In the App Group, so the AutoFill extension can read what this device saved (`ours`).
     static let standard = Backups(
         directory: AppGroup.container.appending(path: "Backups", directoryHint: .isDirectory)
     )
@@ -73,7 +73,7 @@ nonisolated struct Backups: Sendable {
     }
 
     /// The save to the database at `location` was written and confirmed: the unfinished copy is
-    /// now the saved one, what this iPhone last wrote.
+    /// now the saved one, what this device last wrote.
     func saved(_ location: String) {
         let unfinished = file(location, Self.unfinished)
         guard FileManager.default.fileExists(atPath: unfinished.path(percentEncoded: false)) else { return }
@@ -88,7 +88,7 @@ nonisolated struct Backups: Sendable {
         try? FileManager.default.removeItem(at: file(location, Self.unfinished))
     }
 
-    /// What this iPhone last kept of the database at `location`, to merge into the file as
+    /// What this device last kept of the database at `location`, to merge into the file as
     /// read: an unfinished save if there is one (it's newer), else what was last written. Nil
     /// if there's neither, or it can't be read.
     func ours(_ location: String) -> Data? {

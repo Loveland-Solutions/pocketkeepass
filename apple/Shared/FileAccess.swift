@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-/// Reading and writing the database and key file wherever the user keeps them: on this iPhone,
+/// Reading and writing the database and key file wherever the user keeps them: on this device,
 /// in iCloud Drive, or in any storage app with a Files extension (Dropbox, OneDrive, Nextcloud, …).
 ///
 /// Files picked with the system picker sit outside the app's sandbox. They're reached through a
@@ -60,7 +60,7 @@ nonisolated enum FileAccess {
     /// Whether the file is in this app's own storage, where no storage app uploads it later.
     ///
     /// iOS doesn't say which storage app holds a picked file, or whether it syncs it: a file
-    /// "On My iPhone" and one in Dropbox look the same from here. So everything outside the
+    /// "On My iPhone" (or a Mac's local folder) and one in Dropbox look the same from here. So everything outside the
     /// app's own container counts as possibly synced, and is treated with the care a cloud file
     /// needs (see `Session`).
     static func isOnThisDevice(_ url: URL) -> Bool {

@@ -2,7 +2,7 @@ import Foundation
 import ImageIO
 import Observation
 import PocketKeePassCore
-import UIKit
+import CoreGraphics
 
 /// The open database's custom icons (`Meta/CustomIcons`), each fetched from the engine and
 /// decoded once. The app's `Session` and the AutoFill extension each own one, and point it at
@@ -20,7 +20,7 @@ final class CustomIcons {
     /// Thumbnails are made this many pixels across: enough for a list row at 3×.
     nonisolated static let thumbnailPixels = 96
 
-    private(set) var images: [String: UIImage] = [:]
+    private(set) var images: [String: CGImage] = [:]
     @ObservationIgnored private var missing: Set<String> = []
     @ObservationIgnored private var loading: Set<String> = []
     @ObservationIgnored private var database: UnlockedDatabase?
@@ -43,7 +43,7 @@ final class CustomIcons {
     func load(_ id: String) async {
         guard let database, images[id] == nil, !missing.contains(id), !loading.contains(id) else { return }
         loading.insert(id)
-        let image = await Task.detached(priority: .utility) { () -> UIImage? in
+        let image = await Task.detached(priority: .utility) { () -> CGImage? in
             guard let data = try? database.customIcon(id: id) else { return nil }
             return Self.decode(data)
         }.value
@@ -55,7 +55,7 @@ final class CustomIcons {
 
     /// A thumbnail of the image in `data`, or nil if it isn't an image or claims to be larger
     /// than `maxPixels` on a side.
-    nonisolated static func decode(_ data: Data) -> UIImage? {
+    nonisolated static func decode(_ data: Data) -> CGImage? {
         guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary),
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
@@ -67,7 +67,6 @@ final class CustomIcons {
             kCGImageSourceThumbnailMaxPixelSize: thumbnailPixels,
             kCGImageSourceCreateThumbnailWithTransform: true,
         ]
-        guard let thumbnail = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
-        return UIImage(cgImage: thumbnail)
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 }

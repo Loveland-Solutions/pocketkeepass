@@ -33,8 +33,8 @@ struct IconTests {
         await icons.load(Self.id("51"))
         await icons.load(Self.id("53"))
         let red = try #require(icons.images[Self.id("51")])
-        #expect(red.cgImage?.width == 16)
-        #expect(try #require(icons.images[Self.id("53")]).cgImage?.width == 32)
+        #expect(red.width == 16)
+        #expect(try #require(icons.images[Self.id("53")]).width == 32)
         await icons.load(Self.id("52")) // referenced by KeePassXC, not in the file
         #expect(icons.images[Self.id("52")] == nil)
         icons.use(nil)

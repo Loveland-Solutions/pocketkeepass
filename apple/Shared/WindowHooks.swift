@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 import UIKit
 
@@ -74,3 +75,4 @@ private final class InteractionRecorder: UIGestureRecognizer, UIGestureRecognize
         true
     }
 }
+#endif

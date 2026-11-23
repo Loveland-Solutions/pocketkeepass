@@ -14,7 +14,7 @@ struct ItemIconView: View {
     var body: some View {
         Group {
             if kind != .recycleBin, let id = icon.customId, let image = customIcons?.images[id] {
-                Image(uiImage: image)
+                Image(decorative: image, scale: 1)
                     .resizable()
                     .interpolation(.high)
                     .scaledToFit()

@@ -1,7 +1,7 @@
 import Foundation
 import Network
 
-/// Whether the iPhone has a network connection, nothing more. PocketKeePass never uses one
+/// Whether the device has a network connection, nothing more. PocketKeePass never uses one
 /// itself; it only needs to know whether a storage app could upload a save right now (see
 /// `Session`).
 @Observable
@@ -22,7 +22,7 @@ final class Connection {
         monitor.start(queue: DispatchQueue(label: "mn.lls.pocketkeepass.connection"))
     }
 
-    /// How long the iPhone has been online, or nil while it's offline.
+    /// How long the device has been online, or nil while it's offline.
     var onlineFor: Duration? {
         onlineSince.map { ContinuousClock.now - $0 }
     }

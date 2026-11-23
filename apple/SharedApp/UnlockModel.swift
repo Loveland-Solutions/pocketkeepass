@@ -112,7 +112,11 @@ final class UnlockModel {
         case .off, .passwordDue: return
         case .unavailable:
             if biometry.state == .lockedOut {
+                #if os(macOS)
+                error = String(localized: "\(biometry.kind.name) is locked after too many tries. Use your master password, or unlock the Mac with its password to turn \(biometry.kind.name) back on.")
+                #else
                 error = String(localized: "\(biometry.kind.name) is locked after too many tries. Use your master password, or unlock the iPhone with its passcode to turn \(biometry.kind.name) back on.")
+                #endif
             }
             return
         }
@@ -165,7 +169,11 @@ final class UnlockModel {
     }
 
     private func invalidated() {
+        #if os(macOS)
+        error = String(localized: "Unlocking with \(biometry.kind.name) was turned off because the fingerprints or the password on this Mac changed. Unlock with your master password, then turn it back on in settings.")
+        #else
         error = String(localized: "Unlocking with \(biometry.kind.name) was turned off because the faces, fingerprints, or passcode on this iPhone changed. Unlock with your master password, then turn it back on in settings.")
+        #endif
     }
 
     /// The user chose the master password, cancelled, or iOS took the prompt away (another app

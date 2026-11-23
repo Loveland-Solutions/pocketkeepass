@@ -1,7 +1,9 @@
 import Foundation
 import Observation
 import PocketKeePassCore
+#if os(iOS)
 import UIKit
+#endif
 
 /// Whether the open database's changes are in its file.
 enum SaveState: Equatable {
@@ -9,9 +11,9 @@ enum SaveState: Equatable {
     case saved
     /// A save is running.
     case saving
-    /// The changes are saved on this iPhone (`Backups`) but not in the file: the iPhone is
+    /// The changes are saved on this device (`Backups`) but not in the file: the device is
     /// offline, and a storage app might upload the file later over whatever it became meanwhile.
-    /// They go into the file, merged with what it holds by then, once the iPhone is back online,
+    /// They go into the file, merged with what it holds by then, once the device is back online,
     /// and survive a lock meanwhile.
     case waiting
     /// There are changes that aren't in the file, and why. They're lost if the database locks.
@@ -85,10 +87,10 @@ struct SyncStatus: Equatable {
 /// least) take a save made offline into their own copy and upload it later over whatever the
 /// file became meanwhile, without checking:
 ///
-/// - offline, a save to a file outside the app's own storage stays on this iPhone (`.waiting`)
-///   and goes into the file once the iPhone has been back online for `reconnectDelay`, merged
+/// - offline, a save to a file outside the app's own storage stays on this device (`.waiting`)
+///   and goes into the file once the device has been back online for `reconnectDelay`, merged
 ///   with what the file holds by then. So we never overwrite another device's change unseen;
-/// - each unlock merges what this iPhone last saved (`Backups.ours`) into the file as read, so
+/// - each unlock merges what this device last saved (`Backups.ours`) into the file as read, so
 ///   if another device or app overwrote our save without it, it comes back. While the database
 ///   stays open, the checks above do the same from memory.
 ///
@@ -122,7 +124,7 @@ final class Session {
     }
 
     static let checkInterval: Duration = .seconds(30)
-    /// How long the iPhone must be back online before a save that waited for it is written, so
+    /// How long the device must be back online before a save that waited for it is written, so
     /// the storage app has had a moment to fetch what other devices saved meanwhile.
     static let reconnectDelay: Duration = .seconds(10)
     /// How many times one save merges in another device's changes before giving up.
@@ -266,9 +268,12 @@ final class Session {
             return
         }
         saveTask = Task {
+            #if os(iOS)
+            // iOS suspends an app soon after it leaves the screen; ask for time to finish.
             let background = UIApplication.shared.beginBackgroundTask(withName: "Save")
             defer { UIApplication.shared.endBackgroundTask(background) }
-            // What this iPhone saved before must be in the database before anything is written.
+            #endif
+            // What this device saved before must be in the database before anything is written.
             await restoreTask?.value
             let written = await fileLock.run { await write(open, overwrite: overwrite) }
             saveTask = nil
@@ -375,7 +380,7 @@ final class Session {
         watcher = nil
     }
 
-    /// The iPhone is back online: write a save that was waiting for it, after `reconnectDelay`.
+    /// The device is back online: write a save that was waiting for it, after `reconnectDelay`.
     private func reconnected() {
         guard saveState == .waiting else { return }
         reconnectTask?.cancel()
@@ -470,7 +475,7 @@ final class Session {
         return taken
     }
 
-    /// Merges what this iPhone last saved to the file (or a save that was held back or cut
+    /// Merges what this device last saved to the file (or a save that was held back or cut
     /// short) into the database as just read from it, and saves if that brought anything back:
     /// another device or app overwrote the file without our change. Usually the file is exactly
     /// what we saved, and nothing runs.
@@ -503,7 +508,7 @@ final class Session {
     private enum Written: Equatable {
         /// In the file.
         case done
-        /// Kept on this iPhone until it's back online (`.waiting`).
+        /// Kept on this device until it's back online (`.waiting`).
         case held
         case failed(SaveProblem)
 
@@ -515,7 +520,7 @@ final class Session {
 
     /// Saves to the database's own file. A file changed elsewhere is merged with ours first
     /// (unless `overwrite`), and the result saved. Offline, a file outside the app's storage
-    /// isn't touched: the save is kept on this iPhone instead (`.held`). Hold `fileLock`.
+    /// isn't touched: the save is kept on this device instead (`.held`). Hold `fileLock`.
     private func write(_ open: Open, overwrite: Bool) async -> Written {
         let database = open.database
         let url = open.url

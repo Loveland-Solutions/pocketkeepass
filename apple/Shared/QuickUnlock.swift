@@ -24,9 +24,9 @@ import Security
 /// The AutoFill extension unlocks with it too, so its settings are in the App Group's
 /// UserDefaults and the item in the App Group's Keychain access group.
 ///
-/// It doesn't last forever ([isPasswordDue]): after the iPhone restarts, and every
+/// It doesn't last forever ([isPasswordDue]): after the device restarts, and every
 /// [intervalDays] days, the master password has to be typed once, so the user doesn't forget it
-/// and a lost iPhone needs more than a face. That's the app's rule, not the Keychain's: the item
+/// and a lost device needs more than a face. That's the app's rule, not the Keychain's: the item
 /// stays, so quick unlock is back as soon as the password has been typed.
 @Observable
 final class QuickUnlock {
@@ -99,7 +99,7 @@ final class QuickUnlock {
         revision += 1
     }
 
-    /// Whether quick unlock has to wait for the master password: the iPhone restarted since it
+    /// Whether quick unlock has to wait for the master password: the device restarted since it
     /// was last typed for this database, or [intervalDays] days have passed.
     func isPasswordDue(_ database: RecentDatabase) -> Bool {
         _ = revision
@@ -249,6 +249,7 @@ final class QuickUnlock {
         ) else { return false }
         var item: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
+            kSecUseDataProtectionKeychain: true,
             kSecAttrService: service,
             kSecAttrAccount: account,
             kSecAttrAccessControl: access,
@@ -265,6 +266,7 @@ final class QuickUnlock {
     nonisolated private static func read(service: String, account: String, context: LAContext) -> Data? {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
+            kSecUseDataProtectionKeychain: true,
             kSecAttrService: service,
             kSecAttrAccount: account,
             kSecReturnData: true,
@@ -277,7 +279,11 @@ final class QuickUnlock {
     }
 
     nonisolated private static func deleteItems(service: String) {
-        let query: [CFString: Any] = [kSecClass: kSecClassGenericPassword, kSecAttrService: service]
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecUseDataProtectionKeychain: true, // the iOS-style keychain on macOS too; ignored on iOS
+            kSecAttrService: service,
+        ]
         SecItemDelete(query as CFDictionary)
     }
 
@@ -285,6 +291,7 @@ final class QuickUnlock {
     nonisolated private static func hasItems(service: String) -> Bool {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
+            kSecUseDataProtectionKeychain: true,
             kSecAttrService: service,
             kSecReturnAttributes: true,
             kSecMatchLimit: kSecMatchLimitOne,

@@ -5,7 +5,12 @@ import Foundation
 /// never anything from inside it), quick unlock's settings and Keychain item, and the backups.
 /// Nothing in it is secret beyond what the database file itself holds, encrypted.
 nonisolated enum AppGroup {
+    #if os(macOS)
+    /// On macOS a sandboxed app's group is named after the team.
+    static let id = "44H5SLX8KR.mn.lls.pocketkeepass.mac"
+    #else
     static let id = "group.mn.lls.pocketkeepass"
+    #endif
 
     /// The shared settings. Falls back to the app's own when the App Group is missing (a build
     /// without its entitlement), so the app still works on its own.
