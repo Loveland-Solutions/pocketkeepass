@@ -1,6 +1,8 @@
 package mn.lls.pocketkeepass.a11yprobe
 
 import android.accessibilityservice.AccessibilityService
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -8,9 +10,38 @@ import android.view.accessibility.AccessibilityNodeInfo
 /**
  * Logs (tag [tag]) every event from PocketKeePass and the whole window content it can see.
  * Read it with `adb logcat -s A11yProbe A11yProbeTool`.
+ *
+ * It also asks for every window's content every 3 seconds, without waiting for an event (tag
+ * [tag] + "Poll"), as spyware could: an app that sends no events to a service can still be read
+ * that way unless its windows are hidden from it.
  */
 open class ProbeService : AccessibilityService() {
     protected open val tag = "A11yProbe"
+    private val handler = Handler(Looper.getMainLooper())
+    private val poll = object : Runnable {
+        override fun run() {
+            val windows = windows
+            Log.i("${tag}Poll", "poll: ${windows.size} windows, active root of ${rootInActiveWindow?.packageName}")
+            for (window in windows) {
+                val root = window.root
+                val lines = mutableListOf<String>()
+                root?.let { dump(it, 0, lines) }
+                val owner = root?.packageName ?: "(no content)"
+                Log.i("${tag}Poll", "window \"${window.title}\" of $owner: ${lines.size} nodes")
+                lines.forEach { Log.i("${tag}Poll", it) }
+            }
+            handler.postDelayed(this, POLL_MS)
+        }
+    }
+
+    override fun onServiceConnected() {
+        handler.postDelayed(poll, POLL_MS)
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacks(poll)
+        super.onDestroy()
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val type = AccessibilityEvent.eventTypeToString(event.eventType)
@@ -38,6 +69,10 @@ open class ProbeService : AccessibilityService() {
     }
 
     override fun onInterrupt() {}
+
+    private companion object {
+        const val POLL_MS = 3000L
+    }
 }
 
 /** The same, but registered as an assistive tool, like TalkBack. Logs with tag "A11yProbeTool". */
