@@ -113,7 +113,10 @@ for bundle in "$app" "$extension"; do
     exit 1
   fi
   entitlements=$(codesign -d --entitlements - --xml "$bundle" 2>/dev/null)
-  for needed in com.apple.security.app-sandbox "$team.mn.lls.pocketkeepass.mac" keychain-access-groups; do
+  # Both need the credential provider entitlement: App Store Connect refuses an app without it
+  # once its extension has it.
+  for needed in com.apple.security.app-sandbox "$team.mn.lls.pocketkeepass.mac" keychain-access-groups \
+      com.apple.developer.authentication-services.autofill-credential-provider; do
     if ! echo "$entitlements" | grep -q "$needed"; then
       echo "$name isn't signed with $needed. Not uploading it." >&2
       exit 1
