@@ -189,6 +189,53 @@ final class UnlockFlowTests: XCTestCase {
         app.buttons["Lock"].tap()
     }
 
+    /// The generator: a password for a new entry, with symbols turned off and back on, used,
+    /// saved, and the same password shown on the entry's screen.
+    @MainActor
+    func testGeneratePassword() throws {
+        let app = XCUIApplication()
+        app.launch()
+        pickBrowseDatabase(app)
+        let password = app.secureTextFields["Master password"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        focus(password)
+        password.typeText("test-password\n")
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 60))
+
+        app.buttons["Add"].tap()
+        app.buttons["New entry"].tap()
+        let upgrade = app.alerts.buttons["Upgrade"]
+        if upgrade.waitForExistence(timeout: 3) { upgrade.tap() }
+        let titleField = app.textFields["Title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5))
+        focus(titleField)
+        let title = "UI generated \(UUID().uuidString.prefix(8))"
+        titleField.typeText(title)
+
+        app.buttons["Generate password"].tap()
+        let generated = app.staticTexts["Generated password"]
+        XCTAssertTrue(generated.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'bits)'")).firstMatch.exists, "no strength")
+
+        // No symbols: only letters and digits.
+        app.buttons["None"].tap()
+        let plain = try XCTUnwrap(generated.value as? String)
+        XCTAssertEqual(plain.count, 20)
+        XCTAssertTrue(plain.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber) }, "symbols in \(plain)")
+        app.buttons["Common"].tap()
+        attach(app, "generator")
+
+        let chosen = try XCTUnwrap(generated.value as? String)
+        XCTAssertNotEqual(chosen, plain)
+        app.buttons["Use"].tap()
+        app.buttons["Save"].tap()
+        XCTAssertTrue(app.buttons["Show Password"].waitForExistence(timeout: 60), "the new entry didn't open")
+        app.buttons["Show Password"].tap()
+        XCTAssertTrue(app.staticTexts[chosen].waitForExistence(timeout: 5), "the saved password isn't the generated one")
+        attach(app, "saved with the generated password")
+        app.buttons["Lock"].tap()
+    }
+
     /// Whether searching for `title` finds it. Every run adds entries to the fixture, so a new
     /// one may be below the fold, and lists only make the rows on screen. Leaves search closed.
     private func found(_ app: XCUIApplication, _ title: String) -> Bool {

@@ -11,6 +11,16 @@
         }
       }
     },
+    "%@ (%lld bits)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ (%2$lld бит)"
+          }
+        }
+      }
+    },
     "%@ can’t be used by PocketKeePass right now. Check in the iPhone’s Settings that a passcode and %@ are set up, and that PocketKeePass is allowed to use %@.": {
       "localizations": {
         "mn": {
@@ -315,6 +325,16 @@
         }
       }
     },
+    "All": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бүгд"
+          }
+        }
+      }
+    },
     "An independent app for KeePass databases. Written with Claude.": {
       "localizations": {
         "mn": {
@@ -361,6 +381,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Автомат түгжээ"
+          }
+        }
+      }
+    },
+    "Avoid look-alike characters (%@)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Төстэй харагддаг тэмдэгтээс зайлсхийх (%@)"
           }
         }
       }
@@ -509,6 +539,16 @@
         }
       }
     },
+    "Common": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгээмэл"
+          }
+        }
+      }
+    },
     "Copied %@. It clears in %@.": {
       "localizations": {
         "mn": {
@@ -565,6 +605,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Устгалаа."
+          }
+        }
+      }
+    },
+    "Digits": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цифр"
           }
         }
       }
@@ -689,12 +739,42 @@
         }
       }
     },
+    "Every kind you choose appears at least once.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сонгосон төрөл бүр дор хаяж нэг удаа орно."
+          }
+        }
+      }
+    },
+    "Every symbol on the keyboard: %@. Some sites reject a few of these; switch to Common if one does.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Гарын бүх тусгай тэмдэгт: %@. Зарим сайт эдгээрийн заримыг хүлээж авдаггүй; тийм бол «Түгээмэл» рүү шилжинэ үү."
+          }
+        }
+      }
+    },
     "Everything in the recycle bin is deleted for good. This can’t be undone. A new recycle bin appears the next time you delete something.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Хогийн саван дахь бүх зүйл бүрмөсөн устна. Үүнийг буцаах боломжгүй. Дараа нь ямар нэг зүйл устгахад шинэ хогийн сав гарч ирнэ."
+          }
+        }
+      }
+    },
+    "Fair": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дунд зэрэг"
           }
         }
       }
@@ -725,6 +805,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "GPLv3 лицензтэй, үнэгүй, нээлттэй эхийн програм хангамж."
+          }
+        }
+      }
+    },
+    "Generate another": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дахин үүсгэх"
+          }
+        }
+      }
+    },
+    "Generate password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үг үүсгэх"
+          }
+        }
+      }
+    },
+    "Generated password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үүсгэсэн нууц үг"
           }
         }
       }
@@ -819,6 +929,26 @@
         }
       }
     },
+    "Length": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Урт"
+          }
+        }
+      }
+    },
+    "Length: %lld": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Урт: %lld"
+          }
+        }
+      }
+    },
     "Lock": {
       "localizations": {
         "mn": {
@@ -875,6 +1005,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Хадгалалгүй түгжих үү?"
+          }
+        }
+      }
+    },
+    "Lowercase letters": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Жижиг үсэг"
           }
         }
       }
@@ -1009,6 +1149,26 @@
         }
       }
     },
+    "No symbols. Use this only if a site rejects all of them; make the password longer to make up for it.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тусгай тэмдэгтгүй. Сайт бүгдийг нь хүлээж авахгүй үед л үүнийг ашиглаарай, мөн нөхөж нууц үгээ уртасгаарай."
+          }
+        }
+      }
+    },
+    "None": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Байхгүй"
+          }
+        }
+      }
+    },
     "Not now": {
       "localizations": {
         "mn": {
@@ -1045,6 +1205,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нэг удаагийн код"
+          }
+        }
+      }
+    },
+    "Only symbols that sites commonly accept: %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сайтууд ихэвчлэн зөвшөөрдөг тэмдэгтүүд л: %@"
           }
         }
       }
@@ -1285,6 +1455,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Синк хэрхэн ажилладаг, хамгийн сүүлд хэзээ болсныг харуулна"
+          }
+        }
+      }
+    },
+    "Strong": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хүчтэй"
+          }
+        }
+      }
+    },
+    "Symbols": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тусгай тэмдэгт"
           }
         }
       }
@@ -1729,6 +1919,26 @@
         }
       }
     },
+    "Uppercase letters": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Том үсэг"
+          }
+        }
+      }
+    },
+    "Use": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ашиглах"
+          }
+        }
+      }
+    },
     "Use master password": {
       "localizations": {
         "mn": {
@@ -1765,6 +1975,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Хувилбар"
+          }
+        }
+      }
+    },
+    "Very strong": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Маш хүчтэй"
+          }
+        }
+      }
+    },
+    "Weak": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сул"
           }
         }
       }

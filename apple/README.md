@@ -37,7 +37,8 @@ screen: quick unlock's expiry rule and the checks made before a Face ID prompt, 
 saving through `Session` into copies of `core/tests/fixtures` (merging, restoring, upgrading).
 
 The UI tests (`iOS/PocketKeePassUITests`) drive the app through the system file picker: open,
-wrong password, unlock, browse, search, show and copy a protected field, lock, a new entry, and
+wrong password, unlock, browse, search, show and copy a protected field, lock, a new entry, the
+password generator, and
 editing, moving, and deleting an entry. If two simulators share a name (`xcrun simctl list
 devices`), `name=` may pick the one without the fixture: pass `-destination 'id=<id>'` instead. Setup, once per
 simulator: open the Files app once (that creates its "On My iPhone" storage), then copy

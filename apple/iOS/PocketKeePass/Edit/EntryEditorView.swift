@@ -150,8 +150,26 @@ private struct FieldEditor: View {
     @Environment(Session.self) private var session
     @State private var shown = false
     @State private var fetching = false
+    @State private var generating = false
 
     var body: some View {
+        editor
+        if offersGenerator {
+            Button("Generate password", systemImage: "wand.and.stars") { generating = true }
+                .sheet(isPresented: $generating) {
+                    GeneratorView(label: label) { field.setValue($0) }
+                }
+        }
+    }
+
+    /// The password, and any protected custom field (a PIN, a recovery code). Using a generated
+    /// password replaces the value, so an unfetched one is never fetched for it.
+    private var offersGenerator: Bool {
+        field.key == "Password" && !field.isCustom || field.isCustom && field.isProtected
+    }
+
+    @ViewBuilder
+    private var editor: some View {
         if !field.isFetched {
             unfetched
         } else if field.isProtected {
