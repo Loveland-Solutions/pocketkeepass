@@ -1,8 +1,8 @@
 # App Store listing (iPhone and iPad)
 
 What to enter in App Store Connect for PocketKeePass (`mn.lls.pocketkeepass`). Adapted from the
-Google Play listing, with only what the iOS app does today: no passkeys yet (they're shown, not
-used), and no screenshot blocking (iOS doesn't allow it). Keep it in step with the app.
+Google Play listing, with only what the iOS app does today: no screenshot blocking (iOS doesn't
+allow it). Keep it in step with the app.
 
 KeePass's author asks that "KeePass" never be a separate word in an app's name, so the name is
 only "PocketKeePass", and the subtitle doesn't start with "KeePass". Apple doesn't allow other
@@ -33,8 +33,8 @@ The privacy manifest (`apple/iOS/Shared/PrivacyInfo.xcprivacy`) says the same.
 
 ## Promotional text (170)
 
-Your KeePass passwords on iPhone and iPad: free, open source, and offline. Fills in passwords
-in Safari and apps, with Face ID.
+Your KeePass passwords on your iPhone: free, open source, and offline. Fills in passwords and
+passkeys in Safari and apps, with Face ID.
 
 ## Keywords (100)
 
@@ -55,6 +55,8 @@ WHAT IT DOES
 • Browse and search your groups and entries
 • Create, edit, duplicate, move, and delete entries and groups
 • Fill in passwords in Safari and other apps with AutoFill
+• Create and use passkeys
+• Create a new database, or open one you already have
 • Show one-time codes (TOTP) for two-factor sign-in
 • Generate passwords, including a symbols option that leaves out the characters many sites reject
 
@@ -103,4 +105,4 @@ with its `ITSEncryptionExportComplianceCode`; YES without a code fails the uploa
 
 `art/app-store/screenshots/6.3-inch-1-unlock.png` … `6.3-inch-6-settings.png` (1206 × 2622, for "iPhone with
 Dynamic Island, medium display"), and the same as `6.9-inch-*` (1320 × 2868), in that order: unlock, browse, an entry, the password generator, search, settings. How they're taken is in
-that folder's README. No iPad screenshots: see the open item on iPad in CLAUDE.md.
+that folder's README. The app is iPhone-only for now (iPads run it in iPhone mode), so no iPad screenshots are needed.
