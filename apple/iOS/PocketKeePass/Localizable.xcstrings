@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@\n\nYour changes stay here until the database locks.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@\n\nӨгөгдлийн сан түгжигдэх хүртэл таны өөрчлөлтүүд энд үлдэнэ."
+          }
+        }
+      }
+    },
     "%@ can’t be used by PocketKeePass right now. Check in the iPhone’s Settings that a passcode and %@ are set up, and that PocketKeePass is allowed to use %@.": {
       "localizations": {
         "mn": {
@@ -65,6 +75,74 @@
         }
       }
     },
+    "%lld entries changed": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld entry changed"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld entries changed"
+                }
+              }
+            }
+          }
+        },
+        "mn": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld бичлэг өөрчлөгдсөн"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld entries removed": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld entry removed"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld entries removed"
+                }
+              }
+            }
+          }
+        },
+        "mn": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld бичлэг хасагдсан"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld groups": {
       "localizations": {
         "en": {
@@ -92,6 +170,74 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld бүлэг"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld groups changed": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld group changed"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld groups changed"
+                }
+              }
+            }
+          }
+        },
+        "mn": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld бүлэг өөрчлөгдсөн"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld new entries": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld new entry"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld new entries"
+                }
+              }
+            }
+          }
+        },
+        "mn": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld шинэ бичлэг"
                 }
               }
             }
@@ -159,6 +305,16 @@
         }
       }
     },
+    "Another app or device changed the database file, and PocketKeePass can’t combine those changes with yours: the file may have a new master password, hold another database, or be damaged. Saving now would replace it with yours.\n\nYour changes stay here until the database locks.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өөр апп эсвэл төхөөрөмж өгөгдлийн сангийн файлыг өөрчилсөн бөгөөд PocketKeePass тэр өөрчлөлтүүдийг таныхтай нэгтгэж чадахгүй байна: файл шинэ үндсэн нууц үгтэй болсон, өөр өгөгдлийн сан агуулж байгаа эсвэл гэмтсэн байж магадгүй. Одоо хадгалвал тэр файлыг таныхаар солино.\n\nӨгөгдлийн сан түгжигдэх хүртэл таны өөрчлөлтүүд энд үлдэнэ."
+          }
+        }
+      }
+    },
     "Anyone whose face or fingerprint is set up on this iPhone can then open it. Changing those turns this off, and your master password is always needed to turn it back on.": {
       "localizations": {
         "mn": {
@@ -195,6 +351,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Цуцлах"
+          }
+        }
+      }
+    },
+    "Can’t read the file right now. Changes from other devices will come in once it can.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Яг одоо файлыг уншиж чадахгүй байна. Уншиж чадмагц бусад төхөөрөмжийн өөрчлөлтүүд орж ирнэ."
           }
         }
       }
@@ -239,6 +405,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Changes not saved": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өөрчлөлтүүд хадгалагдсангүй"
           }
         }
       }
@@ -299,6 +475,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ хуулах"
+          }
+        }
+      }
+    },
+    "Discard": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хаях"
+          }
+        }
+      }
+    },
+    "Discard mine and reload": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Минийхийг хаяж, дахин ачаалах"
+          }
+        }
+      }
+    },
+    "Discard your changes?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өөрчлөлтөө хаях уу?"
           }
         }
       }
@@ -393,6 +599,16 @@
         }
       }
     },
+    "Keep editing": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үргэлжлүүлэн засах"
+          }
+        }
+      }
+    },
     "Key file: %@": {
       "localizations": {
         "mn": {
@@ -433,6 +649,16 @@
         }
       }
     },
+    "Lock anyway": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ямар ч байсан түгжих"
+          }
+        }
+      }
+    },
     "Lock when the iPhone locks": {
       "localizations": {
         "mn": {
@@ -443,12 +669,32 @@
         }
       }
     },
+    "Lock without saving?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалалгүй түгжих үү?"
+          }
+        }
+      }
+    },
     "Master password": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Үндсэн нууц үг"
+          }
+        }
+      }
+    },
+    "New entry": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ бичлэг"
           }
         }
       }
@@ -543,6 +789,16 @@
         }
       }
     },
+    "PocketKeePass can’t write to the database file. It may have been moved or deleted, or the storage app may only allow reading it.\n\nYour changes stay here until the database locks. Save a copy to keep them.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass өгөгдлийн сангийн файлд бичиж чадахгүй байна. Файлыг зөөсөн эсвэл устгасан, эсвэл хадгалах сангийн апп зөвхөн уншихыг зөвшөөрдөг байж магадгүй.\n\nӨгөгдлийн сан түгжигдэх хүртэл таны өөрчлөлтүүд энд үлдэнэ. Тэдгээрийг алдахгүйн тулд хуулбар хадгална уу."
+          }
+        }
+      }
+    },
     "PocketKeePass is written with Claude, an AI model made by Anthropic.": {
       "localizations": {
         "mn": {
@@ -579,6 +835,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "Хасах"
+          }
+        }
+      }
+    },
+    "Replace it with mine": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Минийхээр солих"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалах"
+          }
+        }
+      }
+    },
+    "Save a copy…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуулбар хадгалах…"
+          }
+        }
+      }
+    },
+    "Saved": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалсан"
+          }
+        }
+      }
+    },
+    "Saved a copy. The database still opens from its old file.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуулбарыг хадгаллаа. Өгөгдлийн сан хуучин файлаасаа нээгдсээр байна."
+          }
+        }
+      }
+    },
+    "Saving…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалж байна…"
           }
         }
       }
@@ -663,12 +979,72 @@
         }
       }
     },
+    "The copy couldn’t be saved.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуулбарыг хадгалж чадсангүй."
+          }
+        }
+      }
+    },
     "The database is locked.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Өгөгдлийн сан түгжээтэй байна."
+          }
+        }
+      }
+    },
+    "The database’s security settings were changed on another device. Lock, then unlock it again to take in the changes.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өгөгдлийн сангийн аюулгүй байдлын тохиргоог өөр төхөөрөмж дээр өөрчилсөн байна. Өөрчлөлтийг авахын тулд түгжээд, дахин түгжээг нь тайлна уу."
+          }
+        }
+      }
+    },
+    "The file changed elsewhere": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлыг өөр газар өөрчилсөн байна"
+          }
+        }
+      }
+    },
+    "The file didn’t read back correctly after saving, so the storage app may not have stored it properly. Try again, or save a copy to be safe.\n\nYour changes stay here until the database locks.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалсны дараа файлыг буцааж уншихад зөрүүтэй гарсан тул хадгалах сангийн апп үүнийг зөв хадгалаагүй байж магадгүй. Дахин оролдох эсвэл найдвартай байлгахын тулд хуулбар хадгална уу.\n\nӨгөгдлийн сан түгжигдэх хүртэл таны өөрчлөлтүүд энд үлдэнэ."
+          }
+        }
+      }
+    },
+    "The file now holds a different database. Lock, then unlock it again.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлд одоо өөр өгөгдлийн сан байна. Түгжээд, дахин түгжээг нь тайлна уу."
+          }
+        }
+      }
+    },
+    "The master password was changed on another device. Lock, then unlock with the new one.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үндсэн нууц үгийг өөр төхөөрөмж дээр сольсон байна. Түгжээд, шинэ нууц үгээр түгжээг тайлна уу."
           }
         }
       }
@@ -689,6 +1065,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нууц үг эсвэл түлхүүр файл буруу байна."
+          }
+        }
+      }
+    },
+    "This database uses the older KDBX 3 format, and PocketKeePass only saves KDBX 4. Upgrading keeps everything in it. KeePass 2.35 or later, KeePassXC 2.3 or later, and current KeePass apps open KDBX 4, but apps that only know KDBX 3 won’t open the file after you save.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ өгөгдлийн сан хуучин KDBX 3 форматтай бөгөөд PocketKeePass зөвхөн KDBX 4 форматаар хадгалдаг. Шинэчлэхэд доторх бүх зүйл хэвээр үлдэнэ. KeePass 2.35, KeePassXC 2.3 болон тэдгээрээс хойшх хувилбарууд, мөн одоогийн KeePass аппууд KDBX 4 файлыг нээдэг. Харин зөвхөн KDBX 3 мэддэг аппууд таныг хадгалсны дараа файлыг нээж чадахгүй."
           }
         }
       }
@@ -739,6 +1125,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Энэ нь KeePass өгөгдлийн сан биш байна."
+          }
+        }
+      }
+    },
+    "Title": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Гарчиг"
+          }
+        }
+      }
+    },
+    "Try again": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дахин оролдох"
           }
         }
       }
@@ -903,6 +1309,46 @@
         }
       }
     },
+    "Updated from %@: %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэчлэгдлээ (%1$@): %2$@"
+          }
+        }
+      }
+    },
+    "Updated from another device: %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өөр төхөөрөмжөөс шинэчлэгдлээ: %@"
+          }
+        }
+      }
+    },
+    "Upgrade": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэчлэх"
+          }
+        }
+      }
+    },
+    "Upgrade to KDBX 4?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KDBX 4 болгон шинэчлэх үү?"
+          }
+        }
+      }
+    },
     "Use master password": {
       "localizations": {
         "mn": {
@@ -933,12 +1379,62 @@
         }
       }
     },
+    "What now?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Одоо яах вэ?"
+          }
+        }
+      }
+    },
     "Your KeePass passwords, free and offline.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Таны KeePass нууц үгнүүд — үнэгүй, интернэтгүй."
+          }
+        }
+      }
+    },
+    "Your changes aren’t saved to the file yet. Locking discards them.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таны өөрчлөлтүүд файлд хараахан хадгалагдаагүй байна. Түгжвэл тэдгээр нь устна."
+          }
+        }
+      }
+    },
+    "Your changes aren’t saved to the file.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таны өөрчлөлтүүд файлд хадгалагдаагүй байна."
+          }
+        }
+      }
+    },
+    "You’re offline. Your changes are kept on this iPhone and go into the file once you’re back online.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Та интернэтгүй байна. Таны өөрчлөлтүүд энэ iPhone дээр хадгалагдсан бөгөөд дахин холбогдмогц файлд орно."
+          }
+        }
+      }
+    },
+    "iCloud Drive": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Drive"
           }
         }
       }

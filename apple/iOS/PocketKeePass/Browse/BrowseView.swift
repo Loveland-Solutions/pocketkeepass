@@ -37,19 +37,28 @@ struct BrowseView: View {
                     }
                 }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) { SaveBar() }
         .sheet(isPresented: $showingSettings) { SettingsView() }
     }
 }
 
-/// The lock button, on every screen of the browser.
+/// The lock button, on every screen of the browser. Asks first if there are changes that
+/// couldn't be saved. (Auto-lock doesn't ask: security wins.)
 struct LockButton: View {
     @Environment(Session.self) private var session
+    @State private var askingUnsaved = false
 
     var body: some View {
         Button {
-            session.lock()
+            if case .unsaved = session.saveState { askingUnsaved = true } else { session.lock() }
         } label: {
             Label("Lock", systemImage: "lock")
+        }
+        .confirmationDialog("Lock without saving?", isPresented: $askingUnsaved, titleVisibility: .visible) {
+            Button("Lock anyway", role: .destructive) { session.lock() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your changes aren’t saved to the file yet. Locking discards them.")
         }
     }
 }
@@ -62,6 +71,7 @@ struct GroupView: View {
     @State private var error: String?
     @State private var query = ""
     @State private var results: [SearchResult]?
+    @State private var addingEntry = false
 
     var body: some View {
         List {
@@ -81,7 +91,20 @@ struct GroupView: View {
         .navigationTitle(title)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { LockButton() }
+            if let listing, !listing.group.isRecycleBin, results == nil {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        addingEntry = true
+                    } label: {
+                        Label("New entry", systemImage: "plus")
+                    }
+                }
+            }
         }
+        .sheet(isPresented: $addingEntry) {
+            if let listing { NewEntryView(groupId: listing.group.id) }
+        }
+        .refreshable { await session.checkNow() }
         .modifier(SearchModifier(enabled: id == nil, query: $query))
         .task(id: session.revision) { await load() }
         .task(id: query) { await search() }

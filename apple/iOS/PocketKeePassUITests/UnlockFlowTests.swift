@@ -68,6 +68,54 @@ final class UnlockFlowTests: XCTestCase {
         attach(app, "locked")
     }
 
+    /// A new entry is saved into the file straight away, and is there after locking and
+    /// unlocking again.
+    ///
+    /// This changes the simulator's copy of browse.kdbx: the first run upgrades it to KDBX 4
+    /// (after asking), and every run adds an entry. Copy the fixture in again to start over.
+    @MainActor
+    func testNewEntryIsSaved() throws {
+        let app = XCUIApplication()
+        app.launch()
+        pickBrowseDatabase(app)
+        let password = app.secureTextFields["Master password"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        focus(password)
+        password.typeText("test-password\n")
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 60))
+
+        let title = "UI test \(UUID().uuidString.prefix(8))"
+        app.buttons["New entry"].tap()
+        let titleField = app.textFields["Title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5))
+        focus(titleField)
+        titleField.typeText(title)
+        let entryPassword = app.secureTextFields["Password"]
+        focus(entryPassword)
+        entryPassword.typeText("s3cret")
+        attach(app, "new entry")
+        app.buttons["Save"].tap()
+
+        // A KDBX 3 file asks to be upgraded before its first change (the first run only).
+        let upgrade = app.alerts.buttons["Upgrade"]
+        if upgrade.waitForExistence(timeout: 3) {
+            attach(app, "upgrade")
+            upgrade.tap()
+        }
+        XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 60), "the new entry isn't listed")
+        XCTAssertTrue(app.staticTexts["Saved"].waitForExistence(timeout: 60), "never showed Saved")
+        attach(app, "saved")
+
+        // From the file again.
+        app.buttons["Lock"].tap()
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        focus(password)
+        password.typeText("test-password\n")
+        XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 60), "the entry wasn't in the file")
+        attach(app, "after unlocking again")
+        app.buttons["Lock"].tap()
+    }
+
     /// Face ID quick unlock: offered after the master password, turned on, used to unlock after
     /// a lock, then turned off again.
     ///

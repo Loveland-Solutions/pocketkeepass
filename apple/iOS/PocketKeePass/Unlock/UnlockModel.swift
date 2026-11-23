@@ -124,12 +124,13 @@ final class UnlockModel {
                 return
             }
 
-            let result = await Task.detached(priority: .userInitiated) { () -> Result<UnlockedDatabase, Error> in
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<Unlocked, Error> in
                 var keyHash = hash
                 defer { keyHash.wipe() }
                 do {
-                    let file = try FileAccess.read(FileAccess.resolve(recent.bookmark).url)
-                    return .success(try UnlockedDatabase.openWithKeyHash(file: file, keyHash: keyHash))
+                    let url = try FileAccess.resolve(recent.bookmark).url
+                    let file = try FileAccess.read(url)
+                    return .success(try Unlocked(UnlockedDatabase.openWithKeyHash(file: file, keyHash: keyHash), url: url, file: file))
                 } catch {
                     return .failure(error)
                 }
@@ -137,8 +138,8 @@ final class UnlockModel {
 
             isUnlocking = false
             switch result {
-            case .success(let database):
-                session.start(database, fileName: recent.name)
+            case .success(let unlocked):
+                unlocked.start(session, recent)
             case .failure(KeePassError.WrongKey(_)):
                 quickUnlock.outdated()
                 error = String(localized: "Unlocking with \(biometry.kind.name) was turned off because this database’s master password or key file changed. Unlock with the new one, then turn it back on in settings.")
@@ -172,7 +173,7 @@ final class UnlockModel {
         error = nil
 
         Task {
-            let result = await Task.detached(priority: .userInitiated) { () -> Result<UnlockedDatabase, Error> in
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<Unlocked, Error> in
                 var passwordBytes: Data? = usePassword ? Secrets.utf8(typed) : nil
                 var keyFile: Data?
                 defer {
@@ -180,7 +181,8 @@ final class UnlockModel {
                     keyFile?.wipe()
                 }
                 do {
-                    let file = try FileAccess.read(FileAccess.resolve(recent.bookmark).url)
+                    let url = try FileAccess.resolve(recent.bookmark).url
+                    let file = try FileAccess.read(url)
                     if let keyBookmark = recent.keyFileBookmark {
                         do {
                             keyFile = try FileAccess.read(FileAccess.resolve(keyBookmark).url)
@@ -188,7 +190,7 @@ final class UnlockModel {
                             throw KeyFileUnreadable()
                         }
                     }
-                    return .success(try UnlockedDatabase.open(file: file, password: passwordBytes, keyFile: keyFile))
+                    return .success(try Unlocked(UnlockedDatabase.open(file: file, password: passwordBytes, keyFile: keyFile), url: url, file: file))
                 } catch {
                     return .failure(error)
                 }
@@ -196,9 +198,9 @@ final class UnlockModel {
 
             isUnlocking = false
             switch result {
-            case .success(let database):
+            case .success(let unlocked):
                 quickUnlock.passwordTyped(recent)
-                session.start(database, fileName: recent.name)
+                unlocked.start(session, recent)
                 if quickUnlock.shouldOffer(recent) { quickUnlock.offerPending = true }
             case .failure(let failure as KeyFileUnreadable):
                 _ = failure
@@ -211,3 +213,22 @@ final class UnlockModel {
 }
 
 private struct KeyFileUnreadable: Error {}
+
+/// A database just unlocked, with what `Session` needs to know about its file.
+private nonisolated struct Unlocked: Sendable {
+    let database: UnlockedDatabase
+    let url: URL
+    let fingerprint: Data
+    let needsUpgrade: Bool
+
+    init(_ database: UnlockedDatabase, url: URL, file: Data) throws {
+        self.database = database
+        self.url = url
+        fingerprint = FileAccess.fingerprint(file)
+        needsUpgrade = try database.summary().needsUpgrade
+    }
+
+    @MainActor func start(_ session: Session, _ recent: RecentDatabase) {
+        session.start(database, recent: recent, url: url, fingerprint: fingerprint, needsUpgrade: needsUpgrade)
+    }
+}
