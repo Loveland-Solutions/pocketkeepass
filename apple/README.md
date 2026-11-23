@@ -17,7 +17,7 @@ crypto logic lives in Swift.
   both apps but not the extension (the session, saving and sync, editing, unlocking, and the
   screens the two apps share, in `SharedApp/Views/`). `AutoFill/` is the extension's code.
   Platform differences are `#if os(iOS)` / `#if os(macOS)` in place.
-- `iOS/` is the iPhone and iPad app (`PocketKeePass.xcodeproj`, iOS 18+, bundle ID
+- `iOS/` is the iPhone and iPad app (`PocketKeePass.xcodeproj`, iOS 26+, bundle ID
   `mn.lls.pocketkeepass`) and its AutoFill extension (`PocketKeePassAutoFill`,
   `mn.lls.pocketkeepass.autofill`). The project uses folder-synchronized groups that point at
   `PocketKeePass/` and the shared folders above, so new Swift files are picked up without

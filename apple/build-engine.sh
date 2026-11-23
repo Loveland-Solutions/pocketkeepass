@@ -20,7 +20,7 @@ export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:/opt/homebrew/bin:$PATH"
 # Xcode sets these for the app it's building; they'd leak into cargo's own builds.
 unset SDKROOT IPHONEOS_DEPLOYMENT_TARGET MACOSX_DEPLOYMENT_TARGET 2>/dev/null || true
 
-export IPHONEOS_DEPLOYMENT_TARGET=18.0
+export IPHONEOS_DEPLOYMENT_TARGET=26.0
 export MACOSX_DEPLOYMENT_TARGET=15.0
 
 # Rust keeps source paths in the library (for panic messages), and they start with the home
