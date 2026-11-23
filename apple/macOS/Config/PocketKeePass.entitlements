@@ -3,6 +3,11 @@
 <!--
   The Mac app's sandbox. No com.apple.security.network.client: the app can't connect to anything,
   like the Android app without the INTERNET permission. It reaches only the files the user picks.
+
+  keychain-access-groups makes Xcode sign with a provisioning profile, which gives the app the
+  application identifier the data protection keychain needs (without it, Touch ID's item fails
+  with errSecMissingEntitlement). The App Group is the access group QuickUnlock uses, shared with
+  the AutoFill extension.
 -->
 <plist version="1.0">
 <dict>
@@ -11,6 +16,10 @@
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>44H5SLX8KR.mn.lls.pocketkeepass.mac</string>
+	</array>
+	<key>keychain-access-groups</key>
 	<array>
 		<string>44H5SLX8KR.mn.lls.pocketkeepass.mac</string>
 	</array>
