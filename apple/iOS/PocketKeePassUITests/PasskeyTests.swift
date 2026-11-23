@@ -46,6 +46,16 @@ final class PasskeyTests: XCTestCase {
             return XCTFail("didn't unlock\n" + sheet.debugDescription)
         }
         attach(sheet, "save a passkey")
+        // Into Work rather than the top group (or wherever the last run put it).
+        let ui = extensionUI.first { $0.buttons["Save in a new entry"].exists } ?? sheet
+        let group = ui.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Group'")).firstMatch
+        XCTAssertTrue(group.exists, "no group choice\n" + ui.debugDescription)
+        group.tap()
+        let work = ui.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Work'")).firstMatch
+        XCTAssertTrue(work.waitForExistence(timeout: 10), "no group list\n" + ui.debugDescription)
+        attach(ui, "choose a group")
+        work.tap()
+        XCTAssertTrue(ui.buttons.matching(NSPredicate(format: "label CONTAINS 'Work'")).firstMatch.waitForExistence(timeout: 10))
         newEntry.tap()
 
         // webauthn.io checked the new passkey.

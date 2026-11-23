@@ -21,6 +21,16 @@
         }
       }
     },
+    "(no name)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(нэргүй)"
+          }
+        }
+      }
+    },
     "(no title)": {
       "localizations": {
         "mn": {
@@ -81,6 +91,26 @@
         }
       }
     },
+    "Change group": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бүлэг солих"
+          }
+        }
+      }
+    },
+    "Chosen": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сонгосон"
+          }
+        }
+      }
+    },
     "Fill in on %@": {
       "localizations": {
         "mn": {
@@ -97,6 +127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Энэ бичлэгийн хэрэглэгчийн нэр, нууц үгийг бөглөнө"
+          }
+        }
+      }
+    },
+    "Group": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бүлэг"
           }
         }
       }
@@ -207,6 +247,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "PocketKeePass түлхүүр файлыг нээж чадахгүй байна. PocketKeePass апп дээр түлхүүр файлыг хасаад дахин нэмнэ үү."
+          }
+        }
+      }
+    },
+    "Put the new entry in": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ бичлэгийг байршуулах бүлэг"
           }
         }
       }

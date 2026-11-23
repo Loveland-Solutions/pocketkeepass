@@ -5,6 +5,7 @@ import SwiftUI
 struct AutoFillView: View {
     @Bindable var model: AutoFillModel
     @State private var screenCaptured = false
+    @State private var choosingGroup = false
 
     var body: some View {
         NavigationStack {
@@ -260,6 +261,20 @@ struct AutoFillView: View {
                     }
                 }
                 Section {
+                    if model.passkeyGroups.count > 1, let group = model.passkeyGroups.first(where: { $0.id == model.passkeyGroupId }) {
+                        Button {
+                            choosingGroup = true
+                        } label: {
+                            LabeledContent {
+                                Text(verbatim: groupName(group))
+                            } label: {
+                                Text("Group")
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .tint(.primary)
+                        .accessibilityHint(Text("Change group"))
+                    }
                     Button {
                         model.createPasskey(.newEntry)
                     } label: {
@@ -295,6 +310,53 @@ struct AutoFillView: View {
                 }
             }
         }
+        .sheet(isPresented: $choosingGroup) { groupPicker }
+    }
+
+    /// Where a new passkey's new entry goes: every group but the recycle bin, as a tree.
+    private var groupPicker: some View {
+        NavigationStack {
+            List(model.passkeyGroups, id: \.id) { group in
+                Button {
+                    model.passkeyGroupId = group.id
+                    choosingGroup = false
+                } label: {
+                    Label {
+                        HStack {
+                            Text(verbatim: groupName(group)).foregroundStyle(Color.primary)
+                            Spacer()
+                            if group.id == model.passkeyGroupId {
+                                Image(systemName: "checkmark").foregroundStyle(.tint)
+                                    .accessibilityLabel(Text("Chosen"))
+                            }
+                        }
+                    } icon: {
+                        ItemIconView(icon: group.icon, kind: .group)
+                    }
+                    .padding(.leading, CGFloat(min(group.depth, 8)) * 16)
+                }
+            }
+            .navigationTitle(Text("Put the new entry in"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { choosingGroup = false }
+                }
+            }
+        }
+        .environment(model.customIcons)
+        #if os(macOS)
+        .frame(minWidth: 320, minHeight: 360)
+        #endif
+    }
+
+    /// A group's name; the top group's is the database's own, or the file's.
+    private func groupName(_ group: GroupChoice) -> String {
+        if !group.name.isEmpty { return group.name }
+        if group.depth == 0 { return model.recent?.name ?? "PocketKeePass" }
+        return String(localized: "(no name)")
     }
 
     private func row(_ result: SearchResult) -> some View {

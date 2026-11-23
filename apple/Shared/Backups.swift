@@ -43,6 +43,9 @@ nonisolated struct Backup: Equatable, Sendable {
 /// Same rules as Android's `Backups.kt`. Blocking file work: call it off the main thread.
 nonisolated struct Backups: Sendable {
     static let maxDatabases = 3
+    /// Posted (a Darwin notification) by the Mac's AutoFill extension when it leaves a save for
+    /// the app to write, so an open app takes it in at once. Carries nothing.
+    static let extensionSavedNotice = "group.mn.lls.pocketkeepass.extension-saved"
     private static let previous = ".kdbx"
     private static let unfinished = ".unfinished.kdbx"
     private static let saved = ".saved.kdbx"
@@ -75,6 +78,12 @@ nonisolated struct Backups: Sendable {
     /// Whether a save to the database at `location` was kept here but isn't confirmed in its file.
     func hasUnfinished(_ location: String) -> Bool {
         FileManager.default.fileExists(atPath: file(location, Self.unfinished).path(percentEncoded: false))
+    }
+
+    /// The unfinished save of the database at `location`, if there is one. On the Mac it may be
+    /// the AutoFill extension's, waiting for the app to write it.
+    func unfinished(_ location: String) -> Data? {
+        try? Data(contentsOf: file(location, Self.unfinished))
     }
 
     /// The save to the database at `location` was written and confirmed: the unfinished copy is
