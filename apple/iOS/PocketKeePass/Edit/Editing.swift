@@ -269,7 +269,8 @@ struct EditingPresenter: ViewModifier {
     func body(content: Content) -> some View {
         content
             .sheet(item: $editing.entryForm) { form in
-                EntryEditorView(form: form)
+                // A new entry opens once it's saved, as on Android.
+                EntryEditorView(form: form) { id in editing.path.append(.entry(id)) }
             }
             .sheet(item: $editing.groupForm) { form in
                 GroupEditorView(form: form)

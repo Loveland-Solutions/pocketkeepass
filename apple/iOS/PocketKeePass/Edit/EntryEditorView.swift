@@ -8,6 +8,8 @@ import SwiftUI
 /// user taps "Change": until then, saving keeps them exactly as they are.
 struct EntryEditorView: View {
     @State var form: EntryForm
+    /// A new entry was saved: its id, so it can be opened.
+    var created: (String) -> Void = { _ in }
     @Environment(Session.self) private var session
     @Environment(\.dismiss) private var dismiss
     @State private var saving = false
@@ -113,9 +115,10 @@ struct EntryEditorView: View {
                         try FieldDraft.withEdits(drafts) { try database.updateEntry(id: entryId, fields: $0, tags: tags) }
                     }
                 } else if let groupId {
-                    _ = try await session.change { database in
+                    let id = try await session.change { database in
                         try FieldDraft.withEdits(drafts) { try database.createEntry(groupId: groupId, fields: $0, tags: tags) }
                     }
+                    created(id)
                 }
                 dismiss()
             } catch {
