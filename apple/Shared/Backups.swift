@@ -28,6 +28,10 @@ nonisolated struct Backup: Equatable, Sendable {
 /// uploads whichever copy arrives last, or another app that doesn't merge. Each unlock merges
 /// it (or an unfinished save, which is newer) into the file as read (`ours`).
 ///
+/// On the Mac there's a fourth, the **latest**: the file as the app last read or wrote it. macOS
+/// ties a file bookmark to the app that made it, so the AutoFill extension can't open the file
+/// the user picked in the app; it opens this copy instead (`latest`).
+///
 /// All are the database file itself, encrypted with the master key, so they hold nothing the
 /// file doesn't. They live in the App Group's Application Support, excluded from iCloud and computer backups,
 /// named by a hash of the database's location. Writing one is atomic: a temporary file, synced,
@@ -42,6 +46,7 @@ nonisolated struct Backups: Sendable {
     private static let previous = ".kdbx"
     private static let unfinished = ".unfinished.kdbx"
     private static let saved = ".saved.kdbx"
+    private static let latest = ".latest.kdbx"
     /// A SHA-256 hash in hex, which starts every copy's file name.
     private static let hashLength = 64
 
@@ -98,6 +103,17 @@ nonisolated struct Backups: Sendable {
         return nil
     }
 
+    /// Keeps `bytes` as the database at `location` as the app last read or wrote it, for the Mac's
+    /// AutoFill extension, which can't open the file itself.
+    func keepLatest(_ location: String, _ bytes: Data) throws {
+        try store(file(location, Self.latest), bytes)
+    }
+
+    /// The database at `location` as the app last read or wrote it (`keepLatest`), or nil.
+    func latest(_ location: String) -> Data? {
+        try? Data(contentsOf: file(location, Self.latest))
+    }
+
     /// The best copy of the database at `location`: the unfinished save if any, else the
     /// previous version.
     func find(_ location: String) -> Backup? {
@@ -116,7 +132,7 @@ nonisolated struct Backups: Sendable {
     /// Files the copies of the database at `from` under `to`, where its backup was just saved as
     /// a new file. Copies already filed under `to` are replaced.
     func move(_ from: String, to: String) throws {
-        for kind in [Self.previous, Self.unfinished, Self.saved] {
+        for kind in [Self.previous, Self.unfinished, Self.saved, Self.latest] {
             let source = file(from, kind)
             guard FileManager.default.fileExists(atPath: source.path(percentEncoded: false)) else { continue }
             guard rename(source.path(percentEncoded: false), file(to, kind).path(percentEncoded: false)) == 0 else {
@@ -127,7 +143,7 @@ nonisolated struct Backups: Sendable {
 
     /// Deletes the copies of the database at `location`, if any.
     func delete(_ location: String) {
-        for kind in [Self.previous, Self.unfinished, Self.saved] {
+        for kind in [Self.previous, Self.unfinished, Self.saved, Self.latest] {
             try? FileManager.default.removeItem(at: file(location, kind))
         }
     }

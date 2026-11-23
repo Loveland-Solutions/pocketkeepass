@@ -30,7 +30,13 @@ crypto logic lives in Swift.
   `44H5SLX8KR.mn.lls.pocketkeepass.mac` (Mac groups start with the team ID), which is also the
   Keychain access group. Quick unlock's item is in the data protection keychain, which needs a
   provisioning profile: an unsigned or "sign to run locally" build gets
-  `errSecMissingEntitlement` (-34018), so build with Apple's profile (below).
+  `errSecMissingEntitlement` (-34018), so build with Apple's profile (below). Its AutoFill
+  extension (`mn.lls.pocketkeepass.mac.autofill`) builds the same `AutoFill/` code as the
+  iPhone's. macOS ties a file bookmark to the app that made it, so the extension can't open the
+  database the user picked: the app keeps the file as it last read or wrote it in the App Group
+  (`Backups.latest`), the extension unlocks that, and a passkey made there waits as an
+  unfinished save that the app writes to the file at its next unlock. A key file can't be read
+  there either, so a database with one fills only with Touch ID.
 
 Rust targets needed:
 

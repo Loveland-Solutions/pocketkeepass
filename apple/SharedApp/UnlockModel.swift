@@ -357,15 +357,17 @@ private nonisolated struct Unlocked: Sendable {
     let url: URL
     let fingerprint: Data
     let needsUpgrade: Bool
+    let file: Data
 
     init(_ database: UnlockedDatabase, url: URL, file: Data) throws {
         self.database = database
         self.url = url
+        self.file = file
         fingerprint = FileAccess.fingerprint(file)
         needsUpgrade = try database.summary().needsUpgrade
     }
 
     @MainActor func start(_ session: Session, _ recent: RecentDatabase) {
-        session.start(database, recent: recent, url: url, fingerprint: fingerprint, needsUpgrade: needsUpgrade)
+        session.start(database, recent: recent, url: url, fingerprint: fingerprint, needsUpgrade: needsUpgrade, file: file)
     }
 }

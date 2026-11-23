@@ -76,3 +76,56 @@ private final class InteractionRecorder: UIGestureRecognizer, UIGestureRecognize
     }
 }
 #endif
+
+#if os(macOS)
+import AppKit
+import SwiftUI
+
+/// The Mac's version: every key press, click, and scroll in this process counts as use
+/// (auto-lock), and the window is left out of screenshots, screen recordings, and screen
+/// sharing (`sharingType = .none`), so the cover `onCaptureChange` drives on iOS isn't needed.
+struct WindowHooks: NSViewRepresentable {
+    var onInteraction: () -> Void
+    var onCaptureChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> HookView {
+        let view = HookView()
+        view.onInteraction = onInteraction
+        return view
+    }
+
+    func updateNSView(_ view: HookView, context: Context) {
+        view.onInteraction = onInteraction
+    }
+
+    static func dismantleNSView(_ view: HookView, coordinator: ()) {
+        view.stop()
+    }
+
+    final class HookView: NSView {
+        var onInteraction: () -> Void = {}
+        private var monitor: Any?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window else { return }
+            #if DEBUG
+            let allowCapture = ProcessInfo.processInfo.environment["PKP_ALLOW_SCREEN_CAPTURE"] == "1"
+            #else
+            let allowCapture = false
+            #endif
+            if !allowCapture { window.sharingType = .none }
+            guard monitor == nil else { return }
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown, .scrollWheel]) { [weak self] event in
+                self?.onInteraction()
+                return event
+            }
+        }
+
+        func stop() {
+            if let monitor { NSEvent.removeMonitor(monitor) }
+            monitor = nil
+        }
+    }
+}
+#endif

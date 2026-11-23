@@ -22,7 +22,9 @@ struct AutoFillView: View {
                 }
             }
             .navigationTitle(Text(verbatim: "PocketKeePass"))
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { model.cancel() }
@@ -82,7 +84,9 @@ struct AutoFillView: View {
                             SecureField("Master password", text: $model.password)
                         }
                     }
+                    #if os(iOS)
                     .textInputAutocapitalization(.never)
+                    #endif
                     .autocorrectionDisabled()
                     .focused($passwordFocused)
                     .submitLabel(.go)
@@ -114,9 +118,15 @@ struct AutoFillView: View {
                 }
             } else if model.isPasswordDue {
                 Section {
-                    Text("Type your master password this time. PocketKeePass asks for it after the iPhone restarts and every \(model.quickUnlock.intervalDays) days, so you don’t forget it.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    Group {
+                        #if os(macOS)
+                        Text("Type your master password this time. PocketKeePass asks for it after the Mac restarts and every \(model.quickUnlock.intervalDays) days, so you don’t forget it.")
+                        #else
+                        Text("Type your master password this time. PocketKeePass asks for it after the iPhone restarts and every \(model.quickUnlock.intervalDays) days, so you don’t forget it.")
+                        #endif
+                    }
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
                 }
             }
 
@@ -178,8 +188,12 @@ struct AutoFillView: View {
                 }
             }
         }
+        #if os(iOS)
         .searchable(text: $model.query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search all entries"))
         .textInputAutocapitalization(.never)
+        #else
+        .searchable(text: $model.query, placement: .toolbar, prompt: Text("Search all entries"))
+        #endif
         .autocorrectionDisabled()
         .task(id: model.query) { await model.search() }
     }

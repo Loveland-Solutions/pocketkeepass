@@ -2,9 +2,10 @@ import AuthenticationServices
 import PocketKeePassCore
 import SwiftUI
 
-/// iOS's way into the AutoFill extension. iOS shows it when the user picks PocketKeePass for a
-/// password field (the key above the keyboard, or Safari's "Passwords" menu), to sign in with a
-/// passkey, or to save a new passkey.
+/// The system's way into the AutoFill extension. iOS shows it when the user picks PocketKeePass
+/// for a password field (the key above the keyboard, or Safari's "Passwords" menu), to sign in
+/// with a passkey, or to save a new passkey; macOS from the same menus and passkey sheet, in
+/// Safari and other apps. The same code builds for both.
 ///
 /// PocketKeePass doesn't put its entries into iOS's list of saved logins
 /// (`ASCredentialIdentityStore`), so iOS never asks for a password without showing this screen,
@@ -62,18 +63,31 @@ final class CredentialProviderViewController: ASCredentialProviderViewController
         show(.password([credentialRequest.credentialIdentity.serviceIdentifier]))
     }
 
+    #if os(iOS)
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         // However the sheet went away, the database doesn't stay open behind it.
         model?.end(.cancel)
     }
+    #else
+    override func viewDidDisappear() {
+        super.viewDidDisappear()
+        // However the sheet went away, the database doesn't stay open behind it.
+        model?.end(.cancel)
+    }
+    #endif
 
     private func show(_ request: AutoFillModel.Request) {
         let model = AutoFillModel(request: request) { [weak self] outcome in
             self?.finish(outcome)
         }
         self.model = model
+        #if os(iOS)
         let host = UIHostingController(rootView: AutoFillView(model: model))
+        #else
+        let host = NSHostingController(rootView: AutoFillView(model: model).frame(minWidth: 420, minHeight: 480))
+        preferredContentSize = NSSize(width: 460, height: 560)
+        #endif
         addChild(host)
         host.view.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(host.view)
@@ -83,7 +97,9 @@ final class CredentialProviderViewController: ASCredentialProviderViewController
             host.view.topAnchor.constraint(equalTo: view.topAnchor),
             host.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
+        #if os(iOS)
         host.didMove(toParent: self)
+        #endif
     }
 
     private func finish(_ outcome: AutoFillModel.Outcome) {

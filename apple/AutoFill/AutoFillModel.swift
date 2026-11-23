@@ -67,8 +67,9 @@ final class AutoFillModel {
     @ObservationIgnored let customIcons = CustomIcons()
     @ObservationIgnored private var database: UnlockedDatabase?
     /// The file the database came from, as it was read, and the engine's change count then:
-    /// what saving a new passkey compares against.
-    @ObservationIgnored private var file: (url: URL, fingerprint: Data, cleanCount: UInt64)?
+    /// what saving a new passkey compares against. `direct` is false on the Mac when it was
+    /// the app's copy (`Backups.latest`), not the file itself.
+    @ObservationIgnored private var file: (url: URL, fingerprint: Data, cleanCount: UInt64, direct: Bool)?
     @ObservationIgnored private let finish: (Outcome) -> Void
     @ObservationIgnored private var finished = false
     @ObservationIgnored private var autoPrompted = false
@@ -121,12 +122,16 @@ final class AutoFillModel {
         switch quickUnlock.check(recent, biometry: biometry, comparingFaces: false) {
         case nil: break
         case .invalidated:
-            error = String(localized: "Unlocking with \(biometry.kind.name) was turned off because the faces, fingerprints, or passcode on this iPhone changed. Unlock with your master password, then turn it back on in the PocketKeePass app’s settings.")
+            error = Self.biometryChangedMessage(biometry.kind.name)
             return
         case .off, .passwordDue: return
         case .unavailable:
             if biometry.state == .lockedOut {
+                #if os(macOS)
+                error = String(localized: "\(biometry.kind.name) is locked after too many tries. Use your master password, or unlock the Mac with its password to turn \(biometry.kind.name) back on.")
+                #else
                 error = String(localized: "\(biometry.kind.name) is locked after too many tries. Use your master password, or unlock the iPhone with its passcode to turn \(biometry.kind.name) back on.")
+                #endif
             }
             return
         }
@@ -139,7 +144,7 @@ final class AutoFillModel {
                 hash = try await quickUnlock.keyHash(recent, biometry: biometry)
             } catch is QuickUnlock.Invalidated {
                 isUnlocking = false
-                error = String(localized: "Unlocking with \(biometry.kind.name) was turned off because the faces, fingerprints, or passcode on this iPhone changed. Unlock with your master password, then turn it back on in the PocketKeePass app’s settings.")
+                error = Self.biometryChangedMessage(biometry.kind.name)
                 return
             } catch let failure as LAError where [.userCancel, .userFallback, .systemCancel, .appCancel].contains(failure.code) {
                 isUnlocking = false
@@ -204,7 +209,12 @@ final class AutoFillModel {
                 quickUnlock.passwordTyped(recent)
                 await opened(unlocked)
             case .failure(is KeyFileUnreadable):
+                #if os(macOS)
+                // macOS ties the key file's bookmark to the app, so the extension never reads it.
+                error = String(localized: "AutoFill on the Mac can’t read the key file. Turn on Touch ID in the PocketKeePass app’s settings to unlock here.")
+                #else
                 error = String(localized: "PocketKeePass can’t open the key file anymore. Open the PocketKeePass app, remove the key file, and add it again.")
+                #endif
             case .failure(let failure):
                 error = failure.userMessage
             }
@@ -218,8 +228,7 @@ final class AutoFillModel {
     nonisolated private static func open(
         _ recent: RecentDatabase, unlock: (Data) throws -> UnlockedDatabase
     ) throws -> Opened {
-        let url = try FileAccess.resolve(recent.bookmark).url
-        let file = try FileAccess.read(url)
+        let (url, file, direct) = try read(recent)
         let database = try unlock(file)
         // What matches the file, before our own copy is merged in below.
         let cleanCount = database.changeCount()
@@ -228,7 +237,25 @@ final class AutoFillModel {
             // Another master key since, or a copy that won't open: the file as it is.
             _ = try? database.mergeSavedCopy(file: ours)
         }
-        return Opened(database: database, url: url, fingerprint: FileAccess.fingerprint(file), cleanCount: cleanCount)
+        return Opened(database: database, url: url, fingerprint: FileAccess.fingerprint(file), cleanCount: cleanCount, direct: direct)
+    }
+
+    /// The database's file. On the Mac, the extension can't open a file through the app's
+    /// bookmark (macOS ties it to the app that made it), so it reads the copy the app keeps of
+    /// the file as it last read or wrote it (`Backups.latest`). Blocking.
+    nonisolated private static func read(_ recent: RecentDatabase) throws -> (URL, Data, Bool) {
+        #if os(macOS)
+        if let url = try? FileAccess.resolve(recent.bookmark).url, let file = try? FileAccess.read(url) {
+            return (url, file, true)
+        }
+        guard let location = recent.location, let copy = Backups.standard.latest(location) else {
+            throw NoCopyForAutoFill()
+        }
+        return (URL(filePath: location), copy, false)
+        #else
+        let url = try FileAccess.resolve(recent.bookmark).url
+        return (url, try FileAccess.read(url), true)
+        #endif
     }
 
     /// A database just unlocked, and its file as it was read.
@@ -237,6 +264,7 @@ final class AutoFillModel {
         let url: URL
         let fingerprint: Data
         let cleanCount: UInt64
+        let direct: Bool
     }
 
     private func opened(_ opened: Opened) async {
@@ -246,7 +274,7 @@ final class AutoFillModel {
             return
         }
         self.database = database
-        file = (opened.url, opened.fingerprint, opened.cleanCount)
+        file = (opened.url, opened.fingerprint, opened.cleanCount, opened.direct)
         customIcons.use(database)
         switch request {
         case .password: await findMatches(database)
@@ -387,9 +415,15 @@ final class AutoFillModel {
     /// as it was and the new bytes are kept in `Backups`; the write is read back and compared.
     /// The app merges this save in at its next unlock like any other (`Backups.ours`). Blocking.
     nonisolated private static func save(
-        _ database: UnlockedDatabase, to file: (url: URL, fingerprint: Data, cleanCount: UInt64)
+        _ database: UnlockedDatabase, to file: (url: URL, fingerprint: Data, cleanCount: UInt64, direct: Bool)
     ) throws {
         let location = Backups.location(file.url)
+        guard file.direct else {
+            // The Mac's copy, not the file: the new bytes wait as an unfinished save, which the
+            // app merges into the file and writes at its next unlock, like a save held offline.
+            try Backups.standard.keepUnfinished(location, try database.save())
+            return
+        }
         let current = try FileAccess.read(file.url)
         if FileAccess.fingerprint(current) != file.fingerprint {
             _ = try database.syncWithFile(file: current, unchangedSince: file.cleanCount)
@@ -473,6 +507,14 @@ final class AutoFillModel {
         Task.detached(priority: .userInitiated) { database.lock() }
     }
 
+    private static func biometryChangedMessage(_ name: String) -> String {
+        #if os(macOS)
+        String(localized: "Unlocking with \(name) was turned off because the fingerprints or password on this Mac changed. Unlock with your master password, then turn it back on in the PocketKeePass app’s settings.")
+        #else
+        String(localized: "Unlocking with \(name) was turned off because the faces, fingerprints, or passcode on this iPhone changed. Unlock with your master password, then turn it back on in the PocketKeePass app’s settings.")
+        #endif
+    }
+
     // MARK: Auto-lock
 
     /// A touch or key press: the auto-lock clock starts again.
@@ -500,3 +542,10 @@ final class AutoFillModel {
 }
 
 private struct KeyFileUnreadable: Error {}
+
+/// The Mac's extension found no copy of the database from the app.
+private struct NoCopyForAutoFill: LocalizedError {
+    var errorDescription: String? {
+        String(localized: "Open your database in the PocketKeePass app once, then try again here.")
+    }
+}

@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ is locked after too many tries. Use your master password, or unlock the Mac with its password to turn %@ back on.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хэт олон удаа оролдсон тул %1$@ түр түгжигдлээ. Үндсэн нууц үгээ ашиглана уу. Эсвэл Mac-ийн түгжээг нууц үгээр нь тайлбал %2$@ дахин ажиллана."
+          }
+        }
+      }
+    },
     "%@ is locked after too many tries. Use your master password, or unlock the iPhone with its passcode to turn %@ back on.": {
       "localizations": {
         "mn": {
@@ -47,6 +57,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Энэ бичлэгт нэмэх: %@"
+          }
+        }
+      }
+    },
+    "AutoFill on the Mac can’t read the key file. Turn on Touch ID in the PocketKeePass app’s settings to unlock here.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac дээр автоматаар бөглөх үед түлхүүр файлыг унших боломжгүй. Энд түгжээ тайлахын тулд PocketKeePass аппын тохиргооноос Touch ID ашиглан тайлахыг асаана уу."
           }
         }
       }
@@ -157,6 +177,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Эхлээд PocketKeePass апп дээр өгөгдлийн сангаа нээнэ үү. Дараа нь PocketKeePass таны нууц үгсийг энд бөглөж чадна."
+          }
+        }
+      }
+    },
+    "Open your database in the PocketKeePass app once, then try again here.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өгөгдлийн сангаа PocketKeePass апп дээр нэг удаа нээгээд, энд дахин оролдоно уу."
           }
         }
       }
@@ -391,6 +421,28 @@
         }
       }
     },
+    "Type your master password this time. PocketKeePass asks for it after the Mac restarts and every %lld days, so you don’t forget it.": {
+      "localizations": {
+        "mn": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Энэ удаа үндсэн нууц үгээ бичнэ үү. Мартахгүйн тулд PocketKeePass үүнийг Mac дахин асах бүрд болон өдөр бүр асуудаг."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Энэ удаа үндсэн нууц үгээ бичнэ үү. Мартахгүйн тулд PocketKeePass үүнийг Mac дахин асах бүрд болон %lld өдөр тутам асуудаг."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Type your master password this time. PocketKeePass asks for it after the iPhone restarts and every %lld days, so you don’t forget it.": {
       "localizations": {
         "mn": {
@@ -449,6 +501,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Энэ iPhone дээрх царай, хурууны хээ эсвэл нууц код өөрчлөгдсөн тул %@ ашиглан түгжээ тайлахыг унтраалаа. Үндсэн нууц үгээрээ түгжээг тайлаад, PocketKeePass аппын тохиргооноос дахин асаана уу."
+          }
+        }
+      }
+    },
+    "Unlocking with %@ was turned off because the fingerprints or password on this Mac changed. Unlock with your master password, then turn it back on in the PocketKeePass app’s settings.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ Mac дээрх хурууны хээ эсвэл нууц үг өөрчлөгдсөн тул %@ ашиглан түгжээ тайлахыг унтраалаа. Үндсэн нууц үгээрээ түгжээг тайлаад, PocketKeePass аппын тохиргооноос дахин асаана уу."
           }
         }
       }

@@ -89,7 +89,7 @@ final class CreateDatabaseModel {
         quickUnlock.disable()
         quickUnlock.passwordTyped(recent)
         self.made = nil
-        session.start(made.database, recent: recent, url: url, fingerprint: FileAccess.fingerprint(expected), needsUpgrade: false)
+        session.start(made.database, recent: recent, url: url, fingerprint: FileAccess.fingerprint(expected), needsUpgrade: false, file: expected)
         if quickUnlock.shouldOffer(recent) { quickUnlock.offerPending = true }
         return true
     }

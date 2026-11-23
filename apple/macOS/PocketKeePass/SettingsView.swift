@@ -1,7 +1,7 @@
 import PocketKeePassCore
 import SwiftUI
 
-/// The Settings window (⌘,): auto-lock, the clipboard, and About.
+/// The Settings window (⌘,): Touch ID, AutoFill, auto-lock, the clipboard, and About.
 struct SettingsView: View {
     @Environment(AutoLock.self) private var autoLock
     @AppStorage(Preferences.autoLockKey, store: AppGroup.defaults) private var autoLockSeconds = 300
@@ -11,6 +11,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             QuickUnlockSection()
+            AutoFillSection()
 
             Section {
                 Picker("Lock after", selection: $autoLockSeconds) {

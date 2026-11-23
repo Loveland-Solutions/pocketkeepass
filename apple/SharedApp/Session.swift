@@ -169,8 +169,9 @@ final class Session {
     }
 
     /// A database was just unlocked from `file`. Any other one is locked first.
-    func start(_ database: UnlockedDatabase, recent: RecentDatabase, url: URL, fingerprint: Data, needsUpgrade: Bool) {
+    func start(_ database: UnlockedDatabase, recent: RecentDatabase, url: URL, fingerprint: Data, needsUpgrade: Bool, file: Data? = nil) {
         lock()
+        if let file { keepLatest(url, file) }
         let open = Open(database: database, recent: recent, url: url, fingerprint: fingerprint, needsUpgrade: needsUpgrade)
         self.open = open
         customIcons.use(database)
@@ -180,6 +181,15 @@ final class Session {
         revision += 1
         restoreTask = Task { await restoreOurs(open) }
         startWatching()
+    }
+
+    /// On the Mac, keeps the file as just read or written for the AutoFill extension, which
+    /// can't open it itself (`Backups.latest`). Nothing on iOS, where the extension can.
+    private func keepLatest(_ url: URL, _ bytes: Data) {
+        #if os(macOS)
+        let backups = backups
+        Task.detached(priority: .utility) { try? backups.keepLatest(Backups.location(url), bytes) }
+        #endif
     }
 
     /// Wipes the decrypted database at once (not when it's garbage collected) and forgets it.
@@ -440,6 +450,7 @@ final class Session {
                 return (report, (try? database.summary().needsUpgrade) ?? true)
             }.value
             open.fingerprint = FileAccess.fingerprint(current)
+            keepLatest(open.url, current)
             // The engine's count from the moment it took the file in, so a change made just
             // after isn't counted as already in the file.
             if !report.merged { open.cleanCount = report.changeCount }
@@ -591,6 +602,7 @@ final class Session {
                 return .failed(.cantWrite)
             }
             open.fingerprint = FileAccess.fingerprint(bytes)
+            keepLatest(url, bytes)
             open.cleanCount = count
             await Self.io { backups.saved(location) }
             if self.open === open { sync.savedAt = .now }
