@@ -3,3 +3,12 @@
 package_name = "mn.lls.pocketkeepass.core"
 cdylib_name = "pocketkeepass_core"
 android = true
+
+# How UniFFI generates the Swift side, for the iOS and macOS apps (../apple/build-engine.sh).
+[bindings.swift]
+module_name = "PocketKeePassCore"
+ffi_module_name = "PocketKeePassCoreFFI"
+ffi_module_filename = "PocketKeePassCoreFFI"
+# Our own LocalizedError (apple/PocketKeePassCore/Sources/PocketKeePassCore/KeePassError+Message.swift)
+# shows the engine's sentence; UniFFI's would show a debug dump.
+omit_localized_error_conformance = true
