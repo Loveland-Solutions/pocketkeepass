@@ -28,6 +28,21 @@
     <string name="open_database">Өгөгдлийн сан нээх</string>
     <string name="open_database_hint">Энэ утаснаас эсвэл дурын үүлэн хадгалах сангийн аппаас .kdbx файл сонгоно уу.</string>
 
+    <!-- A new database -->
+    <string name="create_database">Шинэ өгөгдлийн сан үүсгэх</string>
+    <string name="new_database_title">Шинэ өгөгдлийн сан</string>
+    <string name="new_database_default_name">Нууц үгс</string>
+    <string name="new_database_name">Нэр</string>
+    <string name="new_database_name_hint">Файл энэ нэрээр нэрлэгдэнэ. Файлын нэрийг дараа нь өөрчилж болно.</string>
+    <string name="new_database_password_again">Дахин бичих</string>
+    <string name="new_database_passwords_differ">Хоёр нууц үг өөр байна.</string>
+    <string name="new_database_password_hint">Энэ ганц нууц үг бусад бүх зүйлийг нээдэг тул урт бөгөөд санахад хялбар болгоорой: хоорондоо холбоогүй хэдэн үг сайн тохирно. Мартвал хэн ч, бид ч гэсэн өгөгдлийн санг нээж чадахгүй.</string>
+    <string name="create">Үүсгэх</string>
+    <string name="new_database_creating">Үүсгэж байна… Хэдэн секунд болно.</string>
+    <string name="new_database_choose_location">Хадгалах газраа сонгох</string>
+    <string name="new_database_sync_hint">Бусад төхөөрөмж дээрээ PocketKeePass эсвэл дурын KeePass аппаар ашиглахын тулд Google Drive эсвэл өөр хадгалах сангийн апп дээр хадгална уу.</string>
+    <string name="new_database_cant_save">Шинэ өгөгдлийн санг тэнд хадгалж чадсангүй. Өөр газар сонгоно уу.</string>
+    <string name="new_database_type_again">Үндсэн нууц үгээ дахин бичнэ үү.</string>
     <!-- Unlock -->
     <string name="change_database">Солих</string>
     <string name="master_password">Үндсэн нууц үг</string>

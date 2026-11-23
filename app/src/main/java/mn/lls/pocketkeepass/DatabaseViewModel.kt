@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -158,6 +159,20 @@ private sealed interface BiometricPurpose {
  * The decrypted database itself lives in the app-wide [Session], so every ViewModel sees the
  * same one: unlocking or locking in one place shows everywhere.
  */
+/**
+ * The "new database" screen, while it's open. Its text (name and master password, twice) lives
+ * in [DatabaseViewModel.newName] and friends, out of saved state.
+ */
+data class NewDatabaseState(
+    /** The engine is making the database (timing and running the key derivation). */
+    val busy: Boolean = false,
+    val error: String? = null,
+    /** Made and encrypted, waiting for the user to choose where the file goes. */
+    val made: Boolean = false,
+    /** The file name to suggest, without ".kdbx". */
+    val fileName: String = "",
+)
+
 class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     private companion object {
         const val SEARCH_DELAY_MS = 150L
@@ -207,6 +222,19 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
      * searches for in their password manager is nobody else's business.
      */
     val searchQuery = TextFieldState()
+
+    /** The new database's name, and its master password typed twice. Out of saved state too. */
+    val newName = TextFieldState()
+    val newPassword = TextFieldState()
+    val newPasswordAgain = TextFieldState()
+
+    private val _newDatabase = MutableStateFlow<NewDatabaseState?>(null)
+
+    /** The "new database" screen's state, or null when it isn't open. */
+    val newDatabase: StateFlow<NewDatabaseState?> = _newDatabase.asStateFlow()
+
+    /** The database [newDatabase] made, and its file's bytes, until they're saved or discarded. */
+    private var made: Pair<UnlockedDatabase, ByteArray>? = null
 
     private val database: UnlockedDatabase? get() = session.open.value?.database
 
@@ -259,6 +287,146 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
             recent.keyFile = null
             clearPassword()
             _state.value = locked(document, keyFile = null)
+        }
+    }
+
+    // MARK: A new database
+
+    /** Opens the "new database" screen. */
+    fun startNewDatabase() {
+        newName.setTextAndPlaceCursorAtEnd(getApplication<Application>().getString(R.string.new_database_default_name))
+        clearNewPasswords()
+        _newDatabase.value = NewDatabaseState()
+    }
+
+    /**
+     * Makes the database and its file's bytes, off the main thread, from the name and password
+     * typed. The screen then asks where to save it ([newDatabaseSaved]). Slow on purpose: the
+     * key derivation is timed, then run again to encrypt the file. Can't be abandoned halfway:
+     * a result nobody wants any more is wiped.
+     */
+    fun createNewDatabase() {
+        val current = _newDatabase.value ?: return
+        val name = newName.text.toString().trim()
+        if (current.busy || current.made || name.isEmpty() || newPassword.text.isEmpty() ||
+            newPassword.text.toString() != newPasswordAgain.text.toString()
+        ) return
+        val passwordBytes = newPassword.text.toUtf8Bytes()
+        clearNewPasswords()
+        _newDatabase.value = current.copy(busy = true, error = null)
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.Default + NonCancellable) {
+                try {
+                    val database = UnlockedDatabase.create(name, passwordBytes, null)
+                    try {
+                        Result.success(database to database.save())
+                    } catch (e: KeePassException) {
+                        database.lock()
+                        database.close()
+                        Result.failure(e)
+                    }
+                } catch (e: KeePassException) {
+                    Result.failure(e)
+                } finally {
+                    passwordBytes.wipe()
+                }
+            }
+            val now = _newDatabase.value
+            result.onSuccess { pair ->
+                if (now == null) {
+                    pair.first.lock()
+                    pair.first.close()
+                    return@launch
+                }
+                made = pair
+                _newDatabase.value = now.copy(busy = false, made = true, fileName = name)
+            }.onFailure { e ->
+                val resources = getApplication<Application>().resources
+                val message = e.userMessage(resources) + " " + resources.getString(R.string.new_database_type_again)
+                _newDatabase.value = now?.copy(busy = false, error = message)
+            }
+        }
+    }
+
+    /**
+     * The user created the file at [uri] for the new database: writes it (read back and
+     * compared), makes it the database, and opens it.
+     */
+    fun newDatabaseSaved(uri: Uri) {
+        val current = _newDatabase.value ?: return
+        val (database, bytes) = made ?: return
+        _newDatabase.value = current.copy(busy = true, error = null)
+        viewModelScope.launch {
+            val opened = withContext(Dispatchers.IO + NonCancellable) {
+                try {
+                    remember(uri, write = true)
+                    documents.write(uri, bytes)
+                    Triple(Document(uri, documents.displayName(uri)), database.summary(), database.listGroup(null))
+                } catch (_: IOException) {
+                    null
+                } catch (_: SecurityException) {
+                    null
+                } catch (_: IllegalArgumentException) {
+                    null
+                } catch (_: UnsupportedOperationException) {
+                    null
+                } catch (_: KeePassException) {
+                    null
+                }
+            }
+            if (opened == null) {
+                _newDatabase.value = current.copy(
+                    busy = false,
+                    error = getApplication<Application>().getString(R.string.new_database_cant_save),
+                )
+                return@launch
+            }
+            val (document, summary, root) = opened
+            made = null
+            _newDatabase.value = null
+            clearNewPasswords()
+            session.lock()
+            val previous = recent.database
+            val previousKeyFile = recent.keyFile
+            withContext(Dispatchers.IO) {
+                if (previous != null && previous.uri != uri) documents.releaseAccess(previous.uri)
+                previousKeyFile?.let { documents.releaseAccess(it.uri) }
+            }
+            recent.database = document
+            recent.keyFile = null
+            // Quick unlock belonged to the previous database. Making this one counts as typing
+            // its master password.
+            quickUnlock.disable()
+            quickUnlock.passwordTyped(uri)
+            val open = Session.Open(database, document, null, summary, root, fingerprint(bytes))
+            session.start(open)
+            follow(open)
+            if (quickUnlock.shouldOffer(uri)) {
+                _state.update { (it as? DatabaseState.Unlocked)?.copy(offerQuickUnlock = true) ?: it }
+            }
+        }
+    }
+
+    /** Leaves the "new database" screen: anything made is wiped, and the passwords cleared. */
+    fun cancelNewDatabase() {
+        _newDatabase.value = null
+        clearNewPasswords()
+        made?.let { (database, bytes) ->
+            made = null
+            bytes.wipe()
+            viewModelScope.launch(Dispatchers.Default) {
+                database.lock()
+                database.close()
+            }
+        }
+    }
+
+    /** Empties both new password fields, and their undo history. */
+    @OptIn(ExperimentalFoundationApi::class) // undoState
+    private fun clearNewPasswords() {
+        for (field in listOf(newPassword, newPasswordAgain)) {
+            field.clearText()
+            field.undoState.clearHistory()
         }
     }
 
@@ -944,6 +1112,13 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         clearPassword()
         searchQuery.clearText()
+        clearNewPasswords()
+        made?.let { (database, bytes) ->
+            made = null
+            bytes.wipe()
+            database.lock()
+            database.close()
+        }
     }
 
     /**

@@ -22,6 +22,21 @@ class BridgeTest {
         File(System.getProperty("pocketkeepass.fixtures"), name).readBytes()
 
     @Test
+    fun `a new database opens with its password, and a blank name is refused`() {
+        val created = UnlockedDatabase.create("Personal", "pw".toByteArray(), null)
+        assertEquals("4.0", created.summary().formatVersion)
+        assertEquals(0u, created.summary().entryCount)
+        val file = created.save()
+        created.lock()
+        val opened = UnlockedDatabase.open(file, "pw".toByteArray(), null)
+        assertEquals("Personal", opened.listGroup(null).group.name)
+        opened.lock()
+        assertThrows(KeePassException.Invalid::class.java) {
+            UnlockedDatabase.create("  ", "pw".toByteArray(), null)
+        }
+    }
+
+    @Test
     fun `the engine library loads`() {
         assertEquals("0.1.0", engineVersion())
     }

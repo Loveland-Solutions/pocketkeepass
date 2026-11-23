@@ -110,6 +110,15 @@ the test then goes through the field's edit menu (AutoFill › Passwords). One s
 taking typed text in PocketKeePass's password field after a run of these (even `main`'s build,
 even after a reboot); another was fine. If that happens, use a fresh simulator.
 
+`testCreateDatabase` (a new database: named, saved with the system's save dialog into "On My
+iPhone", opened, an entry added, locked, and unlocked) leaves the new file in "On My iPhone",
+which the file picker tests want to themselves, so it only runs with
+`TEST_RUNNER_CREATE_DATABASE=1`, on a simulator of its own.
+
+`apple/build-engine.sh` builds the Mac copy of the engine (`core/target/release`, which the
+Android app's Kotlin tests also load) with none of Xcode's environment: linked inside Xcode's
+build, it came out malformed and wouldn't load.
+
 ## Releasing (iPhone and iPad)
 
 `tools/release_ios.sh` builds, signs, checks, and uploads a build to App Store Connect, where it
