@@ -1,9 +1,9 @@
 **Effective date:** November 18, 2026\
-**Last updated:** November 18, 2026
+**Last updated:** November 23, 2026
 
-This Privacy Policy explains how Loveland Solutions, LLC ("we," "us" or "our") handles information in connection with the **PocketKeePass** app (the "App"), a password manager for Android that opens and saves KeePass (.kdbx) databases. The App is available on Google Play, and its source code is public at [github.com/Loveland-Solutions/pocketkeepass](https://github.com/Loveland-Solutions/pocketkeepass).
+This Privacy Policy explains how Loveland Solutions, LLC ("we," "us" or "our") handles information in connection with the **PocketKeePass** app (the "App"), a password manager for Android, iPhone and iPad that opens and saves KeePass (.kdbx) databases. The App is available on Google Play and the App Store, and its source code is public at [github.com/Loveland-Solutions/pocketkeepass](https://github.com/Loveland-Solutions/pocketkeepass).
 
-**The short version:** PocketKeePass does not collect your personal information. Your passwords stay in a database file you choose, encrypted with your master password. The App has no internet permission, so it cannot connect to the internet at all. We have no accounts, no servers that store your data, no analytics, no advertising and no tracking.
+**The short version:** PocketKeePass does not collect your personal information. Your passwords stay in a database file you choose, encrypted with your master password. The App does not connect to the internet: on Android it has no internet permission at all, and on iPhone and iPad it contains no code that connects anywhere. We have no accounts, no servers that store your data, no analytics, no advertising and no tracking.
 
 ---
 
@@ -17,11 +17,11 @@ Email: **contact@lls.mn**
 
 ## 2. Information the App does not collect
 
-The App does not ask Android for permission to use the internet, so it cannot send anything anywhere. We do **not** collect, receive, store or have access to:
+On Android, the App does not ask for permission to use the internet, so it cannot send anything anywhere. iOS has no such permission, so on iPhone and iPad the App simply contains no code that connects to the internet; it only asks iOS whether the device is online, to hold a save back until a cloud storage app can upload it safely (Section 3). We do **not** collect, receive, store or have access to:
 
 - Your database file, or the passwords, usernames, notes, one-time codes, passkeys or anything else in it
 - Your master password or key file
-- Your fingerprint or face data
+- Your fingerprint or face data (including Face ID and Touch ID)
 - Your name, email address, phone number or postal address
 - Your location
 - Your contacts, photos, camera or microphone
@@ -33,11 +33,12 @@ The App does not include analytics tools, advertising networks, crash reporting 
 
 ## 3. Information stored on your device
 
-- **Your database file:** You choose the file with Android's file picker. It can be on your phone or in a storage app you use, such as Google Drive, Dropbox or Nextcloud. The App reads it and saves your changes back to it. The file is encrypted with your master password (and key file, if you use one). If the file is in a cloud storage app, that app uploads it under your account and its own privacy policy, not ours. The App itself does not connect to that service.
-- **Backup copies:** Before each save, the App keeps a copy of the previous version of your database, and of the save in progress, in its own private storage, so a save that goes wrong can be undone. The copies are encrypted the same way as your database. The App keeps copies for the 3 databases you saved most recently.
+- **Your database file:** You choose the file with the system's file picker. It can be on your device or in a storage app you use, such as Google Drive, iCloud Drive, Dropbox or Nextcloud. The App reads it and saves your changes back to it. The file is encrypted with your master password (and key file, if you use one). If the file is in a cloud storage app, that app uploads it under your account and its own privacy policy, not ours. The App itself does not connect to that service. On iPhone and iPad, if the device is offline, the App keeps a save on the device and writes it to the file once the device is back online, so a cloud storage app can't upload it later over changes made on your other devices.
+- **Backup copies:** Before each save, the App keeps a copy of the previous version of your database, and of the save in progress, in its own private storage, so a save that goes wrong can be undone. It also keeps a copy of what it last saved, so that changes another device overwrote can be merged back in. The copies are encrypted the same way as your database. The App keeps copies for the 3 databases you saved most recently. On iPhone and iPad, this storage is shared only with the App's own AutoFill extension (Section 4).
 - **Settings and your last database:** The App remembers which database and key file you opened last (their location and name, not their contents), and your settings: auto-lock, clipboard clearing, password generator options, and the group used last for new passkeys. None of these is secret.
-- **Fingerprint unlock:** If you turn it on, the App stores your database's key in a form that only Android's secure hardware can decrypt, and only after you verify your fingerprint (or a face unlock Android rates as strong). Your fingerprint itself never reaches the App: Android only tells it whether the check passed. Android deletes the stored key if your fingerprints or screen lock change.
-- **Device backups:** The App's own storage is excluded from Android's backups, including Google backups, so its settings and backup copies do not leave your phone that way. Your database file is wherever you put it, and is backed up or synced only if you or your storage app do that.
+- **Face ID and Touch ID (iPhone and iPad):** If you turn it on, the App stores your database's key in the iOS Keychain, on this device only (never in iCloud Keychain or backups), where iOS releases it only after a successful Face ID or Touch ID check. Your face and fingerprint data never reach the App: iOS only tells it whether the check passed. iOS makes the stored key unreadable if the faces or fingerprints on the device change, and deletes it if the passcode is turned off.
+- **Fingerprint unlock (Android):** If you turn it on, the App stores your database's key in a form that only Android's secure hardware can decrypt, and only after you verify your fingerprint (or a face unlock Android rates as strong). Your fingerprint itself never reaches the App: Android only tells it whether the check passed. Android deletes the stored key if your fingerprints or screen lock change.
+- **Device backups:** On Android, the App's own storage is excluded from Android's backups, including Google backups. On iPhone and iPad, its backup copies are excluded from iCloud and computer backups; its settings (none of which is secret) may be included in them, as iOS does for every app. So the App's backup copies do not leave your device that way. Your database file is wherever you put it, and is backed up or synced only if you or your storage app do that.
 - **Deleting the App** removes everything in its own storage. Your database file stays where it is until you delete it.
 
 Because we never receive your database or master password, we cannot view, recover, correct or delete them for you, and we cannot reset a forgotten master password. Please keep your own backups of your database file.
@@ -48,8 +49,8 @@ Because we never receive your database or master password, we cannot view, recov
 
 The App only does this when you ask it to:
 
-- **Copying:** When you copy a username, password or other field, Android places it on the clipboard, where your keyboard and, on older versions of Android, other apps can read it. The App marks passwords as sensitive and clears the clipboard after a time you choose (30 seconds by default).
-- **Autofill:** If you turn on autofill and pick an entry, the App gives that entry's username and password to Android, which fills them into the app or website you're signing in to. Nothing is filled in until you pick an entry.
+- **Copying:** When you copy a username, password or other field, the system places it on the clipboard, where your keyboard and, on older versions of Android, other apps can read it. The App marks passwords as sensitive and clears the clipboard after a time you choose (30 seconds by default). On iPhone and iPad, copied fields stay on that device: they aren't sent to your other Apple devices through Universal Clipboard.
+- **Autofill:** If you turn on autofill and pick an entry, the App gives that entry's username and password to Android or iOS, which fills them into the app or website you're signing in to. Nothing is filled in until you unlock the App and pick an entry (or it finds exactly one entry for that website). On iPhone and iPad, the App does not add your entries to iOS's list of saved passwords, so iOS keeps no record of them.
 - **Passkeys:** If you use a passkey, the App gives the app or website you're signing in to a signature, or for a new passkey a public key, through Android's Credential Manager. The passkey's private key never leaves your database.
 
 What those apps and websites do with that information is governed by their own privacy policies.
@@ -58,9 +59,9 @@ What those apps and websites do with that information is governed by their own p
 
 ## 5. Downloads
 
-PocketKeePass is free, with nothing to buy inside it. When you download it through Google Play, Google handles the download and may collect information to provide it, such as your Google account. That information is governed by Google's privacy policy at [policies.google.com/privacy](https://policies.google.com/privacy). There is nothing to pay, so we never receive payment information.
+PocketKeePass is free, with nothing to buy inside it. When you download it through Google Play, Google handles the download and may collect information to provide it, such as your Google account. That information is governed by Google's privacy policy at [policies.google.com/privacy](https://policies.google.com/privacy). When you download it through the App Store (or test it with TestFlight), Apple does the same under its privacy policy at [apple.com/legal/privacy](https://www.apple.com/legal/privacy/). There is nothing to pay, so we never receive payment information.
 
-Google Play gives developers aggregated download reports (for example, the number of downloads by country). If you have chosen in your device settings to share crash or diagnostic reports with app developers, Google may also give us those reports. We use this information only to understand how many people use the App and to fix problems with it, and we do not use it to identify you.
+Google Play and the App Store give developers aggregated download reports (for example, the number of downloads by country). If you have chosen in your device settings to share crash or diagnostic reports with app developers, Google or Apple may also give us those reports. If you test the App with TestFlight, Apple shares with us the email address you were invited with, and any feedback you choose to send through TestFlight. We use this information only to understand how many people use the App and to fix problems with it, and we do not use it to identify you.
 
 ---
 
@@ -100,7 +101,7 @@ We are a United States company, and our support team may be located outside your
 
 ## 9. Security
 
-The App cannot transmit your data anywhere, which is the strongest protection we can offer. Your database is encrypted with your master password using the KeePass format's standard encryption. The App also locks itself after a time you choose and when the screen turns off, blocks screenshots of its screens, and hides its contents from accessibility apps that aren't assistive tools, on Android versions that allow it. Choosing a strong master password and keeping your phone secure (with a screen lock and up-to-date software) helps protect your data.
+The App cannot transmit your data anywhere, which is the strongest protection we can offer. Your database is encrypted with your master password using the KeePass format's standard encryption. The App also locks itself after a time you choose and when the screen turns off (or the iPhone locks). On Android it blocks screenshots of its screens, and hides its contents from accessibility apps that aren't assistive tools, on Android versions that allow it. On iPhone and iPad, which don't let apps block screenshots, it hides its contents in the app switcher and while the screen is being recorded or shared. Choosing a strong master password and keeping your phone secure (with a screen lock and up-to-date software) helps protect your data.
 
 We protect support messages with reasonable technical and organizational measures, including encrypted connections and secured business accounts.
 
@@ -141,7 +142,7 @@ PocketKeePass does not collect personal information from anyone, including child
 
 ## 12. Changes to this policy
 
-If we change how the App handles information (for example, by adding a feature that sends data off your device), we will update this Privacy Policy and the "Last updated" date before the change takes effect. We will also update the App's data safety information on Google Play. For material changes, we will provide notice in the App or on its store listing.
+If we change how the App handles information (for example, by adding a feature that sends data off your device), we will update this Privacy Policy and the "Last updated" date before the change takes effect. We will also update the App's data safety information on Google Play and its privacy details on the App Store. For material changes, we will provide notice in the App or on its store listing.
 
 ---
 

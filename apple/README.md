@@ -110,6 +110,16 @@ the test then goes through the field's edit menu (AutoFill › Passwords). One s
 taking typed text in PocketKeePass's password field after a run of these (even `main`'s build,
 even after a reboot); another was fine. If that happens, use a fresh simulator.
 
+## Releasing (iPhone and iPad)
+
+`tools/release_ios.sh` builds, signs, checks, and uploads a build to App Store Connect, where it
+shows under TestFlight; `--check` stops before the upload. It signs with the Loveland Solutions
+team (`44H5SLX8KR`) through the team's App Store Connect API key, the same one BetterBudget's
+release uses (`~/.config/betterbudget/`, see the script). No iPhone is registered on the team, so
+a device gets the app only through TestFlight. Giving a build to testers and submitting it for
+review are clicks in App Store Connect. The listing and the answers App Store Connect asks for
+are in `art/app-store/listing.md`.
+
 Screenshots: `xcrun simctl io booted screenshot shot.png`. iOS can't block screenshots, unlike
 Android's `FLAG_SECURE`; the app covers itself in the app switcher and while the screen is being
 recorded or mirrored.
