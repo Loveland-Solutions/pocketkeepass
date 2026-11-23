@@ -68,7 +68,10 @@ saving through `Session` into copies of `core/tests/fixtures` (merging, restorin
 The UI tests (`iOS/PocketKeePassUITests`) drive the app through the system file picker: open,
 wrong password, unlock, browse, search, show and copy a protected field, lock, a new entry, the
 password generator, and
-editing, moving, and deleting an entry. If two simulators share a name (`xcrun simctl list
+editing, moving, and deleting an entry. `FeatureTests` needs no setup: it opens fresh copies of
+fixtures through a debug-only hook (`PKP_OPEN_DATABASE` and `PKP_OPEN_KEY_FILE`, paths on the
+Mac, in `UnlockView.openTestDatabase`), for key files, the one-time code and passkey rows, groups,
+long-press menus, duplicating, "Change", and auto-lock. If two simulators share a name (`xcrun simctl list
 devices`), `name=` may pick the one without the fixture: pass `-destination 'id=<id>'` instead. Setup, once per
 simulator: open the Files app once (that creates its "On My iPhone" storage), then copy
 `core/tests/fixtures/browse.kdbx` into

@@ -45,6 +45,9 @@ struct UnlockView: View {
         .sheet(isPresented: $creating) {
             CreateDatabaseView()
         }
+        #if DEBUG
+        .task { openTestDatabase() }
+        #endif
         // The prompt can only show while the app is active: right after a lock in the
         // background, it waits for the user to come back.
         .task(id: scenePhase) {
@@ -57,6 +60,36 @@ struct UnlockView: View {
             }
         }
     }
+
+    #if DEBUG
+    /// Opened once per launch, not again after each lock (that would undo what a test saved).
+    private static var openedTestDatabase = false
+
+    /// For UI tests, debug builds only (never in a release): `PKP_OPEN_DATABASE` and
+    /// `PKP_OPEN_KEY_FILE` name fixture files on the Mac (the simulator can read them). Fresh
+    /// copies go into the app's own storage and are picked as if through the file picker, so a
+    /// test can use any fixture, and never changes the fixtures themselves.
+    private func openTestDatabase() {
+        let environment = ProcessInfo.processInfo.environment
+        guard !Self.openedTestDatabase, let database = environment["PKP_OPEN_DATABASE"] else { return }
+        Self.openedTestDatabase = true
+        let folder = URL.applicationSupportDirectory.appending(path: "UITests", directoryHint: .isDirectory)
+        func copy(_ path: String) -> URL? {
+            let source = URL(filePath: path)
+            let target = folder.appending(path: source.lastPathComponent)
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try? FileManager.default.removeItem(at: target)
+            // And what earlier runs left of it, which the unlock would merge back in.
+            Backups.standard.delete(Backups.location(target))
+            return (try? FileManager.default.copyItem(at: source, to: target)) == nil ? nil : target
+        }
+        guard let url = copy(database) else { return }
+        model.pickedDatabase(url, quickUnlock: quickUnlock)
+        if let keyFile = environment["PKP_OPEN_KEY_FILE"], let keyURL = copy(keyFile) {
+            model.pickedKeyFile(keyURL, quickUnlock: quickUnlock)
+        }
+    }
+    #endif
 
     private func pick(_ target: Picking) {
         pickingFor = target
