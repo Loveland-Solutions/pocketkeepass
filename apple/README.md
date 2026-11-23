@@ -13,8 +13,15 @@ crypto logic lives in Swift.
   `BridgeTests`, the Swift version of the Android `BridgeTest.kt`, against
   `core/tests/fixtures`.
 - `iOS/` is the iPhone and iPad app (`PocketKeePass.xcodeproj`, iOS 18+, bundle ID
-  `mn.lls.pocketkeepass`). The project uses folder-synchronized groups, so new Swift files are
-  picked up without editing the project file.
+  `mn.lls.pocketkeepass`) and its AutoFill extension (`PocketKeePassAutoFill`,
+  `mn.lls.pocketkeepass.autofill`). The project uses folder-synchronized groups, so new Swift
+  files are picked up without editing the project file: `PocketKeePass/` is the app's,
+  `PocketKeePassAutoFill/` the extension's, and `Shared/` is built into both (the remembered
+  database, file access, backups, quick unlock, fill targets). `Config/` holds the extension's
+  Info.plist and both targets' entitlements: the App Group `group.mn.lls.pocketkeepass`, which
+  the two share (settings, backups, and quick unlock's Keychain item), and the AutoFill
+  credential provider. Each target has its own string catalog; strings in `Shared/` need their
+  Mongolian in both.
 - `macOS/`: not started.
 
 Rust targets needed:
@@ -83,6 +90,25 @@ TEST_RUNNER_DAMAGED_FILE=1 xcodebuild … -only-testing:PocketKeePassUITests/Unl
 
 The restore test leaves browse.kdbx whole again. The save-as test leaves the damaged file and a
 new `browse (restored).kdbx` beside it: delete that, and copy the good one back.
+
+`testAutoFillInSafari` (turning AutoFill on, then filling the autofill probe's login page in
+Safari through the extension: unlocked with the master password, an entry found by search) and
+`testAutoFillWithFaceID` (the same, unlocked with Face ID turned on in the app) need the page
+served on the Mac, and the extension turned on in the simulator: iOS's own "turn on" question
+doesn't come up there (its helper fails to start, and the app then shows "Turn on AutoFill"
+after 3 seconds anyway), so `pluginkit` does it:
+
+```sh
+python3 -m http.server 8765 -d tools/autofill-probe &
+xcrun simctl spawn <id> pluginkit -e use -i mn.lls.pocketkeepass.autofill   # after installing the app once
+TEST_RUNNER_AUTOFILL_PAGE=1 xcodebuild … -only-testing:PocketKeePassUITests/UnlockFlowTests/testAutoFillInSafari test
+```
+
+The Face ID one also needs `TEST_RUNNER_FACE_ID_MATCHER=1` and the matcher, as above. Without
+the on-screen keyboard (a simulator using the Mac's keyboard) there's no key button above it;
+the test then goes through the field's edit menu (AutoFill › Passwords). One simulator stopped
+taking typed text in PocketKeePass's password field after a run of these (even `main`'s build,
+even after a reboot); another was fine. If that happens, use a fresh simulator.
 
 Screenshots: `xcrun simctl io booted screenshot shot.png`. iOS can't block screenshots, unlike
 Android's `FLAG_SECURE`; the app covers itself in the app switcher and while the screen is being

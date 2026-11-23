@@ -1,8 +1,9 @@
 import Foundation
 
-/// The database (and key file) last unlocked, so the unlock screen can offer it again. Stored in
-/// UserDefaults as bookmarks and file names: locations only, never a password or anything
-/// from inside the database.
+/// The database (and key file) last unlocked, so the unlock screen can offer it again, and the
+/// AutoFill extension knows which one to open. Stored in the App Group's UserDefaults as
+/// bookmarks and file names: locations only, never a password or anything from inside the
+/// database.
 nonisolated struct RecentDatabase: Codable, Equatable, Sendable {
     /// Made fresh each time a database is picked. Quick unlock and its expiry record belong to
     /// this, not to the file's location, which a bookmark can follow as the file moves.
@@ -32,10 +33,10 @@ nonisolated struct RecentDatabase: Codable, Equatable, Sendable {
         location = try container.decodeIfPresent(String.self, forKey: .location)
     }
 
-    private static let key = "recent_database"
+    static let key = "recent_database"
 
     static func load() -> RecentDatabase? {
-        guard let data = UserDefaults.standard.data(forKey: key),
+        guard let data = AppGroup.defaults.data(forKey: key),
               let recent = try? JSONDecoder().decode(RecentDatabase.self, from: data)
         else { return nil }
         recent.save() // keeps an `id` given to an older record
@@ -44,7 +45,7 @@ nonisolated struct RecentDatabase: Codable, Equatable, Sendable {
 
     func save() {
         if let data = try? JSONEncoder().encode(self) {
-            UserDefaults.standard.set(data, forKey: Self.key)
+            AppGroup.defaults.set(data, forKey: Self.key)
         }
     }
 }

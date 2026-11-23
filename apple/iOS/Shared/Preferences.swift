@@ -13,13 +13,17 @@ enum Preferences {
 
     static func register() {
         UserDefaults.standard.register(defaults: [
-            autoLockKey: 300,
             lockOnDeviceLockKey: true,
             clipboardKey: 30,
         ])
+        AppGroup.defaults.register(defaults: [autoLockKey: 300])
     }
 
-    static var autoLockSeconds: Int { UserDefaults.standard.integer(forKey: autoLockKey) }
+    /// Shared with the AutoFill extension, which locks after the same time without use.
+    static var autoLockSeconds: Int {
+        let seconds = AppGroup.defaults.integer(forKey: autoLockKey)
+        return autoLockChoices.contains(seconds) ? seconds : 300
+    }
     static var lockOnDeviceLock: Bool { UserDefaults.standard.bool(forKey: lockOnDeviceLockKey) }
     static var clipboardSeconds: Int { UserDefaults.standard.integer(forKey: clipboardKey) }
 }

@@ -410,6 +410,156 @@ final class UnlockFlowTests: XCTestCase {
         attach(app, "locked, Face ID off")
     }
 
+    /// The AutoFill extension in Safari: turned on from settings, then picked for a login page's
+    /// password field, unlocked with the master password, and an entry found by search filled in.
+    ///
+    /// Needs the autofill probe's login page served on the Mac, so it runs only with
+    /// `TEST_RUNNER_AUTOFILL_PAGE=1` (see `apple/README.md`):
+    /// `python3 -m http.server 8765 -d tools/autofill-probe`.
+    @MainActor
+    func testAutoFillInSafari() throws {
+        guard ProcessInfo.processInfo.environment["AUTOFILL_PAGE"] == "1" else {
+            throw XCTSkip("needs the probe's login page on localhost:8765 (apple/README.md)")
+        }
+        let app = XCUIApplication()
+        app.launch()
+        pickBrowseDatabase(app)
+        let password = app.secureTextFields["Master password"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        focus(password)
+        password.typeText("test-password\n")
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 60))
+
+        // The settings section. iOS's own question doesn't come up in the simulator (its helper
+        // doesn't start), so the extension is turned on from the Mac beforehand with pluginkit.
+        tapWhenReady(app.buttons["Settings"])
+        let turnOn = app.buttons["Turn on AutoFill"]
+        let on = app.staticTexts["PocketKeePass fills in passwords"]
+        XCTAssertTrue(turnOn.waitForExistence(timeout: 10) || on.exists, "no AutoFill section")
+        attach(app, "settings, AutoFill")
+        app.buttons["Done"].tap()
+        app.buttons["Lock"].tap()
+
+        let safari = openPocketKeePassInSafari()
+
+        // The extension: unlock, nothing saved for localhost, so search.
+        let master = safari.secureTextFields["Master password"]
+        XCTAssertTrue(master.waitForExistence(timeout: 15), safari.debugDescription)
+        attach(safari, "extension, locked")
+        master.typeText("test-password\n")
+        searchAndFillVPN(safari)
+    }
+
+    /// The AutoFill extension unlocked with Face ID: quick unlock turned on in the app is used
+    /// there too (the Keychain item is shared through the App Group), and nothing is typed.
+    ///
+    /// Needs both the login page and the Face ID matcher (`TEST_RUNNER_AUTOFILL_PAGE=1` and
+    /// `TEST_RUNNER_FACE_ID_MATCHER=1`, see `apple/README.md`).
+    @MainActor
+    func testAutoFillWithFaceID() throws {
+        let environment = ProcessInfo.processInfo.environment
+        guard environment["AUTOFILL_PAGE"] == "1", environment["FACE_ID_MATCHER"] == "1" else {
+            throw XCTSkip("needs the login page and face-id-matcher.sh (apple/README.md)")
+        }
+        let matchFace = {
+            FileManager.default.createFile(atPath: NSTemporaryDirectory() + "face-id-match", contents: Data())
+            sleep(3)
+        }
+        let app = XCUIApplication()
+        app.launch()
+        matchFace() // a run that stopped halfway may have left the prompt up
+        pickBrowseDatabase(app)
+        let password = app.secureTextFields["Master password"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        focus(password)
+        password.typeText("test-password\n")
+        let turnOn = app.alerts.buttons["Turn on"]
+        XCTAssertTrue(turnOn.waitForExistence(timeout: 60), "no offer to turn on Face ID")
+        turnOn.tap()
+        allowFaceIDIfAsked()
+        matchFace()
+        tapWhenReady(app.buttons["Lock"])
+
+        // In Safari, the prompt opens by itself; the matcher answers it.
+        let safari = openPocketKeePassInSafari()
+        sleep(2)
+        attach(safari, "extension, Face ID")
+        allowFaceIDIfAsked()
+        matchFace()
+        searchAndFillVPN(safari)
+
+        // The app's own quick unlock is still on (the extension didn't turn it off), then off
+        // again for the other tests.
+        // (Its prompt opened by itself right after Lock, and Safari took it away.)
+        app.activate()
+        let faceID = app.buttons["Unlock with Face ID"]
+        XCTAssertTrue(faceID.waitForExistence(timeout: 10), "Face ID is off in the app\n" + app.debugDescription)
+        tapWhenReady(faceID)
+        matchFace()
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 60), "Face ID no longer unlocks the app")
+        tapWhenReady(app.buttons["Settings"])
+        let toggle = app.switches["Unlock this database with Face ID"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 10))
+        if toggle.value as? String == "1" { toggle.switches.firstMatch.tap() }
+        app.buttons["Done"].tap()
+        tapWhenReady(app.buttons["Lock"])
+    }
+
+    /// Opens the autofill probe's login page in Safari and picks PocketKeePass for its password
+    /// field. Returns Safari, which shows the extension.
+    @MainActor
+    private func openPocketKeePassInSafari() -> XCUIApplication {
+        let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+        XCUIDevice.shared.system.open(URL(string: "http://localhost:8765/login.html")!)
+        let field = safari.webViews.secureTextFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 30), "the login page didn't load")
+        field.tap()
+        sleep(2)
+        attach(safari, "password field")
+        // With the Mac's keyboard standing in, iOS shows no on-screen keyboard and so no key
+        // button above it: the field's edit menu has AutoFill › Passwords instead.
+        let keyButton = safari.buttons.matching(NSPredicate(format: "label ==[c] 'Passwords' OR label CONTAINS[c] 'password options'")).firstMatch
+        if !keyButton.waitForExistence(timeout: 3) {
+            field.tap()
+            let autoFill = safari.menuItems["AutoFill"].firstMatch
+            XCTAssertTrue(autoFill.waitForExistence(timeout: 5), "no AutoFill in the edit menu\n" + safari.debugDescription)
+            autoFill.tap()
+            sleep(2)
+            attach(safari, "AutoFill menu")
+        }
+        let passwords = safari.descendants(matching: .any).matching(NSPredicate(format: "label ==[c] 'Passwords'")).firstMatch
+        XCTAssertTrue(passwords.waitForExistence(timeout: 10), "no Passwords\n" + safari.debugDescription)
+        passwords.tap()
+        sleep(2)
+        attach(safari, "providers")
+        let provider = safari.buttons["PocketKeePass"].firstMatch
+        if provider.waitForExistence(timeout: 5) { provider.tap() }
+        return safari
+    }
+
+    /// In the unlocked extension, with nothing saved for localhost: searches for "VPN", picks
+    /// it, and checks the page got its username and password.
+    @MainActor
+    private func searchAndFillVPN(_ safari: XCUIApplication) {
+        let search = safari.searchFields["Search all entries"]
+        XCTAssertTrue(search.waitForExistence(timeout: 60), "didn't unlock")
+        XCTAssertTrue(safari.staticTexts["No entries are saved for this site. Search for the entry to fill in."].exists)
+        attach(safari, "extension, unlocked")
+        search.tap()
+        search.typeText("VPN")
+        let vpn = safari.buttons.matching(NSPredicate(format: "label BEGINSWITH 'VPN'")).firstMatch
+        XCTAssertTrue(vpn.waitForExistence(timeout: 10), safari.debugDescription)
+        attach(safari, "search")
+        vpn.tap()
+
+        // Filled in: the page shows what its fields hold.
+        let show = safari.webViews.buttons["Show"]
+        XCTAssertTrue(show.waitForExistence(timeout: 15), "the extension didn't close")
+        show.tap()
+        XCTAssertTrue(safari.webViews.staticTexts["filled: jo.work | correct horse"].waitForExistence(timeout: 5), safari.debugDescription)
+        attach(safari, "filled")
+    }
+
     /// Taps once the element can take it: right after a Face ID prompt or a sheet closes, it's
     /// still covered for a moment.
     @MainActor

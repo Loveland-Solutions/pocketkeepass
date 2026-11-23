@@ -21,6 +21,9 @@ import Security
 ///
 /// There's one slot, as on Android: the app remembers one database at a time.
 ///
+/// The AutoFill extension unlocks with it too, so its settings are in the App Group's
+/// UserDefaults and the item in the App Group's Keychain access group.
+///
 /// It doesn't last forever ([isPasswordDue]): after the iPhone restarts, and every
 /// [intervalDays] days, the master password has to be typed once, so the user doesn't forget it
 /// and a lost iPhone needs more than a face. That's the app's rule, not the Keychain's: the item
@@ -40,7 +43,9 @@ final class QuickUnlock {
     /// The Keychain service the item is stored under. Tests use their own.
     private let service: String
 
-    init(defaults: UserDefaults = .standard, service: String = "mn.lls.pocketkeepass.quick-unlock") {
+    nonisolated static let defaultService = "mn.lls.pocketkeepass.quick-unlock"
+
+    init(defaults: UserDefaults = AppGroup.defaults, service: String = defaultService) {
         self.defaults = defaults
         self.service = service
     }
@@ -136,10 +141,11 @@ final class QuickUnlock {
 
     // MARK: Turning it on and off
 
-    /// Turns quick unlock on for the open database, after a Face ID check of its own. Throws the
-    /// check's error if it failed or was cancelled; the caller decides what's worth showing.
-    func enable(_ database: RecentDatabase, session: Session, biometry: Biometry) async throws {
-        guard let open = session.database else { return }
+    /// Turns quick unlock on for `database`, unlocked as `open`, after a Face ID check of its
+    /// own. Returns false if the Keychain refused. Throws the check's error if it failed or was
+    /// cancelled; the caller decides what's worth showing. The app's `enable(_:session:)` is
+    /// the usual way in.
+    func store(_ database: RecentDatabase, open: UnlockedDatabase, biometry: Biometry) async throws -> Bool {
         let context = LAContext()
         context.localizedCancelTitle = String(localized: "Cancel")
         _ = try await context.evaluatePolicy(
@@ -154,29 +160,11 @@ final class QuickUnlock {
             defer { hash.wipe() }
             return Self.store(hash, service: service, account: database.id)
         }.value
-        guard stored, session.database === open else {
-            // Locked meanwhile, or the Keychain refused: stays off.
-            disable()
-            return
-        }
+        guard stored else { return false }
         defaults.set(database.id, forKey: Keys.database)
         defaults.set(state, forKey: Keys.biometryState)
         revision += 1
-    }
-
-    /// [enable] for the remembered database, from settings or the offer. Returns what to tell
-    /// the user if it didn't work, or nil (it worked, or the user cancelled the check).
-    func turnOn(session: Session) async -> String? {
-        guard let database = RecentDatabase.load() else { return nil }
-        let biometry = Self.biometry()
-        do {
-            try await enable(database, session: session, biometry: biometry)
-            return nil
-        } catch let failure as LAError where [.userCancel, .systemCancel, .appCancel].contains(failure.code) {
-            return nil
-        } catch {
-            return error.localizedDescription
-        }
+        return true
     }
 
     /// Turns quick unlock off: forgets which database it was for and deletes the Keychain item.
@@ -191,14 +179,19 @@ final class QuickUnlock {
 
     /// Whether the stored hash can still be used: nil if so, otherwise why not. `.invalidated`
     /// turns quick unlock off.
-    func check(_ database: RecentDatabase, biometry: Biometry) -> Unusable? {
+    ///
+    /// `comparingFaces` is false in the AutoFill extension: iOS gives each app and extension its
+    /// own value for the set of faces (`LADomainState`), so the one stored by the app never
+    /// matches there. The Keychain still refuses the item after a change, and [keyHash] then
+    /// turns quick unlock off.
+    func check(_ database: RecentDatabase, biometry: Biometry, comparingFaces: Bool = true) -> Unusable? {
         guard isEnabled(for: database) else { return .off }
         if isPasswordDue(database) { return .passwordDue }
         switch biometry.state {
         case .ready(let state):
             // `.biometryCurrentSet` already makes the item unreadable after a change; this says
             // so before the prompt instead of after it.
-            if state != defaults.data(forKey: Keys.biometryState) {
+            if comparingFaces, state != defaults.data(forKey: Keys.biometryState) {
                 disable()
                 return .invalidated
             }
@@ -254,13 +247,16 @@ final class QuickUnlock {
         guard let access = SecAccessControlCreateWithFlags(
             nil, kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly, .biometryCurrentSet, &error
         ) else { return false }
-        let item: [CFString: Any] = [
+        var item: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
             kSecAttrAccount: account,
             kSecAttrAccessControl: access,
             kSecValueData: hash,
         ]
+        // Shared with the AutoFill extension. Reads and deletes search every group the app may
+        // use, so an item from before this is still found (by the app).
+        if service == defaultService { item[kSecAttrAccessGroup] = AppGroup.id }
         return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
     }
 
@@ -302,6 +298,7 @@ final class QuickUnlock {
         static let offered = "quick_unlock_offered"
         static let interval = "quick_unlock_interval_days"
         static let typed = "quick_unlock_password_typed"
+        static let all = [database, biometryState, offered, interval, typed]
     }
 
     enum Unusable: Equatable {
