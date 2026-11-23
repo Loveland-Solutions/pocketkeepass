@@ -26,12 +26,12 @@ crypto logic lives in Swift.
   backups, and quick unlock's Keychain item), and the AutoFill credential provider. Each target
   has its own string catalog; strings in `Shared/` need their Mongolian in both.
 - `macOS/` is the Mac app (`PocketKeePass.xcodeproj`, macOS 15+, bundle ID
-  `mn.lls.pocketkeepass.mac`), sandboxed with no network entitlement. Its App Group is
+  `mn.lls.pocketkeepass`, the iPhone's: one App Store listing for both), sandboxed with no network entitlement. Its App Group is
   `44H5SLX8KR.mn.lls.pocketkeepass.mac` (Mac groups start with the team ID), which is also the
   Keychain access group. Quick unlock's item is in the data protection keychain, which needs a
   provisioning profile: an unsigned or "sign to run locally" build gets
   `errSecMissingEntitlement` (-34018), so build with Apple's profile (below). Its AutoFill
-  extension (`mn.lls.pocketkeepass.mac.autofill`) builds the same `AutoFill/` code as the
+  extension (`mn.lls.pocketkeepass.autofill`, also the iPhone's) builds the same `AutoFill/` code as the
   iPhone's. macOS ties a file bookmark to the app that made it, so the extension can't open the
   database the user picked: the app keeps the file as it last read or wrote it in the App Group
   (`Backups.latest`), the extension unlocks that, and a passkey made there waits as an
