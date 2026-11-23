@@ -29,7 +29,7 @@ struct AutoFillSection: View {
         } header: {
             Text("AutoFill")
         } footer: {
-            Text("In Safari or another app, click a password field, open its Passwords menu, and choose PocketKeePass. It asks for Touch ID or your master password each time, and offers the entries saved for that website. PocketKeePass doesn’t share your entries with macOS. AutoFill reads the copy of your database PocketKeePass kept when it last opened or saved it, and a passkey saved there reaches the file the next time you unlock PocketKeePass.")
+            Text("In Safari or another app, click a password field, open its Passwords menu, and choose PocketKeePass. It asks for Touch ID or your master password each time, and offers the entries saved for that website. PocketKeePass doesn’t share your entries with macOS. AutoFill reads the copy of your database PocketKeePass kept when it last opened or saved it, and a passkey saved there goes into the file at once if PocketKeePass is open, or else the next time you unlock it.")
         }
         .task {
             await refresh()

@@ -811,12 +811,12 @@
         }
       }
     },
-    "In Safari or another app, click a password field, open its Passwords menu, and choose PocketKeePass. It asks for Touch ID or your master password each time, and offers the entries saved for that website. PocketKeePass doesn’t share your entries with macOS. AutoFill reads the copy of your database PocketKeePass kept when it last opened or saved it, and a passkey saved there reaches the file the next time you unlock PocketKeePass.": {
+    "In Safari or another app, click a password field, open its Passwords menu, and choose PocketKeePass. It asks for Touch ID or your master password each time, and offers the entries saved for that website. PocketKeePass doesn’t share your entries with macOS. AutoFill reads the copy of your database PocketKeePass kept when it last opened or saved it, and a passkey saved there goes into the file at once if PocketKeePass is open, or else the next time you unlock it.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
-            "value": "Safari эсвэл өөр апп дээр нууц үгийн талбар дээр дарж, түүний «Нууц үгс» цэсийг нээгээд PocketKeePass-г сонгоно уу. Тэр бүрд Touch ID эсвэл үндсэн нууц үгийг асууж, тухайн вэб сайтад хадгалсан бичлэгүүдийг санал болгоно. PocketKeePass таны бичлэгүүдийг macOS-тэй хуваалцдаггүй. Автоматаар бөглөх үед PocketKeePass өгөгдлийн сангаа хамгийн сүүлд нээж эсвэл хадгалах үедээ үлдээсэн хуулбарыг уншдаг бөгөөд тэнд хадгалсан нэвтрэх түлхүүр нь PocketKeePass-ийн түгжээг дараагийн удаа тайлахад файлд орно."
+            "value": "Safari эсвэл өөр апп дээр нууц үгийн талбар дээр дарж, түүний «Нууц үгс» цэсийг нээгээд PocketKeePass-г сонгоно уу. Тэр бүрд Touch ID эсвэл үндсэн нууц үгийг асууж, тухайн вэб сайтад хадгалсан бичлэгүүдийг санал болгоно. PocketKeePass таны бичлэгүүдийг macOS-тэй хуваалцдаггүй. Автоматаар бөглөх үед PocketKeePass өгөгдлийн сангаа хамгийн сүүлд нээж эсвэл хадгалах үедээ үлдээсэн хуулбарыг уншдаг бөгөөд тэнд хадгалсан нэвтрэх түлхүүр нь PocketKeePass нээлттэй бол шууд, эс бөгөөс түгжээг нь дараагийн удаа тайлахад файлд орно."
           }
         }
       }

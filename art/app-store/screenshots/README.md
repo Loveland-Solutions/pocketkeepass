@@ -27,3 +27,21 @@ the file to KDBX 4. The AutoFill row in settings says "Turn on AutoFill": iOS do
 in the simulator.
 
 No iPad screenshots yet: the app's iPad layout is the iPhone's, stretched, and some text says "iPhone".
+
+## Mac
+
+`mac-1-browse.png` … `mac-4-unlock.png` (2880 × 1800, light, in that order): the main window
+with an entry, a search, the new-entry sheet, and the unlock screen, with the demo database as
+`Personal.kdbx`. Each is a 1280 × 800 window captured with its shadow and centred on a soft
+backdrop, from a debug build launched with environment settings only debug builds read:
+
+- `PKP_ALLOW_SCREEN_CAPTURE=1` (the window is otherwise kept out of screenshots),
+  `PKP_DEBUG_WINDOW=1280x800`, `PKP_DEBUG_APPEARANCE=light`;
+- `PKP_OPEN_DATABASE=<path in the app's container>` and `PKP_TEST_PASSWORD=demo`;
+- `PKP_DEBUG_GROUP=Finance`, `PKP_DEBUG_ENTRY=Credit union`, `PKP_DEBUG_QUERY=sam`, or
+  `PKP_DEBUG_SHOW=new-entry`.
+
+Run the app's binary with those, wait for it to unlock, then `screencapture -l <window id>`
+(the window id from `CGWindowListCopyWindowInfo`), and composite onto 2880 × 1800. Copy the
+demo database in again before each shot. The window comes to the front by itself, so don't type
+meanwhile: keystrokes go to it.

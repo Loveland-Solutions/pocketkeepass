@@ -70,5 +70,6 @@ review notes, and screenshots. Entered through the App Store Connect API on 2026
 
 ## Screenshots
 
-`art/app-store/screenshots/mac-*.png` (2880 × 1800), taken from a debug build with
-`PKP_ALLOW_SCREEN_CAPTURE=1` and the demo database. See that folder's README.
+`art/app-store/screenshots/mac-1-browse.png` … `mac-4-unlock.png` (2880 × 1800), uploaded on
+2026-11-23 as the macOS version's desktop screenshots. How they're taken is in that folder's
+README.
