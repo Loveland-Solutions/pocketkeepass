@@ -29,7 +29,7 @@ nonisolated struct Backup: Equatable, Sendable {
 /// it (or an unfinished save, which is newer) into the file as read (`ours`).
 ///
 /// All are the database file itself, encrypted with the master key, so they hold nothing the
-/// file doesn't. They live in Application Support, excluded from iCloud and computer backups,
+/// file doesn't. They live in the App Group's Application Support, excluded from iCloud and computer backups,
 /// named by a hash of the database's location. Writing one is atomic: a temporary file, synced,
 /// then renamed into place, so a crash here leaves the older copy whole.
 ///
@@ -47,8 +47,9 @@ nonisolated struct Backups: Sendable {
 
     let directory: URL
 
+    /// In the App Group, so the AutoFill extension can read what this iPhone saved (`ours`).
     static let standard = Backups(
-        directory: URL.applicationSupportDirectory.appending(path: "Backups", directoryHint: .isDirectory)
+        directory: AppGroup.container.appending(path: "Backups", directoryHint: .isDirectory)
     )
 
     /// The key the copies of the database at `url` are filed under.

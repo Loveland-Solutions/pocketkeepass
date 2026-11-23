@@ -4,7 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AutoLock.self) private var autoLock
-    @AppStorage(Preferences.autoLockKey) private var autoLockSeconds = 300
+    @AppStorage(Preferences.autoLockKey, store: AppGroup.defaults) private var autoLockSeconds = 300
     @AppStorage(Preferences.lockOnDeviceLockKey) private var lockOnDeviceLock = true
     @AppStorage(Preferences.clipboardKey) private var clipboardSeconds = 30
 
@@ -12,6 +12,8 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 QuickUnlockSection()
+
+                AutoFillSection()
 
                 Section {
                     Picker("Lock after", selection: $autoLockSeconds) {

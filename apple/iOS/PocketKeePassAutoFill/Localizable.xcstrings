@@ -1,0 +1,408 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ is locked after too many tries. Use your master password, or unlock the iPhone with its passcode to turn %@ back on.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хэт олон удаа оролдсон тул %1$@ түр түгжигдлээ. Үндсэн нууц үгээ ашиглана уу. Эсвэл утасны түгжээг нууц кодоор тайлбал %2$@ дахин ажиллана."
+          }
+        }
+      }
+    },
+    "(no title)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(гарчиггүй)"
+          }
+        }
+      }
+    },
+    "A passkey for this account is already in the database.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бүртгэлийн нэвтрэх түлхүүр өгөгдлийн санд аль хэдийн байна."
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цуцлах"
+          }
+        }
+      }
+    },
+    "Fill in on %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бөглөх газар · %@"
+          }
+        }
+      }
+    },
+    "Fills in this entry’s username and password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бичлэгийн хэрэглэгчийн нэр, нууц үгийг бөглөнө"
+          }
+        }
+      }
+    },
+    "Hidden while the screen is being recorded or shared.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дэлгэцийг бичиж эсвэл хуваалцаж байх үед нуугдана."
+          }
+        }
+      }
+    },
+    "Hide password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үгийг нуух"
+          }
+        }
+      }
+    },
+    "Key file: %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түлхүүр файл: %@"
+          }
+        }
+      }
+    },
+    "Master password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үндсэн нууц үг"
+          }
+        }
+      }
+    },
+    "No database yet": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өгөгдлийн сан алга"
+          }
+        }
+      }
+    },
+    "No entries are saved for this site. Search for the entry to fill in.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ сайтад хадгалсан бичлэг алга. Бөглөх бичлэгээ хайна уу."
+          }
+        }
+      }
+    },
+    "No matching entries.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тохирох бичлэг алга."
+          }
+        }
+      }
+    },
+    "Open your database in the PocketKeePass app first. Then PocketKeePass can fill in your passwords here.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эхлээд PocketKeePass апп дээр өгөгдлийн сангаа нээнэ үү. Дараа нь PocketKeePass таны нууц үгсийг энд бөглөж чадна."
+          }
+        }
+      }
+    },
+    "PocketKeePass can’t open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass өгөгдлийн сангийн файлыг нээж чадахгүй байна. Файлыг зөөсөн, нэрийг нь өөрчилсөн эсвэл устгасан байж магадгүй. Дахин сонгоно уу."
+          }
+        }
+      }
+    },
+    "PocketKeePass can’t open the key file anymore. Open the PocketKeePass app, remove the key file, and add it again.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass түлхүүр файлыг нээж чадахгүй байна. PocketKeePass апп дээр түлхүүр файлыг хасаад дахин нэмнэ үү."
+          }
+        }
+      }
+    },
+    "Search all entries": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бүх бичлэгээс хайх"
+          }
+        }
+      }
+    },
+    "Search for the entry to fill in.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бөглөх бичлэгээ хайна уу."
+          }
+        }
+      }
+    },
+    "Show password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үгийг харуулах"
+          }
+        }
+      }
+    },
+    "That entry isn’t in the database anymore.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тэр бичлэг өгөгдлийн санд байхгүй болсон байна."
+          }
+        }
+      }
+    },
+    "That group or entry isn’t in the database anymore.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тэр бүлэг эсвэл бичлэг өгөгдлийн санд байхгүй болсон байна."
+          }
+        }
+      }
+    },
+    "That key file couldn’t be read.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тэр түлхүүр файлыг уншиж чадсангүй."
+          }
+        }
+      }
+    },
+    "The database is locked.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өгөгдлийн сан түгжээтэй байна."
+          }
+        }
+      }
+    },
+    "The new copy of the database failed its safety check, so it wasn’t saved.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өгөгдлийн сангийн шинэ хуулбар аюулгүй байдлын шалгалтад тэнцээгүй тул хадгалсангүй."
+          }
+        }
+      }
+    },
+    "The password or key file is incorrect.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үг эсвэл түлхүүр файл буруу байна."
+          }
+        }
+      }
+    },
+    "This database uses the older KDBX 3 format. It has to be upgraded to KDBX 4 before it can be saved.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ өгөгдлийн сан хуучин KDBX 3 форматтай. Хадгалахаас өмнө KDBX 4 болгон шинэчлэх шаардлагатай."
+          }
+        }
+      }
+    },
+    "This device couldn’t provide secure random numbers, so the database wasn’t saved.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ төхөөрөмж найдвартай санамсаргүй тоо гаргаж чадаагүй тул өгөгдлийн санг хадгалсангүй."
+          }
+        }
+      }
+    },
+    "This isn’t a KeePass database.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ нь KeePass өгөгдлийн сан биш байна."
+          }
+        }
+      }
+    },
+    "Turn on unlocking with %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ашиглан түгжээ тайлахыг асаах"
+          }
+        }
+      }
+    },
+    "Type your master password this time. PocketKeePass asks for it after the iPhone restarts and every %lld days, so you don’t forget it.": {
+      "localizations": {
+        "mn": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Энэ удаа үндсэн нууц үгээ бичнэ үү. Мартахгүйн тулд PocketKeePass үүнийг iPhone дахин асах бүрд болон өдөр бүр асуудаг."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Энэ удаа үндсэн нууц үгээ бичнэ үү. Мартахгүйн тулд PocketKeePass үүнийг iPhone дахин асах бүрд болон %lld өдөр тутам асуудаг."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Unlock": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжээ тайлах"
+          }
+        }
+      }
+    },
+    "Unlock %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжээг тайлах: %@"
+          }
+        }
+      }
+    },
+    "Unlock with %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ашиглан түгжээ тайлах"
+          }
+        }
+      }
+    },
+    "Unlocking with %@ was turned off because the faces, fingerprints, or passcode on this iPhone changed. Unlock with your master password, then turn it back on in the PocketKeePass app’s settings.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ iPhone дээрх царай, хурууны хээ эсвэл нууц код өөрчлөгдсөн тул %@ ашиглан түгжээ тайлахыг унтраалаа. Үндсэн нууц үгээрээ түгжээг тайлаад, PocketKeePass аппын тохиргооноос дахин асаана уу."
+          }
+        }
+      }
+    },
+    "Unlocking with %@ was turned off because this database’s master password or key file changed. Unlock with the new one, then turn it back on in the PocketKeePass app’s settings.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ өгөгдлийн сангийн үндсэн нууц үг эсвэл түлхүүр файл өөрчлөгдсөн тул %@ ашиглан түгжээ тайлахыг унтраалаа. Шинэ нууц үгээрээ түгжээг тайлаад, PocketKeePass аппын тохиргооноос дахин асаана уу."
+          }
+        }
+      }
+    },
+    "Unlocking… This can take a few seconds.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжээг тайлж байна… Хэдэн секунд болж магадгүй."
+          }
+        }
+      }
+    },
+    "Use master password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үндсэн нууц үг ашиглах"
+          }
+        }
+      }
+    },
+    "iCloud Drive": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Drive"
+          }
+        }
+      }
+    },
+    "“%@” has no username or password to fill in.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бичлэгт (%@) бөглөх хэрэглэгчийн нэр, нууц үг алга."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

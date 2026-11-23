@@ -405,6 +405,16 @@
         }
       }
     },
+    "AutoFill": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автоматаар бөглөх"
+          }
+        }
+      }
+    },
     "Avoid look-alike characters (%@)": {
       "localizations": {
         "mn": {
@@ -1319,6 +1329,16 @@
         }
       }
     },
+    "PocketKeePass fills in passwords": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass нууц үгсийг бөглөнө"
+          }
+        }
+      }
+    },
     "PocketKeePass is written with Claude, an AI model made by Anthropic.": {
       "localizations": {
         "mn": {
@@ -1599,6 +1619,16 @@
         }
       }
     },
+    "Tap a password field in Safari or another app, tap the key above the keyboard, and choose PocketKeePass. It asks for Face ID or your master password each time, and offers the entries saved for that website. iOS checks which website is asking. PocketKeePass doesn’t share your entries with iOS.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safari эсвэл өөр аппын нууц үгийн талбар дээр дарж, гарын дээрх түлхүүрийн тэмдэг дээр дараад, PocketKeePass гэснийг сонгоно уу. Тэр бүрт Face ID эсвэл үндсэн нууц үгийг асууж, тухайн вэбсайтад хадгалсан бичлэгүүдийг санал болгоно. Аль вэбсайт асууж буйг iOS өөрөө шалгадаг. PocketKeePass таны бичлэгүүдийг iOS системтэй хуваалцдаггүй."
+          }
+        }
+      }
+    },
     "That group or entry isn’t in the database anymore.": {
       "localizations": {
         "mn": {
@@ -1825,6 +1855,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Асаах"
+          }
+        }
+      }
+    },
+    "Turn on AutoFill": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автоматаар бөглөхийг асаах"
           }
         }
       }

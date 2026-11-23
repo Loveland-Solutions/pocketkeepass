@@ -8,6 +8,7 @@ struct PocketKeePassApp: App {
     @State private var quickUnlock = QuickUnlock()
 
     init() {
+        AppGroup.migrate()
         Preferences.register()
         let session = Session()
         _session = State(initialValue: session)
