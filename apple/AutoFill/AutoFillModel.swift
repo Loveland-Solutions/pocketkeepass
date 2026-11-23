@@ -64,6 +64,14 @@ final class AutoFillModel {
     private(set) var isSaving = false
     /// The KDBX 3 database is upgraded to KDBX 4 when the new passkey is saved.
     private(set) var needsUpgrade = false
+    /// The groups a new passkey's entry can go in, in tree order: every group but the recycle
+    /// bin and what's in it.
+    private(set) var passkeyGroups: [GroupChoice] = []
+    /// The group a new passkey's new entry goes in: the one used last, if this database still
+    /// has it, else the top group. Remembered when a passkey is saved (`Self.passkeyGroupKey`).
+    var passkeyGroupId: String?
+    /// Nothing secret: a group's UUID only. In the extension's own UserDefaults.
+    static let passkeyGroupKey = "passkey_group"
 
     @ObservationIgnored let quickUnlock = QuickUnlock()
     /// The unlocked database's custom icons, for the list.
@@ -353,16 +361,22 @@ final class AutoFillModel {
     }
 
     private func checkCreation(_ database: UnlockedDatabase, _ request: SitePasskeyRequest) async {
-        let checked = await Task.detached(priority: .userInitiated) { () -> Result<(PasskeyCreation, Bool), Error> in
-            Result { (try database.passkeyCreationAtSite(request: request), try database.summary().needsUpgrade) }
+        let checked = await Task.detached(priority: .userInitiated) { () -> Result<(PasskeyCreation, Bool, [GroupChoice]), Error> in
+            Result {
+                let groups = try database.allGroups().filter { !$0.isRecycleBin && !$0.isInRecycleBin }
+                return (try database.passkeyCreationAtSite(request: request), try database.summary().needsUpgrade, groups)
+            }
         }.value
         guard !finished else { return }
         isUnlocked = true
         startTimer()
         switch checked {
-        case .success(let (creation, needsUpgrade)):
+        case .success(let (creation, needsUpgrade, groups)):
             self.creation = creation
             self.needsUpgrade = needsUpgrade
+            passkeyGroups = groups
+            let remembered = UserDefaults.standard.string(forKey: Self.passkeyGroupKey)
+            passkeyGroupId = groups.first { $0.id == remembered }?.id ?? groups.first?.id
         case .failure(let failure):
             error = failure.userMessage
         }
@@ -377,12 +391,13 @@ final class AutoFillModel {
         isSaving = true
         error = nil
         let upgrade = needsUpgrade
+        let groupId = passkeyGroupId
         Task {
             let result = await Task.detached(priority: .userInitiated) { () -> Result<PasskeyRegistration, Error> in
                 Result {
                     if upgrade { try database.upgradeToKdbx4() }
                     let target: PasskeyTarget = switch place {
-                    case .newEntry: .newEntry(groupId: try database.listGroup(id: nil).group.id)
+                    case .newEntry: .newEntry(groupId: try groupId ?? database.listGroup(id: nil).group.id)
                     case .entry(let id, _): .entry(entryId: id)
                     }
                     let made = try database.createPasskeyAtSite(target: target, request: request)
@@ -399,6 +414,9 @@ final class AutoFillModel {
             switch result {
             case .success(let made):
                 needsUpgrade = false
+                if case .newEntry = place, let groupId {
+                    UserDefaults.standard.set(groupId, forKey: Self.passkeyGroupKey)
+                }
                 end(.newPasskey(ASPasskeyRegistrationCredential(
                     relyingParty: request.rpId,
                     clientDataHash: request.clientDataHash,
@@ -506,6 +524,7 @@ final class AutoFillModel {
         results = []
         passkeys = []
         creation = nil
+        passkeyGroups = []
         query = ""
         password = ""
         customIcons.use(nil)
