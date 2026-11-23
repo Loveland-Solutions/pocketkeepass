@@ -11,6 +11,7 @@
 
 mod autofill;
 mod browse;
+mod create;
 mod edit;
 mod error;
 pub mod ffi;

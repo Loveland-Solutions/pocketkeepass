@@ -44,6 +44,15 @@ impl Database {
         })
     }
 
+    /// A database made in memory (see `create.rs`), locked with the composite key hash `key`.
+    pub(crate) fn from_parts(inner: Decrypted, key: Zeroizing<[u8; 32]>) -> Self {
+        Self {
+            inner,
+            key,
+            passkey_undo: None,
+        }
+    }
+
     /// Encrypts the database into a complete `.kdbx` file, locked with the key it was opened
     /// with. Like opening, this is slow on purpose (key derivation), so call it off the UI
     /// thread.

@@ -30,7 +30,7 @@ use crate::xml::{Element, is_xml_char};
 pub const STANDARD_FIELDS: [&str; 5] = ["Title", "UserName", "Password", "URL", "Notes"];
 
 /// What [`Database::save`] writes into `Meta/Generator` once we've changed a database.
-const GENERATOR: &str = "PocketKeePass";
+pub(crate) const GENERATOR: &str = "PocketKeePass";
 
 /// KeePass's own default for `HistoryMaxItems`, used when the database doesn't say.
 const DEFAULT_HISTORY_MAX_ITEMS: i64 = 10;
@@ -38,11 +38,11 @@ const DEFAULT_HISTORY_MAX_ITEMS: i64 = 10;
 /// The standard icons KeePass gives new items: a key for entries, a folder for groups, and a
 /// recycle bin for the recycle bin.
 const ENTRY_ICON: &str = "0";
-const GROUP_ICON: &str = "48";
+pub(crate) const GROUP_ICON: &str = "48";
 const RECYCLE_BIN_ICON: &str = "43";
 
 /// Seconds from 0001-01-01 (where KeePass counts from) to 1970-01-01 (where Unix does).
-const UNIX_EPOCH_IN_KEEPASS_SECONDS: i64 = 62_135_596_800;
+pub(crate) const UNIX_EPOCH_IN_KEEPASS_SECONDS: i64 = 62_135_596_800;
 
 /// Where a field's new value comes from.
 pub enum FieldValue<'a> {
@@ -724,7 +724,7 @@ fn normalize_tags(tags: &[&str]) -> Vec<String> {
 }
 
 /// Refuses text with characters a KeePass file can't hold. `what` starts the sentence.
-fn check_text(what: &str, text: &str) -> Result<()> {
+pub(crate) fn check_text(what: &str, text: &str) -> Result<()> {
     if text.chars().all(is_xml_char) {
         Ok(())
     } else {
@@ -769,7 +769,7 @@ fn new_times(now: &str) -> Element {
 }
 
 /// A group the way KeePass creates one.
-fn new_group(
+pub(crate) fn new_group(
     uuid: &[u8; 16],
     name: &str,
     notes: &str,
@@ -845,7 +845,7 @@ pub(crate) fn after(el: &Element, name: &str) -> usize {
 
 /// Writes a date (seconds since 0001-01-01, UTC) the way the format version stores dates:
 /// KDBX 4 as base64 of a little-endian `i64`, KDBX 3 as ISO 8601 text.
-fn format_date(seconds: i64, major_version: u16) -> String {
+pub(crate) fn format_date(seconds: i64, major_version: u16) -> String {
     if major_version >= 4 {
         return BASE64.encode(seconds.to_le_bytes());
     }

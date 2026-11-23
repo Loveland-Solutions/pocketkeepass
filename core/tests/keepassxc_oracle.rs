@@ -387,3 +387,36 @@ fn keepassxc_reads_databases_we_merged() {
         }
     }
 }
+
+#[test]
+fn keepassxc_opens_and_edits_a_database_we_created() {
+    let Some(cli) = keepassxc_cli() else { return };
+    let fixture = Fixture {
+        file: "created.kdbx",
+        password: Some(b"fresh-password"),
+        key_file: None,
+        export: "",
+    };
+    let db = Database::create("Fresh", &fixture.key()).unwrap();
+    let created = TempFile::new("created.kdbx", &db.save().unwrap());
+
+    // What KeePassXC makes of its settings: Argon2id and AES-256, as we set them.
+    let info = String::from_utf8(keepassxc(&cli, "db-info", &fixture, &created.0, &[])).unwrap();
+    assert!(info.contains("Argon2id"), "{info}");
+    assert!(info.contains("AES"), "{info}");
+    assert!(info.contains("Fresh"), "{info}");
+
+    // KeePassXC adds an entry with its own writer, and we read the result.
+    keepassxc(
+        &cli,
+        "add",
+        &fixture,
+        &created.0,
+        &["--username", "kxc", "From KeePassXC"],
+    );
+    let edited = Database::open(&std::fs::read(&created.0).unwrap(), &fixture.key()).unwrap();
+    assert_eq!(
+        edited.root().entry("From KeePassXC").unwrap().username(),
+        "kxc"
+    );
+}

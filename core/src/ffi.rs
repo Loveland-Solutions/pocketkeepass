@@ -374,6 +374,34 @@ impl UnlockedDatabase {
         }))
     }
 
+    /// A new, empty database called `name`, locked with the master password (UTF-8 bytes)
+    /// and/or a key file's content, at least one of them. KDBX 4.0, AES-256, and Argon2id timed
+    /// to take about a second to unlock on this device. Nothing is written: get the file's
+    /// bytes from `save` and write them where the user chose. Slow (it times the key
+    /// derivation), so call it off the main thread. Fails with `Invalid` (a sentence for the
+    /// user) if the name is empty or holds characters a KeePass file can't.
+    ///
+    /// This side's copies of `password` and `key_file` are wiped before this returns. The
+    /// caller should wipe its own.
+    #[uniffi::constructor]
+    pub fn create(
+        name: String,
+        password: Option<Vec<u8>>,
+        key_file: Option<Vec<u8>>,
+    ) -> Result<Arc<Self>> {
+        let password = password.map(Zeroizing::new);
+        let key_file = key_file.map(Zeroizing::new);
+        let key = CompositeKey::new(
+            password.as_ref().map(|p| p.as_slice()),
+            key_file.as_ref().map(|k| k.as_slice()),
+        )?;
+        let db = Database::create(&name, &key)?;
+        Ok(Arc::new(Self {
+            db: RwLock::new(Some(db)),
+            changes: AtomicU64::new(0),
+        }))
+    }
+
     /// Decrypts a whole `.kdbx` file with a composite key hash from `key_hash`, for quick
     /// unlock. Fails with `WrongKey` if the hash doesn't open the file (the master key changed
     /// since it was stored) or isn't 32 bytes. Like `open`, this runs the key derivation.
@@ -1135,6 +1163,22 @@ mod tests {
             env!("CARGO_MANIFEST_DIR")
         ))
         .unwrap()
+    }
+
+    #[test]
+    fn a_created_database_crosses_the_bridge_and_opens_with_its_password() {
+        let db = UnlockedDatabase::create("Personal".into(), Some(b"pw".to_vec()), None).unwrap();
+        let summary = db.summary().unwrap();
+        assert_eq!(summary.format_version, "4.0");
+        assert!(!summary.needs_upgrade);
+        assert_eq!(summary.entry_count, 0);
+        let file = db.save().unwrap();
+        let again = UnlockedDatabase::open(file, Some(b"pw".to_vec()), None).unwrap();
+        assert_eq!(again.list_group(None).unwrap().group.name, "Personal");
+        assert!(matches!(
+            UnlockedDatabase::create(" ".into(), Some(b"pw".to_vec()), None),
+            Err(Error::Invalid(_))
+        ));
     }
 
     fn open(name: &str) -> Arc<UnlockedDatabase> {

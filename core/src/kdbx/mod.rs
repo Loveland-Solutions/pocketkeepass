@@ -5,6 +5,7 @@
 mod blocks;
 mod crypto;
 mod header;
+mod new;
 mod upgrade;
 mod write;
 
@@ -14,6 +15,9 @@ use zeroize::Zeroizing;
 
 pub(crate) use crypto::KdfCost;
 pub use header::FormatVersion;
+#[cfg(test)]
+pub(crate) use new::{ARGON2_MEMORY, argon2id};
+pub(crate) use new::{UNLOCK_TIME, container, timed_argon2id};
 pub(crate) use upgrade::{seconds_since_year_1, upgrade_to_kdbx4};
 pub(crate) use write::encrypt;
 
@@ -21,7 +25,8 @@ use crate::error::{Error, Result, corrupt};
 use crate::util::{Cursor, SecretBuf, sha256, sha512};
 use crate::xml::{self, Element};
 use crypto::InnerStream;
-use header::{OuterHeader, VariantDictionary};
+use header::OuterHeader;
+pub(crate) use header::VariantDictionary;
 
 // Inner header field IDs (KDBX 4).
 const INNER_END: u8 = 0;

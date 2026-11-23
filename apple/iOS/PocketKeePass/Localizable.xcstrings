@@ -539,12 +539,32 @@
         }
       }
     },
+    "Choose a .kdbx file from this iPhone or from any cloud storage app, or start a new one.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ iPhone эсвэл дурын үүлэн хадгалах сангийн аппаас .kdbx файл сонгох, эсвэл шинээр эхлүүлнэ үү."
+          }
+        }
+      }
+    },
     "Choose a .kdbx file from this iPhone or from any cloud storage app.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Энэ iPhone дээрээс эсвэл дурын үүлэн хадгалах сангийн аппаас .kdbx файл сонгоно уу."
+          }
+        }
+      }
+    },
+    "Choose where to save it…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалах газраа сонгох…"
           }
         }
       }
@@ -605,6 +625,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ хуулах"
+          }
+        }
+      }
+    },
+    "Create": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үүсгэх"
+          }
+        }
+      }
+    },
+    "Create new database": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ өгөгдлийн сан үүсгэх"
+          }
+        }
+      }
+    },
+    "Creating… This takes a few seconds.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үүсгэж байна… Хэдэн секунд болно."
           }
         }
       }
@@ -1149,6 +1199,16 @@
         }
       }
     },
+    "New database": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ өгөгдлийн сан"
+          }
+        }
+      }
+    },
     "New entry": {
       "localizations": {
         "mn": {
@@ -1275,6 +1335,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нууц үг"
+          }
+        }
+      }
+    },
+    "Passwords": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үгс"
           }
         }
       }
@@ -1465,6 +1535,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Шинэ файлаар хадгалах…"
+          }
+        }
+      }
+    },
+    "Save it in iCloud Drive or another storage app to use it on your other devices too, with PocketKeePass or any KeePass app.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бусад төхөөрөмж дээрээ PocketKeePass эсвэл дурын KeePass аппаар ашиглахын тулд iCloud Drive эсвэл өөр хадгалах сангийн апп дээр хадгална уу."
           }
         }
       }
@@ -1719,6 +1799,16 @@
         }
       }
     },
+    "The file is named after it. You can rename the file later.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл энэ нэрээр нэрлэгдэнэ. Файлын нэрийг дараа нь өөрчилж болно."
+          }
+        }
+      }
+    },
     "The file now holds a different database. Lock, then unlock it again.": {
       "localizations": {
         "mn": {
@@ -1749,12 +1839,42 @@
         }
       }
     },
+    "The new database couldn’t be saved there. Try another location.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ өгөгдлийн санг тэнд хадгалж чадсангүй. Өөр газар сонгоно уу."
+          }
+        }
+      }
+    },
+    "The new database was saved, but PocketKeePass can’t open it from there. Choose it with Open database.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ өгөгдлийн санг хадгалсан ч PocketKeePass түүнийг тэндээс нээж чадахгүй байна. «Өгөгдлийн сан нээх»-ээр сонгоно уу."
+          }
+        }
+      }
+    },
     "The password or key file is incorrect.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Нууц үг эсвэл түлхүүр файл буруу байна."
+          }
+        }
+      }
+    },
+    "The two passwords are different.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хоёр нууц үг өөр байна."
           }
         }
       }
@@ -1819,6 +1939,16 @@
         }
       }
     },
+    "This one password opens everything else, so make it long and memorable: several unrelated words work well. If it’s forgotten, nobody can open the database, not even us.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ ганц нууц үг бусад бүх зүйлийг нээдэг тул урт бөгөөд санахад хялбар болгоорой: хоорондоо холбоогүй хэдэн үг сайн тохирно. Мартвал хэн ч, бид ч гэсэн өгөгдлийн санг нээж чадахгүй."
+          }
+        }
+      }
+    },
     "This replaces %@ with the copy from %@. Changes made after that, here or on another device, will be lost.\n\nIf the file is still syncing from another device, wait for it to finish first, or choose “Save as new file” instead, which leaves the file alone.": {
       "localizations": {
         "mn": {
@@ -1875,6 +2005,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ ашиглан түгжээ тайлахыг асаах"
+          }
+        }
+      }
+    },
+    "Type it again": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дахин бичих"
+          }
+        }
+      }
+    },
+    "Type the master password again.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үндсэн нууц үгээ дахин бичнэ үү."
           }
         }
       }
