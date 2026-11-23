@@ -70,6 +70,20 @@ item), so "the faces changed, quick unlock turned off" can only be tried on a de
 tests cover the app's own check. Use a simulator of your own for these tests: one shared with
 other work gets its apps in the way of the file picker.
 
+`testRestoreBackupOfDamagedFile` and `testSaveBackupAsNewFile` need browse.kdbx damaged, which a
+UI test can't do from inside the simulator, and a save made to it before (any run of
+`testNewEntryIsSaved`), so the app holds a backup. Keep a good copy, cut the file short from the
+Mac, then run one of them:
+
+```sh
+cp "<File Provider Storage>/browse.kdbx" /tmp/browse-good.kdbx
+truncate -s 600 "<File Provider Storage>/browse.kdbx"
+TEST_RUNNER_DAMAGED_FILE=1 xcodebuild … -only-testing:PocketKeePassUITests/UnlockFlowTests/testRestoreBackupOfDamagedFile test
+```
+
+The restore test leaves browse.kdbx whole again. The save-as test leaves the damaged file and a
+new `browse (restored).kdbx` beside it: delete that, and copy the good one back.
+
 Screenshots: `xcrun simctl io booted screenshot shot.png`. iOS can't block screenshots, unlike
 Android's `FLAG_SECURE`; the app covers itself in the app switcher and while the screen is being
 recorded or mirrored.

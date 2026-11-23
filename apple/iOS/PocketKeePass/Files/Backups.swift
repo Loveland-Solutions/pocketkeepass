@@ -112,6 +112,18 @@ nonisolated struct Backups: Sendable {
         try Data(contentsOf: file(location, backup.unfinished ? Self.unfinished : Self.previous))
     }
 
+    /// Files the copies of the database at `from` under `to`, where its backup was just saved as
+    /// a new file. Copies already filed under `to` are replaced.
+    func move(_ from: String, to: String) throws {
+        for kind in [Self.previous, Self.unfinished, Self.saved] {
+            let source = file(from, kind)
+            guard FileManager.default.fileExists(atPath: source.path(percentEncoded: false)) else { continue }
+            guard rename(source.path(percentEncoded: false), file(to, kind).path(percentEncoded: false)) == 0 else {
+                throw CocoaError(.fileWriteUnknown)
+            }
+        }
+    }
+
     /// Deletes the copies of the database at `location`, if any.
     func delete(_ location: String) {
         for kind in [Self.previous, Self.unfinished, Self.saved] {

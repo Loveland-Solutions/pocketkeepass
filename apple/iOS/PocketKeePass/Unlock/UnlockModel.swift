@@ -12,6 +12,14 @@ final class UnlockModel {
     var showPassword = false
     private(set) var isUnlocking = false
     private(set) var error: String?
+    /// A copy of the database to offer when its file is missing or won't open as a database.
+    private(set) var backup: Backup?
+    /// The key `backup` is filed under.
+    private var backupLocation: String?
+    /// Writing the backup back is running.
+    private(set) var isRestoring = false
+    /// The backup was just restored, into the database's file or a new one.
+    private(set) var restored = false
     /// What Face ID or Touch ID can do on this device, read again whenever the screen shows.
     private(set) var biometry = QuickUnlock.biometry()
     /// The Face ID prompt opens by itself once per lock; this model lives as long as one locked
@@ -23,10 +31,13 @@ final class UnlockModel {
         do {
             // Another database: its key file (if any) is the user's to add again. Even the same
             // file again: the user may be starting over with different credentials.
-            recent = RecentDatabase(bookmark: try FileAccess.bookmark(url), name: url.lastPathComponent)
-            recent?.save()
+            var picked = RecentDatabase(bookmark: try FileAccess.bookmark(url), name: url.lastPathComponent)
+            picked.location = Backups.location(url)
+            picked.save()
+            recent = picked
             quickUnlock.disable()
             error = nil
+            clearBackup()
         } catch {
             self.error = error.userMessage
         }
@@ -43,6 +54,7 @@ final class UnlockModel {
             // anyway, confusingly.
             quickUnlock.disable()
             error = nil
+            clearBackup()
         } catch {
             self.error = String(localized: "PocketKeePass can’t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.")
         }
@@ -53,6 +65,7 @@ final class UnlockModel {
         recent?.keyFileName = nil
         recent?.save()
         quickUnlock.disable()
+        clearBackup()
     }
 
     // MARK: Quick unlock
@@ -105,6 +118,7 @@ final class UnlockModel {
         }
         isUnlocking = true
         error = nil
+        restored = false
         let biometry = self.biometry
 
         Task {
@@ -139,12 +153,13 @@ final class UnlockModel {
             isUnlocking = false
             switch result {
             case .success(let unlocked):
-                unlocked.start(session, recent)
+                opened(unlocked, recent, session)
             case .failure(KeePassError.WrongKey(_)):
                 quickUnlock.outdated()
                 error = String(localized: "Unlocking with \(biometry.kind.name) was turned off because this database’s master password or key file changed. Unlock with the new one, then turn it back on in settings.")
             case .failure(let failure):
                 error = failure.userMessage
+                await offerBackup(recent, failure)
             }
         }
     }
@@ -171,6 +186,7 @@ final class UnlockModel {
         password = ""
         isUnlocking = true
         error = nil
+        restored = false
 
         Task {
             let result = await Task.detached(priority: .userInitiated) { () -> Result<Unlocked, Error> in
@@ -200,15 +216,128 @@ final class UnlockModel {
             switch result {
             case .success(let unlocked):
                 quickUnlock.passwordTyped(recent)
-                unlocked.start(session, recent)
+                opened(unlocked, recent, session)
                 if quickUnlock.shouldOffer(recent) { quickUnlock.offerPending = true }
             case .failure(let failure as KeyFileUnreadable):
                 _ = failure
                 error = String(localized: "PocketKeePass can’t open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.")
             case .failure(let failure):
                 error = failure.userMessage
+                await offerBackup(recent, failure)
             }
         }
+    }
+
+    /// Hands the database to the session, remembering where its file is now, for its backups.
+    private func opened(_ unlocked: Unlocked, _ recent: RecentDatabase, _ session: Session) {
+        var recent = recent
+        let location = Backups.location(unlocked.url)
+        if recent.location != location {
+            recent.location = location
+            recent.save()
+            if self.recent?.id == recent.id { self.recent = recent }
+        }
+        clearBackup()
+        unlocked.start(session, recent)
+    }
+
+    // MARK: Backups
+
+    /// Offers the database's backup if `failure` says its file is missing or isn't a database
+    /// any more. Not for a wrong key, and not for a file in a newer format (another app upgraded
+    /// it): restoring an older copy over that would throw its content away.
+    private func offerBackup(_ recent: RecentDatabase, _ failure: Error) async {
+        let damaged = switch failure {
+        case KeePassError.NotKeePass, KeePassError.Corrupt: true
+        case is KeePassError, is KeyFileUnreadable: false
+        default: true // the file couldn't be read: gone, or out of reach
+        }
+        guard damaged else { return clearBackup() }
+        let found = await Task.detached(priority: .userInitiated) { () -> (String, Backup)? in
+            // Where the file is now if the bookmark still resolves, else where it last was.
+            let resolved = (try? FileAccess.resolve(recent.bookmark).url).map(Backups.location)
+            for location in [resolved, recent.location].compactMap({ $0 }) {
+                if let backup = Backups.standard.find(location) { return (location, backup) }
+            }
+            return nil
+        }.value
+        guard self.recent?.id == recent.id else { return }
+        backupLocation = found?.0
+        backup = found?.1
+    }
+
+    private func clearBackup() {
+        backup = nil
+        backupLocation = nil
+        restored = false
+    }
+
+    /// Writes the backup over the database's file, which is damaged. The user then unlocks it as
+    /// usual. A file that's gone can't be written (the picker granted that file only): then the
+    /// backup has to be saved as a new file.
+    func restoreBackup() {
+        guard let recent, let backup, let location = backupLocation, !isRestoring, !isUnlocking else { return }
+        isRestoring = true
+        error = nil
+        Task {
+            let restored = await Task.detached(priority: .userInitiated) { () -> Bool in
+                do {
+                    let url = try FileAccess.resolve(recent.bookmark).url
+                    try FileAccess.write(url, try Backups.standard.read(location, backup))
+                    // The file now holds the unfinished save; the previous version stays.
+                    if backup.unfinished { Backups.standard.finished(location) }
+                    return true
+                } catch {
+                    return false
+                }
+            }.value
+            isRestoring = false
+            guard self.recent?.id == recent.id else { return }
+            if restored {
+                clearBackup()
+                self.restored = true
+            } else {
+                error = String(localized: "PocketKeePass couldn’t write the backup into the database file. Save it as a new file instead.")
+            }
+        }
+    }
+
+    /// The backup's bytes, for "Save as new file".
+    func backupBytes() async -> Data? {
+        guard let backup, let location = backupLocation else { return nil }
+        return await Task.detached(priority: .userInitiated) { try? Backups.standard.read(location, backup) }.value
+    }
+
+    /// The backup was saved as a new file at `url`: that file is now the database, with the
+    /// same key file, and the backups move with it. The old file is left alone.
+    func savedBackup(as url: URL, quickUnlock: QuickUnlock) {
+        guard let old = recent else { return }
+        var new: RecentDatabase
+        do {
+            new = RecentDatabase(bookmark: try FileAccess.bookmark(url), name: url.lastPathComponent)
+        } catch {
+            clearBackup()
+            self.error = String(localized: "The backup was saved as \(url.lastPathComponent), but PocketKeePass can’t open it from there. Choose it with Change.")
+            return
+        }
+        new.keyFileBookmark = old.keyFileBookmark
+        new.keyFileName = old.keyFileName
+        new.location = Backups.location(url)
+        if let from = backupLocation, let to = new.location {
+            // If they can't move, the new file's first save makes copies of its own.
+            try? Backups.standard.move(from, to: to)
+        }
+        new.save()
+        recent = new
+        // Quick unlock belongs to the database as picked.
+        quickUnlock.disable()
+        clearBackup()
+        error = nil
+        restored = true
+    }
+
+    func backupNotSaved() {
+        error = String(localized: "PocketKeePass couldn’t save the backup into that file. Try another location.")
     }
 }
 

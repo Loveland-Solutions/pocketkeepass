@@ -182,6 +182,22 @@ struct BackupsTests {
         #expect(backups.ours("a") == Data([2]))
     }
 
+    @Test func copiesMoveWithABackupSavedAsANewFile() throws {
+        try backups.keep("old", Data([1]))
+        try backups.keepUnfinished("old", Data([2]))
+        backups.saved("old")
+        try backups.keepUnfinished("old", Data([3]))
+
+        try backups.move("old", to: "new")
+        #expect(backups.find("old") == nil)
+        #expect(backups.ours("old") == nil)
+        #expect(backups.find("new")?.unfinished == true)
+        #expect(backups.ours("new") == Data([3]))
+        backups.finished("new")
+        #expect(try backups.read("new", #require(backups.find("new"))) == Data([1]))
+        #expect(backups.ours("new") == Data([2]))
+    }
+
     @Test func finishedDropsOnlyTheUnfinishedSave() throws {
         try backups.keepUnfinished("a", Data([2]))
         backups.saved("a")
