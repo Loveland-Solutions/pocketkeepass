@@ -60,12 +60,14 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AA0000000000000000000404 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Shared;
+			name = Shared;
+			path = ../Shared;
 			sourceTree = "<group>";
 		};
 		AA0000000000000000000405 /* PocketKeePassAutoFill */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PocketKeePassAutoFill;
+			name = AutoFill;
+			path = ../AutoFill;
 			sourceTree = "<group>";
 		};
 		AA0000000000000000000401 /* PocketKeePass */ = {
@@ -81,6 +83,12 @@
 		AA0000000000000000000403 /* PocketKeePassUnitTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PocketKeePassUnitTests;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000406 /* SharedApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = SharedApp;
+			path = ../SharedApp;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -124,6 +132,7 @@
 			children = (
 				AA0000000000000000000401 /* PocketKeePass */,
 				AA0000000000000000000404 /* Shared */,
+				AA0000000000000000000406 /* SharedApp */,
 				AA0000000000000000000405 /* PocketKeePassAutoFill */,
 				AA0000000000000000000402 /* PocketKeePassUITests */,
 				AA0000000000000000000403 /* PocketKeePassUnitTests */,
@@ -186,6 +195,7 @@
 			fileSystemSynchronizedGroups = (
 				AA0000000000000000000401 /* PocketKeePass */,
 				AA0000000000000000000404 /* Shared */,
+				AA0000000000000000000406 /* SharedApp */,
 			);
 			name = PocketKeePass;
 			packageProductDependencies = (

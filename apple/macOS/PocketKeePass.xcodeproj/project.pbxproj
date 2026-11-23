@@ -1,0 +1,564 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BB0000000000000000000101 /* PocketKeePassCore in Frameworks */ = {isa = PBXBuildFile; productRef = BB0000000000000000000301 /* PocketKeePassCore */; };
+		BB0000000000000000000102 /* PocketKeePassCore in Frameworks */ = {isa = PBXBuildFile; productRef = BB0000000000000000000303 /* PocketKeePassCore */; };
+		BB0000000000000000000103 /* PocketKeePassAutoFill.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000204 /* PocketKeePassAutoFill.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		BB0000000000000000000B03 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB0000000000000000000801 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB0000000000000000000704;
+			remoteInfo = PocketKeePassAutoFill;
+		};
+		BB0000000000000000000B02 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB0000000000000000000801 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB0000000000000000000701;
+			remoteInfo = PocketKeePass;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BB0000000000000000000504 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				BB0000000000000000000103 /* PocketKeePassAutoFill.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		BB0000000000000000000201 /* PocketKeePass.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PocketKeePass.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB0000000000000000000203 /* PocketKeePassUnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PocketKeePassUnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB0000000000000000000204 /* PocketKeePassAutoFill.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PocketKeePassAutoFill.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		BB0000000000000000000401 /* PocketKeePass */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PocketKeePass;
+			sourceTree = "<group>";
+		};
+		BB0000000000000000000402 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = Shared;
+			path = ../Shared;
+			sourceTree = "<group>";
+		};
+		BB0000000000000000000403 /* SharedApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = SharedApp;
+			path = ../SharedApp;
+			sourceTree = "<group>";
+		};
+		BB0000000000000000000405 /* AutoFill */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = AutoFill;
+			path = ../AutoFill;
+			sourceTree = "<group>";
+		};
+		BB0000000000000000000404 /* PocketKeePassUnitTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = PocketKeePassUnitTests;
+			path = ../iOS/PocketKeePassUnitTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BB0000000000000000000501 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0000000000000000000101 /* PocketKeePassCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB0000000000000000000531 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB0000000000000000000102 /* PocketKeePassCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB0000000000000000000521 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		BB0000000000000000000601 = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000401 /* PocketKeePass */,
+				BB0000000000000000000402 /* Shared */,
+				BB0000000000000000000403 /* SharedApp */,
+				BB0000000000000000000405 /* AutoFill */,
+				BB0000000000000000000404 /* PocketKeePassUnitTests */,
+				BB0000000000000000000602 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BB0000000000000000000602 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BB0000000000000000000201 /* PocketKeePass.app */,
+				BB0000000000000000000204 /* PocketKeePassAutoFill.appex */,
+				BB0000000000000000000203 /* PocketKeePassUnitTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BB0000000000000000000701 /* PocketKeePass */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB0000000000000000000901 /* Build configuration list for PBXNativeTarget "PocketKeePass" */;
+			buildPhases = (
+				BB0000000000000000000502 /* Sources */,
+				BB0000000000000000000501 /* Frameworks */,
+				BB0000000000000000000503 /* Resources */,
+				BB0000000000000000000504 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BB0000000000000000000C03 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				BB0000000000000000000401 /* PocketKeePass */,
+				BB0000000000000000000402 /* Shared */,
+				BB0000000000000000000403 /* SharedApp */,
+			);
+			name = PocketKeePass;
+			packageProductDependencies = (
+				BB0000000000000000000301 /* PocketKeePassCore */,
+			);
+			productName = PocketKeePass;
+			productReference = BB0000000000000000000201 /* PocketKeePass.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BB0000000000000000000704 /* PocketKeePassAutoFill */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB0000000000000000000905 /* Build configuration list for PBXNativeTarget "PocketKeePassAutoFill" */;
+			buildPhases = (
+				BB0000000000000000000532 /* Sources */,
+				BB0000000000000000000531 /* Frameworks */,
+				BB0000000000000000000533 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BB0000000000000000000405 /* AutoFill */,
+				BB0000000000000000000402 /* Shared */,
+			);
+			name = PocketKeePassAutoFill;
+			packageProductDependencies = (
+				BB0000000000000000000303 /* PocketKeePassCore */,
+			);
+			productName = PocketKeePassAutoFill;
+			productReference = BB0000000000000000000204 /* PocketKeePassAutoFill.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BB0000000000000000000703 /* PocketKeePassUnitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB0000000000000000000904 /* Build configuration list for PBXNativeTarget "PocketKeePassUnitTests" */;
+			buildPhases = (
+				BB0000000000000000000522 /* Sources */,
+				BB0000000000000000000521 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BB0000000000000000000C02 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				BB0000000000000000000404 /* PocketKeePassUnitTests */,
+			);
+			name = PocketKeePassUnitTests;
+			productName = PocketKeePassUnitTests;
+			productReference = BB0000000000000000000203 /* PocketKeePassUnitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BB0000000000000000000801 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2720;
+				LastUpgradeCheck = 2720;
+			};
+			buildConfigurationList = BB0000000000000000000902 /* Build configuration list for PBXProject "PocketKeePass" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				mn,
+				Base,
+			);
+			mainGroup = BB0000000000000000000601;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				BB0000000000000000000302 /* XCLocalSwiftPackageReference "../PocketKeePassCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = BB0000000000000000000602 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BB0000000000000000000701 /* PocketKeePass */,
+				BB0000000000000000000704 /* PocketKeePassAutoFill */,
+				BB0000000000000000000703 /* PocketKeePassUnitTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BB0000000000000000000503 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB0000000000000000000533 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BB0000000000000000000502 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB0000000000000000000532 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB0000000000000000000522 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BB0000000000000000000C03 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB0000000000000000000704 /* PocketKeePassAutoFill */;
+			targetProxy = BB0000000000000000000B03 /* PBXContainerItemProxy */;
+		};
+		BB0000000000000000000C02 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB0000000000000000000701 /* PocketKeePass */;
+			targetProxy = BB0000000000000000000B02 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		BB0000000000000000000A01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		BB0000000000000000000A02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		BB0000000000000000000A03 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/PocketKeePass.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44H5SLX8KR;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PocketKeePass;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Loveland Solutions, LLC";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac;
+				PRODUCT_NAME = PocketKeePass;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		BB0000000000000000000A04 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/PocketKeePass.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44H5SLX8KR;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PocketKeePass;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Loveland Solutions, LLC";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac;
+				PRODUCT_NAME = PocketKeePass;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		BB0000000000000000000A09 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/PocketKeePassAutoFill.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44H5SLX8KR;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/AutoFill-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = PocketKeePass;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Loveland Solutions, LLC";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac.autofill;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		BB0000000000000000000A0A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/PocketKeePassAutoFill.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44H5SLX8KR;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/AutoFill-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = PocketKeePass;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Loveland Solutions, LLC";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac.autofill;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		BB0000000000000000000A07 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44H5SLX8KR;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac.unittests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PocketKeePass.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PocketKeePass";
+			};
+			name = Debug;
+		};
+		BB0000000000000000000A08 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44H5SLX8KR;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mn.lls.pocketkeepass.mac.unittests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PocketKeePass.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PocketKeePass";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BB0000000000000000000901 /* Build configuration list for PBXNativeTarget "PocketKeePass" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB0000000000000000000A03 /* Debug */,
+				BB0000000000000000000A04 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB0000000000000000000902 /* Build configuration list for PBXProject "PocketKeePass" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB0000000000000000000A01 /* Debug */,
+				BB0000000000000000000A02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB0000000000000000000905 /* Build configuration list for PBXNativeTarget "PocketKeePassAutoFill" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB0000000000000000000A09 /* Debug */,
+				BB0000000000000000000A0A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB0000000000000000000904 /* Build configuration list for PBXNativeTarget "PocketKeePassUnitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB0000000000000000000A07 /* Debug */,
+				BB0000000000000000000A08 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		BB0000000000000000000302 /* XCLocalSwiftPackageReference "../PocketKeePassCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../PocketKeePassCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BB0000000000000000000301 /* PocketKeePassCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PocketKeePassCore;
+		};
+		BB0000000000000000000303 /* PocketKeePassCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PocketKeePassCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = BB0000000000000000000801 /* Project object */;
+}

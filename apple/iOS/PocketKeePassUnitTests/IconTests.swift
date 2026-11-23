@@ -2,7 +2,11 @@ import Foundation
 import ImageIO
 import PocketKeePassCore
 import Testing
+#if os(iOS)
 import UIKit
+#else
+import AppKit
+#endif
 @testable import PocketKeePass
 
 /// KeePass's icons on iOS: every standard icon is a real SF Symbol, and custom icons come from
@@ -21,7 +25,11 @@ struct IconTests {
     @Test func everyStandardIconIsAnSFSymbol() {
         #expect(StandardIcons.symbols.count == 69)
         for (number, name) in StandardIcons.symbols.enumerated() {
+            #if os(iOS)
             #expect(UIImage(systemName: name) != nil, "icon \(number): \(name)")
+            #else
+            #expect(NSImage(systemSymbolName: name, accessibilityDescription: nil) != nil, "icon \(number): \(name)")
+            #endif
         }
         #expect(StandardIcons.symbol(200) == StandardIcons.symbols[0])
     }
@@ -33,8 +41,8 @@ struct IconTests {
         await icons.load(Self.id("51"))
         await icons.load(Self.id("53"))
         let red = try #require(icons.images[Self.id("51")])
-        #expect(red.cgImage?.width == 16)
-        #expect(try #require(icons.images[Self.id("53")]).cgImage?.width == 32)
+        #expect(red.width == 16)
+        #expect(try #require(icons.images[Self.id("53")]).width == 32)
         await icons.load(Self.id("52")) // referenced by KeePassXC, not in the file
         #expect(icons.images[Self.id("52")] == nil)
         icons.use(nil)

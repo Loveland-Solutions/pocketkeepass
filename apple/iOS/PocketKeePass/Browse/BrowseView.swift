@@ -1,18 +1,6 @@
 import PocketKeePassCore
 import SwiftUI
 
-enum Route: Hashable {
-    case group(String)
-    case entry(String)
-}
-
-/// Runs an engine read off the main thread, as every read is: the engine takes a lock, and a
-/// save or sync may hold it.
-func engine<T: Sendable>(_ session: Session, _ read: @escaping @Sendable (UnlockedDatabase) throws -> T) async throws -> T {
-    guard let database = session.database else { throw KeePassError.Locked(message: "") }
-    return try await Task.detached(priority: .userInitiated) { try read(database) }.value
-}
-
 struct BrowseView: View {
     @Environment(Session.self) private var session
     @State private var editing = Editing()
@@ -39,7 +27,7 @@ struct BrowseView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { SaveBar() }
         .sheet(isPresented: $showingSettings) { SettingsView() }
-        .modifier(EditingPresenter(editing: editing))
+        .modifier(EditingPresenter(editing: editing) { id in editing.path.append(.entry(id)) })
         .environment(editing)
     }
 }

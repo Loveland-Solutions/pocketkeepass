@@ -12,17 +12,31 @@ crypto logic lives in Swift.
   `PocketKeePassCore.swift`, and our own `KeePassError+Message.swift`. `swift test` there runs
   `BridgeTests`, the Swift version of the Android `BridgeTest.kt`, against
   `core/tests/fixtures`.
+- `Shared/` is built into both apps and the iPhone's AutoFill extension (the remembered
+  database, file access, backups, quick unlock, fill targets, icons). `SharedApp/` is built into
+  both apps but not the extension (the session, saving and sync, editing, unlocking, and the
+  screens the two apps share, in `SharedApp/Views/`). `AutoFill/` is the extension's code.
+  Platform differences are `#if os(iOS)` / `#if os(macOS)` in place.
 - `iOS/` is the iPhone and iPad app (`PocketKeePass.xcodeproj`, iOS 18+, bundle ID
   `mn.lls.pocketkeepass`) and its AutoFill extension (`PocketKeePassAutoFill`,
-  `mn.lls.pocketkeepass.autofill`). The project uses folder-synchronized groups, so new Swift
-  files are picked up without editing the project file: `PocketKeePass/` is the app's,
-  `PocketKeePassAutoFill/` the extension's, and `Shared/` is built into both (the remembered
-  database, file access, backups, quick unlock, fill targets). `Config/` holds the extension's
-  Info.plist and both targets' entitlements: the App Group `group.mn.lls.pocketkeepass`, which
-  the two share (settings, backups, and quick unlock's Keychain item), and the AutoFill
-  credential provider. Each target has its own string catalog; strings in `Shared/` need their
-  Mongolian in both.
-- `macOS/`: not started.
+  `mn.lls.pocketkeepass.autofill`). The project uses folder-synchronized groups that point at
+  `PocketKeePass/` and the shared folders above, so new Swift files are picked up without
+  editing the project file. `Config/` holds the extension's Info.plist and both targets'
+  entitlements: the App Group `group.mn.lls.pocketkeepass`, which the two share (settings,
+  backups, and quick unlock's Keychain item), and the AutoFill credential provider. Each target
+  has its own string catalog; strings in `Shared/` need their Mongolian in both.
+- `macOS/` is the Mac app (`PocketKeePass.xcodeproj`, macOS 15+, bundle ID
+  `mn.lls.pocketkeepass.mac`), sandboxed with no network entitlement. Its App Group is
+  `44H5SLX8KR.mn.lls.pocketkeepass.mac` (Mac groups start with the team ID), which is also the
+  Keychain access group. Quick unlock's item is in the data protection keychain, which needs a
+  provisioning profile: an unsigned or "sign to run locally" build gets
+  `errSecMissingEntitlement` (-34018), so build with Apple's profile (below). Its AutoFill
+  extension (`mn.lls.pocketkeepass.mac.autofill`) builds the same `AutoFill/` code as the
+  iPhone's. macOS ties a file bookmark to the app that made it, so the extension can't open the
+  database the user picked: the app keeps the file as it last read or wrote it in the App Group
+  (`Backups.latest`), the extension unlocks that, and a passkey made there waits as an
+  unfinished save that the app writes to the file at its next unlock. A key file can't be read
+  there either, so a database with one fills only with Touch ID.
 
 Rust targets needed:
 
@@ -37,6 +51,14 @@ apple/build-engine.sh
 cd apple/PocketKeePassCore && swift test           # the bridge, on this Mac
 cd apple/iOS && xcodebuild -project PocketKeePass.xcodeproj -scheme PocketKeePass \
     -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath ../build/DerivedData test
+
+# The Mac app, signed with a development profile Xcode fetches through the App Store Connect
+# API key (see tools/release_ios.sh for where the key lives):
+cd apple/macOS && xcodebuild -project PocketKeePass.xcodeproj -scheme PocketKeePass \
+    -destination 'platform=macOS,arch=arm64' -derivedDataPath ../build/mac-signed \
+    -allowProvisioningUpdates -authenticationKeyPath <AuthKey_….p8> \
+    -authenticationKeyID <key ID> -authenticationKeyIssuerID <issuer ID> build
+# `test` instead of `build` runs PocketKeePassUnitTests (the iPhone's folder, built for the Mac).
 ```
 
 `iOS/PocketKeePassUnitTests` (Swift Testing, hosted in the app) covers app logic that needs no
