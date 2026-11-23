@@ -85,25 +85,10 @@ final class UnlockFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 60))
 
         let title = "UI test \(UUID().uuidString.prefix(8))"
-        app.buttons["New entry"].tap()
-        let titleField = app.textFields["Title"]
-        XCTAssertTrue(titleField.waitForExistence(timeout: 5))
-        focus(titleField)
-        titleField.typeText(title)
-        let entryPassword = app.secureTextFields["Password"]
-        focus(entryPassword)
-        entryPassword.typeText("s3cret")
-        attach(app, "new entry")
-        app.buttons["Save"].tap()
-
-        // A KDBX 3 file asks to be upgraded before its first change (the first run only).
-        let upgrade = app.alerts.buttons["Upgrade"]
-        if upgrade.waitForExistence(timeout: 3) {
-            attach(app, "upgrade")
-            upgrade.tap()
-        }
-        XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 60), "the new entry isn't listed")
+        addEntry(app, title: title, password: "s3cret")
+        // "Saved" shows for 2 seconds only, so look for it first.
         XCTAssertTrue(app.staticTexts["Saved"].waitForExistence(timeout: 60), "never showed Saved")
+        XCTAssertTrue(app.staticTexts[title].exists, "the new entry isn't listed")
         attach(app, "saved")
 
         // From the file again.
@@ -114,6 +99,100 @@ final class UnlockFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 60), "the entry wasn't in the file")
         attach(app, "after unlocking again")
         app.buttons["Lock"].tap()
+    }
+
+    /// Editing an entry without touching its password, moving it, and deleting it into the
+    /// recycle bin. Works on an entry it adds itself, so the fixture's own entries stay as the
+    /// other tests expect them. Every run leaves one more entry in the recycle bin.
+    @MainActor
+    func testEditMoveAndDeleteEntry() throws {
+        let app = XCUIApplication()
+        app.launch()
+        pickBrowseDatabase(app)
+        let password = app.secureTextFields["Master password"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        focus(password)
+        password.typeText("test-password\n")
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 60))
+
+        let title = "UI edit \(UUID().uuidString.prefix(8))"
+        addEntry(app, title: title, password: "keep-me")
+        let row = app.staticTexts[title]
+        XCTAssertTrue(row.waitForExistence(timeout: 60))
+        row.tap()
+
+        // Edit: the password stays as dots with "Change", and isn't touched.
+        let edit = app.buttons["Edit"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 5))
+        edit.tap()
+        XCTAssertTrue(app.buttons["Change Password"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.secureTextFields["Password"].exists)
+        let username = app.textFields["Username"]
+        focus(username)
+        username.typeText("someone@example.com")
+        app.buttons["Add field"].tap()
+        let fieldName = app.textFields["Field name"]
+        XCTAssertTrue(fieldName.waitForExistence(timeout: 5))
+        focus(fieldName)
+        fieldName.typeText("Account")
+        let value = app.textFields["Value"]
+        focus(value)
+        value.typeText("42")
+        attach(app, "editing")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["someone@example.com"].waitForExistence(timeout: 60), "the edit isn't shown")
+        XCTAssertTrue(app.staticTexts["42"].exists)
+        app.buttons["Show Password"].tap()
+        XCTAssertTrue(app.staticTexts["keep-me"].waitForExistence(timeout: 5), "the password changed")
+        attach(app, "edited")
+
+        // Move it into Work.
+        app.buttons["More options"].tap()
+        app.buttons["Move"].tap()
+        let work = app.buttons["Work"]
+        XCTAssertTrue(work.waitForExistence(timeout: 5))
+        attach(app, "move picker")
+        work.tap()
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 10), "the group path didn't change")
+
+        // Delete it: into the recycle bin, and back to the list.
+        app.buttons["More options"].tap()
+        app.buttons["Delete"].tap()
+        let confirm = app.alerts.buttons["Move to recycle bin"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        attach(app, "delete question")
+        confirm.tap()
+        XCTAssertTrue(app.staticTexts["Saved"].waitForExistence(timeout: 60), "never showed Saved")
+        XCTAssertTrue(app.staticTexts["Recycle Bin"].waitForExistence(timeout: 10), "didn't go back to the list")
+        XCTAssertFalse(app.staticTexts[title].exists)
+
+        app.staticTexts["Recycle Bin"].tap()
+        XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 5), "not in the recycle bin")
+        attach(app, "recycle bin")
+        app.buttons["Lock"].tap()
+    }
+
+    /// Adds an entry to the group on screen, through "+" › "New entry", answering the upgrade
+    /// question if the file is still KDBX 3 (the first run only).
+    @MainActor
+    private func addEntry(_ app: XCUIApplication, title: String, password: String) {
+        app.buttons["Add"].tap()
+        app.buttons["New entry"].tap()
+        let upgrade = app.alerts.buttons["Upgrade"]
+        if upgrade.waitForExistence(timeout: 3) {
+            attach(app, "upgrade")
+            upgrade.tap()
+        }
+        let titleField = app.textFields["Title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5))
+        focus(titleField)
+        titleField.typeText(title)
+        let entryPassword = app.secureTextFields["Password"]
+        focus(entryPassword)
+        entryPassword.typeText(password)
+        attach(app, "new entry")
+        app.buttons["Save"].tap()
     }
 
     /// Face ID quick unlock: offered after the master password, turned on, used to unlock after

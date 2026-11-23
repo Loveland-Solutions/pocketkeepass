@@ -7,6 +7,7 @@ import SwiftUI
 struct EntryView: View {
     let id: String
     @Environment(Session.self) private var session
+    @Environment(Editing.self) private var editing
     @State private var entry: EntryDetails?
     @State private var error: String?
     /// Protected values the user chose to see, by field key.
@@ -28,20 +29,30 @@ struct EntryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { LockButton() }
-        }
-        .overlay(alignment: .bottom) {
-            if let copiedMessage {
-                Text(copiedMessage)
-                    .font(.callout)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(.regularMaterial, in: Capsule())
-                    .padding(.bottom, 24)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .accessibilityAddTraits(.isStaticText)
+            if let entry {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Edit") { editing.editEntry(session, entry) }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        let item = EditItem.entry(id: entry.id, name: entry.title, inRecycleBin: entry.isInRecycleBin)
+                        Button("Duplicate", systemImage: "plus.square.on.square") {
+                            editing.duplicate(session, id: entry.id, open: true)
+                        }
+                        Button("Move", systemImage: "folder") { editing.move(session, item) }
+                        Button("Delete", systemImage: "trash", role: .destructive) { editing.delete(session, item) }
+                    } label: {
+                        Label("More options", systemImage: "ellipsis.circle")
+                    }
+                }
             }
         }
-        .task(id: session.revision) { await load() }
+        .overlay(alignment: .bottom) { CopiedToast(message: copiedMessage) }
+        .task(id: session.revision) {
+            // A value shown before an edit or a sync may no longer be the entry's.
+            shown = [:]
+            await load()
+        }
         .onDisappear {
             shown = [:]
             totpShown = false
