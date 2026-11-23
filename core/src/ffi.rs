@@ -1240,6 +1240,55 @@ fn search_result(hit: &SearchHit<'_>) -> SearchResult {
     }
 }
 
+/// Whether a field holds one-time code settings, in any format KeePass apps use (`otp`,
+/// `TimeOtp-*`, `TOTP Seed`/`TOTP Settings`): the editor shows "Change" rather than "Set up",
+/// and a new code set up there replaces all of them.
+#[uniffi::export]
+pub fn is_totp_field(key: String) -> bool {
+    crate::totp::is_settings_field(&key)
+}
+
+/// What `totp_setup` made of a pasted setup key or link.
+#[derive(uniffi::Record)]
+pub struct TotpSetupResult {
+    /// The field to store it in (`otp`), protected.
+    pub field: String,
+    /// The field's value, UTF-8. It holds the secret: the caller wipes it.
+    pub value: Vec<u8>,
+    /// The code at the time given, for the user to enter on the site to finish setting up.
+    pub code: Vec<u8>,
+    pub period_seconds: u32,
+    pub length: u32,
+}
+
+/// Checks what the user pasted when a site set up two-factor sign-in (a setup key, or the
+/// `otpauth://` link a QR code holds) and returns what to store in the entry, plus the current
+/// code. A bare key is labelled with the entry's `title` and `username`, as KeePassXC does.
+/// `input` is wiped here; the caller wipes its own copy and the result's bytes.
+///
+/// Fails with `Invalid` (a sentence for the user) for anything that can't make codes. It
+/// doesn't touch any database, and it's fast enough for the main thread.
+#[uniffi::export]
+pub fn totp_setup(
+    input: Vec<u8>,
+    title: String,
+    username: String,
+    unix_seconds: u64,
+) -> Result<TotpSetupResult> {
+    let input = Zeroizing::new(input);
+    let text = std::str::from_utf8(&input)
+        .map_err(|_| Error::Invalid("That isn't a setup key.".to_owned()))?;
+    let set = crate::totp::setup(text, &title, &username)?;
+    let code = set.totp.code_at(unix_seconds);
+    Ok(TotpSetupResult {
+        field: crate::totp::OTP_FIELD.to_owned(),
+        value: set.value.as_bytes().to_vec(),
+        code: code.as_bytes().to_vec(),
+        period_seconds: set.totp.period(),
+        length: set.totp.length(),
+    })
+}
+
 /// Makes a random password. It's ASCII, so the bytes are also its UTF-8. The caller wipes them.
 ///
 /// Fails with `Invalid` (a sentence for the user) if no kind of character is chosen or the
@@ -1632,6 +1681,28 @@ mod tests {
         for bad in ["ee".repeat(16), "01".repeat(16), "nonsense".to_owned()] {
             assert!(matches!(db.entry(bad), Err(Error::NotFound)));
         }
+    }
+
+    #[test]
+    fn totp_setup_crosses_the_bridge_as_bytes() {
+        let set = totp_setup(
+            b"GEZD GNBV GY3T QOJQ GEZD GNBV GY3T QOJQ".to_vec(),
+            "Mail".into(),
+            "alice".into(),
+            59,
+        )
+        .unwrap();
+        assert_eq!(set.field, "otp");
+        assert!(
+            set.value
+                .starts_with(b"otpauth://totp/Mail:alice?secret=GEZD")
+        );
+        assert_eq!(set.code, b"287082");
+        assert_eq!((set.period_seconds, set.length), (30, 6));
+        assert!(matches!(
+            totp_setup(vec![0xff, 0xfe], String::new(), String::new(), 0),
+            Err(Error::Invalid(_))
+        ));
     }
 
     #[test]

@@ -469,6 +469,112 @@ fn parse_algorithm(text: &str) -> Result<TotpAlgorithm> {
     }
 }
 
+/// Whether a field holds one-time code settings in any of the ways `Totp::from_entry` reads,
+/// so setting up a new code can replace all of them.
+pub fn is_settings_field(key: &str) -> bool {
+    key == OTP_FIELD || key.starts_with("TimeOtp-") || key == LEGACY_SEED || key == LEGACY_SETTINGS
+}
+
+/// The shortest setup key `setup` takes typed or pasted on its own: 80 bits (16 Base32
+/// characters), RFC 4226's minimum and the shortest sites use. A shorter one is almost always a
+/// key copied in part.
+const MIN_SETUP_SECRET: usize = 10;
+
+/// What `setup` makes of what the user pasted.
+pub struct TotpSetup {
+    /// What to store in the `otp` field. Holds the secret.
+    pub value: Zeroizing<String>,
+    pub totp: Totp,
+}
+
+/// Turns what a site shows when two-factor sign-in is set up into the `otp` field's value, as
+/// KeePassXC stores it, after checking it makes codes:
+///
+/// - an `otpauth://totp/…` link (what the QR code holds), kept as it is;
+/// - KeeOTP's `key=…&size=…&step=…`, kept as it is;
+/// - a bare setup key (Base32, in either case, with spaces or dashes), turned into an
+///   `otpauth://` link labelled with the entry's title and username, as KeePassXC does.
+///
+/// Fails with `Invalid` (a sentence for the user) for anything else, a counter-based (HOTP)
+/// link, or a setup key too short to be a whole one.
+pub fn setup(input: &str, title: &str, username: &str) -> Result<TotpSetup> {
+    let input = input.trim();
+    if input.is_empty() {
+        return Err(invalid(
+            "Paste the setup key or the otpauth:// link the site shows.",
+        ));
+    }
+    let scheme = "otpauth://";
+    let is_link = input
+        .get(..scheme.len())
+        .is_some_and(|start| start.eq_ignore_ascii_case(scheme));
+    if is_link || input.to_ascii_lowercase().contains("key=") {
+        let totp = parse_otp_field(input)?;
+        return Ok(TotpSetup {
+            value: Zeroizing::new(input.to_owned()),
+            totp,
+        });
+    }
+
+    let compact: Zeroizing<String> = Zeroizing::new(
+        input
+            .chars()
+            .filter(|c| !c.is_whitespace() && *c != '-')
+            .map(|c| c.to_ascii_uppercase())
+            .collect::<String>()
+            .trim_end_matches('=')
+            .to_owned(),
+    );
+    let secret = base32_decode(&compact).ok_or_else(|| {
+        invalid(
+            "That isn't a setup key. Setup keys use only the letters A to Z and the digits 2 to 7.",
+        )
+    })?;
+    if secret.len() < MIN_SETUP_SECRET {
+        return Err(invalid(
+            "That setup key is too short. Setup keys are usually 16 or 32 characters: check that all of it was copied.",
+        ));
+    }
+    let issuer = title.trim();
+    let account = username.trim();
+    let label = match (issuer.is_empty(), account.is_empty()) {
+        (false, false) => format!("{}:{}", percent_encode(issuer), percent_encode(account)),
+        (false, true) => percent_encode(issuer),
+        (true, false) => percent_encode(account),
+        (true, true) => "PocketKeePass".to_owned(),
+    };
+    let mut value = Zeroizing::new(format!(
+        "otpauth://totp/{label}?secret={}&period={DEFAULT_PERIOD}&digits={DEFAULT_DIGITS}",
+        compact.as_str()
+    ));
+    if !issuer.is_empty() {
+        value.push_str("&issuer=");
+        value.push_str(&percent_encode(issuer));
+    }
+    let totp = Totp::new(
+        secret,
+        TotpAlgorithm::Sha1,
+        DEFAULT_DIGITS,
+        DEFAULT_PERIOD,
+        false,
+    )?;
+    Ok(TotpSetup { value, totp })
+}
+
+/// Percent-encodes everything but RFC 3986's unreserved characters, for a link's label and
+/// issuer.
+fn percent_encode(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for byte in text.bytes() {
+        if byte.is_ascii_alphanumeric() || b"-._~".contains(&byte) {
+            out.push(byte as char);
+        } else {
+            out.push_str(&format!("%{byte:02X}"));
+        }
+    }
+    out
+}
+
 fn invalid(message: impl Into<String>) -> Error {
     Error::Invalid(message.into())
 }
@@ -531,6 +637,84 @@ mod tests {
         for (time, code) in expected.iter().enumerate() {
             assert_eq!(*t.code_at(time as u64), *code);
         }
+    }
+
+    #[test]
+    fn setup_turns_a_bare_key_into_a_link_keepassxc_reads() {
+        // RFC 6238's secret, as a setup page might show it: lowercase, in groups, padded.
+        let set = setup(
+            "  gezd gnbv gy3t qojq gezd gnbv gy3t qojq====  ",
+            "Example: Mail",
+            "alice@example.com",
+        )
+        .unwrap();
+        assert_eq!(
+            *set.value,
+            "otpauth://totp/Example%3A%20Mail:alice%40example.com\
+             ?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&period=30&digits=6&issuer=Example%3A%20Mail"
+        );
+        assert_eq!(*set.totp.code_at(59), "287082");
+        // What's stored reads back as the same settings.
+        let again = parse_otp_field(&set.value).unwrap();
+        assert_eq!(*again.code_at(59), "287082");
+        assert_eq!((again.length(), again.period()), (6, 30));
+    }
+
+    #[test]
+    fn setup_labels_a_key_with_whatever_the_entry_has() {
+        let key = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
+        assert!(
+            setup(key, "", "bob")
+                .unwrap()
+                .value
+                .starts_with("otpauth://totp/bob?secret=")
+        );
+        let untitled = setup(key, " ", "").unwrap();
+        assert!(
+            untitled
+                .value
+                .starts_with("otpauth://totp/PocketKeePass?secret=")
+        );
+        assert!(!untitled.value.contains("issuer="));
+    }
+
+    #[test]
+    fn setup_keeps_links_and_keeotp_as_they_are() {
+        let link = "otpauth://totp/GitHub:alice?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&digits=8&issuer=GitHub";
+        let set = setup(link, "Anything", "else").unwrap();
+        assert_eq!(*set.value, link);
+        assert_eq!(*set.totp.code_at(59), "94287082");
+        let keeotp = "key=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&size=8&step=30";
+        assert_eq!(*setup(keeotp, "", "").unwrap().value, keeotp);
+    }
+
+    #[test]
+    fn settings_fields_in_every_format() {
+        for key in [
+            "otp",
+            "TimeOtp-Secret-Base32",
+            "TimeOtp-Period",
+            "TOTP Seed",
+            "TOTP Settings",
+        ] {
+            assert!(is_settings_field(key), "{key}");
+        }
+        for key in ["Password", "OTP", "otp2", "TOTP", "Notes"] {
+            assert!(!is_settings_field(key), "{key}");
+        }
+    }
+
+    #[test]
+    fn setup_refuses_what_cant_make_codes() {
+        let message = |input: &str| match setup(input, "T", "u") {
+            Err(Error::Invalid(m)) => m,
+            other => panic!("{input:?} gave {:?}", other.map(|s| s.totp)),
+        };
+        assert!(message("   ").contains("Paste"));
+        assert!(message("hunter2!").contains("isn't a setup key"));
+        assert!(message("GEZDGNBV").contains("too short"));
+        assert!(message("otpauth://hotp/x?secret=GEZDGNBVGY3TQOJQ&counter=1").contains("HOTP"));
+        assert!(message("otpauth://totp/x?secret=GEZDGNBVGY3TQOJQ&digits=12").contains("length"));
     }
 
     #[test]

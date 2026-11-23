@@ -43,7 +43,7 @@ pub use passkey::{
     AppTrust, CreatedPasskey, CreationSummary, PasskeyHit, PasskeyStatus, PasskeyTarget,
     PasskeyView, has_passkey, is_passkey_field, passkey_of,
 };
-pub use totp::{OTP_FIELD, Totp, TotpAlgorithm};
+pub use totp::{OTP_FIELD, Totp, TotpAlgorithm, TotpSetup, setup as totp_setup};
 pub use webauthn::Client;
 
 uniffi::setup_scaffolding!();
