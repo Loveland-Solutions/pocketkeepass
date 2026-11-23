@@ -215,6 +215,33 @@ final class Session {
         return result
     }
 
+    /// Converts a KDBX 3 database to KDBX 4 in memory, once the user agreed, so the edit they
+    /// asked for can follow. The file changes with the first save.
+    func upgrade() async throws {
+        guard let open else { throw KeePassError.Locked(message: "") }
+        guard open.needsUpgrade else { return }
+        let database = open.database
+        try await Task.detached(priority: .userInitiated) { try database.upgradeToKdbx4() }.value
+        open.needsUpgrade = false
+    }
+
+    /// Like `change`, for an edit that reports whether it changed anything (`update_entry`,
+    /// `move_entry`, …). One that didn't needs no save, unless the database was upgraded on the
+    /// way. Returns what the edit returned.
+    @discardableResult
+    func changeIfNeeded(_ edit: @escaping @Sendable (UnlockedDatabase) throws -> Bool) async throws -> Bool {
+        guard let open else { throw KeePassError.Locked(message: "") }
+        let upgrade = open.needsUpgrade
+        let database = open.database
+        let changed = try await Task.detached(priority: .userInitiated) {
+            if upgrade { try database.upgradeToKdbx4() }
+            return try edit(database)
+        }.value
+        if upgrade { open.needsUpgrade = false }
+        if self.open === open, changed || upgrade { self.changed() }
+        return changed
+    }
+
     /// The open database was just changed in memory. Screens re-read it, and it's saved.
     func changed() {
         revision += 1

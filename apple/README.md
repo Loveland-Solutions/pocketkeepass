@@ -36,8 +36,10 @@ cd apple/iOS && xcodebuild -project PocketKeePass.xcodeproj -scheme PocketKeePas
 screen: quick unlock's expiry rule and the checks made before a Face ID prompt, backups, and
 saving through `Session` into copies of `core/tests/fixtures` (merging, restoring, upgrading).
 
-The UI test (`iOS/PocketKeePassUITests`) drives the app through the system file picker: open,
-wrong password, unlock, browse, search, show and copy a protected field, and lock. Setup, once per
+The UI tests (`iOS/PocketKeePassUITests`) drive the app through the system file picker: open,
+wrong password, unlock, browse, search, show and copy a protected field, lock, a new entry, and
+editing, moving, and deleting an entry. If two simulators share a name (`xcrun simctl list
+devices`), `name=` may pick the one without the fixture: pass `-destination 'id=<id>'` instead. Setup, once per
 simulator: open the Files app once (that creates its "On My iPhone" storage), then copy
 `core/tests/fixtures/browse.kdbx` into
 `~/Library/Developer/CoreSimulator/Devices/<id>/data/Containers/Shared/AppGroup/<group>/File Provider Storage/`,

@@ -15,11 +15,11 @@ func engine<T: Sendable>(_ session: Session, _ read: @escaping @Sendable (Unlock
 
 struct BrowseView: View {
     @Environment(Session.self) private var session
-    @State private var path: [Route] = []
+    @State private var editing = Editing()
     @State private var showingSettings = false
 
     var body: some View {
-        NavigationStack(path: $path) {
+        NavigationStack(path: $editing.path) {
             GroupView(id: nil)
                 .navigationDestination(for: Route.self) { route in
                     switch route {
@@ -39,6 +39,8 @@ struct BrowseView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { SaveBar() }
         .sheet(isPresented: $showingSettings) { SettingsView() }
+        .modifier(EditingPresenter(editing: editing))
+        .environment(editing)
     }
 }
 
@@ -67,11 +69,11 @@ struct GroupView: View {
     /// nil for the root group.
     let id: String?
     @Environment(Session.self) private var session
+    @Environment(Editing.self) private var editing
     @State private var listing: GroupListing?
     @State private var error: String?
     @State private var query = ""
     @State private var results: [SearchResult]?
-    @State private var addingEntry = false
 
     var body: some View {
         List {
@@ -91,18 +93,20 @@ struct GroupView: View {
         .navigationTitle(title)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { LockButton() }
-            if let listing, !listing.group.isRecycleBin, results == nil {
+            if let listing, !isInRecycleBin(listing), results == nil {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        addingEntry = true
+                    Menu {
+                        Button("New entry", systemImage: "key") {
+                            editing.newEntry(session, groupId: listing.group.id)
+                        }
+                        Button("New group", systemImage: "folder.badge.plus") {
+                            editing.newGroup(session, parentId: listing.group.id)
+                        }
                     } label: {
-                        Label("New entry", systemImage: "plus")
+                        Label("Add", systemImage: "plus")
                     }
                 }
             }
-        }
-        .sheet(isPresented: $addingEntry) {
-            if let listing { NewEntryView(groupId: listing.group.id) }
         }
         .refreshable { await session.checkNow() }
         .modifier(SearchModifier(enabled: id == nil, query: $query))
@@ -122,6 +126,9 @@ struct GroupView: View {
         if !listing.groups.isEmpty {
             Section {
                 ForEach(listing.groups, id: \.id) { group in
+                    let item = EditItem.group(
+                        id: group.id, name: group.name, inRecycleBin: isInRecycleBin(listing), isRecycleBin: group.isRecycleBin
+                    )
                     NavigationLink(value: Route.group(group.id)) {
                         Label {
                             VStack(alignment: .leading) {
@@ -134,6 +141,7 @@ struct GroupView: View {
                             ItemIconView(icon: group.icon, kind: group.isRecycleBin ? .recycleBin : .group)
                         }
                     }
+                    .contextMenu { groupActions(item) }
                 }
             }
         }
@@ -141,6 +149,9 @@ struct GroupView: View {
             Section {
                 ForEach(listing.entries, id: \.id) { entry in
                     EntryRow(entry: entry, groupPath: nil)
+                        .contextMenu {
+                            entryActions(.entry(id: entry.id, name: entry.title, inRecycleBin: isInRecycleBin(listing)))
+                        }
                 }
             }
         }
@@ -153,7 +164,37 @@ struct GroupView: View {
         } else {
             ForEach(results, id: \.entry.id) { result in
                 EntryRow(entry: result.entry, groupPath: result.groupPath)
+                    .contextMenu {
+                        // Search leaves out the recycle bin.
+                        entryActions(.entry(id: result.entry.id, name: result.entry.title, inRecycleBin: false))
+                    }
             }
+        }
+    }
+
+    /// Whether this group is the recycle bin or inside it, where deleting is for good and nothing
+    /// new is added.
+    private func isInRecycleBin(_ listing: GroupListing) -> Bool {
+        listing.group.isRecycleBin || listing.parents.contains(where: \.isRecycleBin)
+    }
+
+    @ViewBuilder
+    private func entryActions(_ item: EditItem) -> some View {
+        Button("Duplicate", systemImage: "plus.square.on.square") {
+            editing.duplicate(session, id: item.id, open: false)
+        }
+        Button("Move", systemImage: "folder") { editing.move(session, item) }
+        Button("Delete", systemImage: "trash", role: .destructive) { editing.delete(session, item) }
+    }
+
+    @ViewBuilder
+    private func groupActions(_ item: EditItem) -> some View {
+        if item.isRecycleBin {
+            Button("Empty recycle bin", systemImage: "trash", role: .destructive) { editing.delete(session, item) }
+        } else {
+            Button("Edit", systemImage: "pencil") { editing.editGroup(session, id: item.id) }
+            Button("Move", systemImage: "folder") { editing.move(session, item) }
+            Button("Delete", systemImage: "trash", role: .destructive) { editing.delete(session, item) }
         }
     }
 

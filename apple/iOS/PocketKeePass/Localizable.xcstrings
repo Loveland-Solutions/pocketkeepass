@@ -285,6 +285,26 @@
         }
       }
     },
+    "Add": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэмэх"
+          }
+        }
+      }
+    },
+    "Add field": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Талбар нэмэх"
+          }
+        }
+      }
+    },
     "Add key file": {
       "localizations": {
         "mn": {
@@ -371,6 +391,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Солих"
+          }
+        }
+      }
+    },
+    "Change %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ өөрчлөх"
           }
         }
       }
@@ -479,6 +509,36 @@
         }
       }
     },
+    "Delete": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Устгах"
+          }
+        }
+      }
+    },
+    "Delete for good?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бүрмөсөн устгах уу?"
+          }
+        }
+      }
+    },
+    "Deleted.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Устгалаа."
+          }
+        }
+      }
+    },
     "Discard": {
       "localizations": {
         "mn": {
@@ -519,12 +579,82 @@
         }
       }
     },
+    "Duplicate": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хувилах"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Засах"
+          }
+        }
+      }
+    },
+    "Edit entry": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бичлэг засах"
+          }
+        }
+      }
+    },
+    "Edit group": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бүлэг засах"
+          }
+        }
+      }
+    },
+    "Empty recycle bin": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хогийн савыг хоослох"
+          }
+        }
+      }
+    },
     "Engine": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Хөдөлгүүр"
+          }
+        }
+      }
+    },
+    "Everything in the recycle bin is deleted for good. This can’t be undone. A new recycle bin appears the next time you delete something.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хогийн саван дахь бүх зүйл бүрмөсөн устна. Үүнийг буцаах боломжгүй. Дараа нь ямар нэг зүйл устгахад шинэ хогийн сав гарч ирнэ."
+          }
+        }
+      }
+    },
+    "Field name": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Талбарын нэр"
           }
         }
       }
@@ -679,6 +809,16 @@
         }
       }
     },
+    "Made a copy.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуулбар үүсгэлээ."
+          }
+        }
+      }
+    },
     "Master password": {
       "localizations": {
         "mn": {
@@ -689,12 +829,102 @@
         }
       }
     },
+    "More options": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бусад сонголт"
+          }
+        }
+      }
+    },
+    "Move": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зөөх"
+          }
+        }
+      }
+    },
+    "Move to recycle bin": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хогийн сав руу зөөх"
+          }
+        }
+      }
+    },
+    "Move to the recycle bin?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хогийн сав руу зөөх үү?"
+          }
+        }
+      }
+    },
+    "Move “%@” to": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зөөх газраа сонгоно уу: «%@»"
+          }
+        }
+      }
+    },
+    "Moved to the recycle bin.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хогийн сав руу зөөлөө."
+          }
+        }
+      }
+    },
+    "Moved.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зөөлөө."
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэр"
+          }
+        }
+      }
+    },
     "New entry": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Шинэ бичлэг"
+          }
+        }
+      }
+    },
+    "New group": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ бүлэг"
           }
         }
       }
@@ -829,6 +1059,16 @@
         }
       }
     },
+    "Protect (hide and encrypt)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хамгаалах (нууж, шифрлэх)"
+          }
+        }
+      }
+    },
     "Remove": {
       "localizations": {
         "mn": {
@@ -905,6 +1145,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Бичлэг хайх"
+          }
+        }
+      }
+    },
+    "Separate tags with commas.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шошгуудыг таслалаар тусгаарлана уу."
           }
         }
       }
@@ -1369,6 +1619,16 @@
         }
       }
     },
+    "Value": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Утга"
+          }
+        }
+      }
+    },
     "Version": {
       "localizations": {
         "mn": {
@@ -1435,6 +1695,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "iCloud Drive"
+          }
+        }
+      }
+    },
+    "“%@” and everything in it are deleted for good. This can’t be undone.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» болон доторх бүх зүйл бүрмөсөн устна. Үүнийг буцаах боломжгүй."
+          }
+        }
+      }
+    },
+    "“%@” and everything in it go to the recycle bin. You can move them back out from there.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» болон доторх бүх зүйл хогийн сав руу орно. Тэндээс буцааж гаргаж болно."
+          }
+        }
+      }
+    },
+    "“%@” goes to the recycle bin. You can move it back out from there.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» хогийн сав руу орно. Тэндээс буцааж гаргаж болно."
+          }
+        }
+      }
+    },
+    "“%@” is deleted for good. This can’t be undone.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» бүрмөсөн устна. Үүнийг буцаах боломжгүй."
           }
         }
       }
