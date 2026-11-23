@@ -4,22 +4,41 @@ import LocalAuthentication
 import Observation
 import PocketKeePassCore
 
-/// One AutoFill request: unlock the remembered database, offer the entries saved for the site
-/// asking (or any entry, by search), and hand iOS the chosen one's username and password.
+/// One AutoFill request: unlock the remembered database, then
+/// - for a password: offer the entries saved for the site asking (or any entry, by search), and
+///   hand iOS the chosen one's username and password;
+/// - for a passkey sign-in: offer the passkeys for the site, and sign with the chosen one;
+/// - for a new passkey: make it, in a new entry or one for the same site, save the database,
+///   and only then hand iOS the new credential.
 ///
 /// The extension is its own process, apart from the app, so it can't use a database the app
 /// has open: it unlocks the file itself each time, with Face ID (quick unlock, shared with the
-/// app) or the master password. The database is wiped as soon as the request ends, filled or
-/// cancelled, and after the auto-lock time without use. Nothing is ever written: the file and
-/// the app's backups are only read.
+/// app) or the master password. That unlock is also the user verification every passkey use
+/// needs. The database is wiped as soon as the request ends, however it ends, and after the
+/// auto-lock time without use. Only a new passkey writes the file (see `savePasskey`).
 @Observable
 final class AutoFillModel {
+    enum Request {
+        case password([ASCredentialServiceIdentifier])
+        case passkeySignIn(SiteSignIn)
+        case newPasskey(SitePasskeyRequest)
+    }
+
     enum Outcome {
         case fill(user: String, password: String)
+        case passkey(ASPasskeyAssertionCredential)
+        case newPasskey(ASPasskeyRegistrationCredential)
         case cancel
     }
 
+    /// Where a new passkey goes, once the user chose.
+    enum PasskeyPlace: Hashable {
+        case newEntry
+        case entry(id: String, title: String)
+    }
+
     let recent = RecentDatabase.load()
+    let request: Request
     /// Where the fill goes, as iOS reported it (already verified by iOS).
     let targets: [FillTarget]
     /// The hosts in `targets`, for saying where the fill goes.
@@ -34,20 +53,41 @@ final class AutoFillModel {
     private(set) var matches: [SearchResult] = []
     private(set) var results: [SearchResult] = []
     private(set) var isUnlocked = false
+    /// The passkeys for the site asking to sign in.
+    private(set) var passkeys: [PasskeyChoice] = []
+    /// What a new passkey is for, and the entries it could join.
+    private(set) var creation: PasskeyCreation?
+    /// A new passkey is being made and saved.
+    private(set) var isSaving = false
+    /// The KDBX 3 database is upgraded to KDBX 4 when the new passkey is saved.
+    private(set) var needsUpgrade = false
 
     @ObservationIgnored let quickUnlock = QuickUnlock()
     /// The unlocked database's custom icons, for the list.
     @ObservationIgnored let customIcons = CustomIcons()
     @ObservationIgnored private var database: UnlockedDatabase?
+    /// The file the database came from, as it was read, and the engine's change count then:
+    /// what saving a new passkey compares against.
+    @ObservationIgnored private var file: (url: URL, fingerprint: Data, cleanCount: UInt64)?
     @ObservationIgnored private let finish: (Outcome) -> Void
     @ObservationIgnored private var finished = false
     @ObservationIgnored private var autoPrompted = false
     @ObservationIgnored private var lastInteraction = ContinuousClock.now
     @ObservationIgnored private var timer: Task<Void, Never>?
 
-    init(identifiers: [ASCredentialServiceIdentifier], finish: @escaping (Outcome) -> Void) {
-        targets = FillTargets.from(identifiers)
-        hosts = FillTargets.hosts(targets)
+    init(request: Request, finish: @escaping (Outcome) -> Void) {
+        self.request = request
+        switch request {
+        case .password(let identifiers):
+            targets = FillTargets.from(identifiers)
+            hosts = FillTargets.hosts(targets)
+        case .passkeySignIn(let signIn):
+            targets = []
+            hosts = [signIn.rpId]
+        case .newPasskey(let creation):
+            targets = []
+            hosts = [creation.rpId]
+        }
         self.finish = finish
     }
 
@@ -109,15 +149,15 @@ final class AutoFillModel {
                 self.error = error.localizedDescription
                 return
             }
-            let result = await Task.detached(priority: .userInitiated) { () -> Result<UnlockedDatabase, Error> in
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<Opened, Error> in
                 var keyHash = hash
                 defer { keyHash.wipe() }
                 return Result { try Self.open(recent) { try UnlockedDatabase.openWithKeyHash(file: $0, keyHash: keyHash) } }
             }.value
             isUnlocking = false
             switch result {
-            case .success(let database):
-                await opened(database)
+            case .success(let unlocked):
+                await opened(unlocked)
             case .failure(KeePassError.WrongKey):
                 quickUnlock.outdated()
                 error = String(localized: "Unlocking with \(biometry.kind.name) was turned off because this database’s master password or key file changed. Unlock with the new one, then turn it back on in the PocketKeePass app’s settings.")
@@ -138,7 +178,7 @@ final class AutoFillModel {
         isUnlocking = true
         error = nil
         Task {
-            let result = await Task.detached(priority: .userInitiated) { () -> Result<UnlockedDatabase, Error> in
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<Opened, Error> in
                 var passwordBytes: Data? = usePassword ? Secrets.utf8(typed) : nil
                 var keyFile: Data?
                 defer {
@@ -160,9 +200,9 @@ final class AutoFillModel {
             }.value
             isUnlocking = false
             switch result {
-            case .success(let database):
+            case .success(let unlocked):
                 quickUnlock.passwordTyped(recent)
-                await opened(database)
+                await opened(unlocked)
             case .failure(is KeyFileUnreadable):
                 error = String(localized: "PocketKeePass can’t open the key file anymore. Open the PocketKeePass app, remove the key file, and add it again.")
             case .failure(let failure):
@@ -177,25 +217,45 @@ final class AutoFillModel {
     /// only; the app writes it to the file. Blocking.
     nonisolated private static func open(
         _ recent: RecentDatabase, unlock: (Data) throws -> UnlockedDatabase
-    ) throws -> UnlockedDatabase {
+    ) throws -> Opened {
         let url = try FileAccess.resolve(recent.bookmark).url
         let file = try FileAccess.read(url)
         let database = try unlock(file)
+        // What matches the file, before our own copy is merged in below.
+        let cleanCount = database.changeCount()
         let location = Backups.location(url)
         if let ours = Backups.standard.ours(location), FileAccess.fingerprint(ours) != FileAccess.fingerprint(file) {
             // Another master key since, or a copy that won't open: the file as it is.
             _ = try? database.mergeSavedCopy(file: ours)
         }
-        return database
+        return Opened(database: database, url: url, fingerprint: FileAccess.fingerprint(file), cleanCount: cleanCount)
     }
 
-    private func opened(_ database: UnlockedDatabase) async {
+    /// A database just unlocked, and its file as it was read.
+    nonisolated struct Opened: @unchecked Sendable {
+        let database: UnlockedDatabase
+        let url: URL
+        let fingerprint: Data
+        let cleanCount: UInt64
+    }
+
+    private func opened(_ opened: Opened) async {
+        let database = opened.database
         guard !finished else {
             Task.detached { database.lock() }
             return
         }
         self.database = database
+        file = (opened.url, opened.fingerprint, opened.cleanCount)
         customIcons.use(database)
+        switch request {
+        case .password: await findMatches(database)
+        case .passkeySignIn(let request): await findPasskeys(database, request)
+        case .newPasskey(let creation): await checkCreation(database, creation)
+        }
+    }
+
+    private func findMatches(_ database: UnlockedDatabase) async {
         let targets = targets
         let found = await Task.detached(priority: .userInitiated) { () -> [SearchResult] in
             var seen = Set<String>()
@@ -214,6 +274,131 @@ final class AutoFillModel {
         // One entry saved for this site: that's the one. iOS verified the site, and the user
         // chose PocketKeePass for it.
         if found.count == 1 { fill(found[0].entry) }
+    }
+
+    // MARK: Passkeys
+
+    private func findPasskeys(_ database: UnlockedDatabase, _ request: SiteSignIn) async {
+        let found = await Task.detached(priority: .userInitiated) {
+            Result { try database.passkeysForSite(request: request) }
+        }.value
+        guard !finished else { return }
+        isUnlocked = true
+        startTimer()
+        switch found {
+        case .success(let choices):
+            passkeys = choices
+            // One passkey that works: that's the one. The unlock just now verified the user.
+            let usable = choices.filter { $0.unusableReason == nil }
+            if usable.count == 1, choices.count == 1 { signIn(with: usable[0]) }
+        case .failure(let failure):
+            error = failure.userMessage
+        }
+    }
+
+    /// Signs the sign-in request with the chosen passkey, and hands iOS the result.
+    func signIn(with choice: PasskeyChoice) {
+        guard case .passkeySignIn(let signIn) = request, let database, choice.unusableReason == nil, !finished else { return }
+        interacted()
+        let id = choice.result.entry.id
+        Task {
+            let signed = await Task.detached(priority: .userInitiated) {
+                Result { try database.signInAtSite(entryId: id, request: signIn) }
+            }.value
+            switch signed {
+            case .success(let assertion):
+                end(.passkey(ASPasskeyAssertionCredential(
+                    userHandle: assertion.userHandle,
+                    relyingParty: signIn.rpId,
+                    signature: assertion.signature,
+                    clientDataHash: signIn.clientDataHash,
+                    authenticatorData: assertion.authenticatorData,
+                    credentialID: assertion.credentialId
+                )))
+            case .failure(let failure):
+                error = failure.userMessage
+            }
+        }
+    }
+
+    private func checkCreation(_ database: UnlockedDatabase, _ request: SitePasskeyRequest) async {
+        let checked = await Task.detached(priority: .userInitiated) { () -> Result<(PasskeyCreation, Bool), Error> in
+            Result { (try database.passkeyCreationAtSite(request: request), try database.summary().needsUpgrade) }
+        }.value
+        guard !finished else { return }
+        isUnlocked = true
+        startTimer()
+        switch checked {
+        case .success(let (creation, needsUpgrade)):
+            self.creation = creation
+            self.needsUpgrade = needsUpgrade
+        case .failure(let failure):
+            error = failure.userMessage
+        }
+    }
+
+    /// Makes the new passkey where the user chose, saves the database to its file, and only
+    /// then hands iOS the new credential: a site must never hold a passkey the file doesn't. If
+    /// saving fails, the passkey is taken back out, and the user can try again or cancel.
+    func createPasskey(_ place: PasskeyPlace) {
+        guard case .newPasskey(let request) = request, let database, let file, !isSaving, !finished else { return }
+        interacted()
+        isSaving = true
+        error = nil
+        let upgrade = needsUpgrade
+        Task {
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<PasskeyRegistration, Error> in
+                Result {
+                    if upgrade { try database.upgradeToKdbx4() }
+                    let target: PasskeyTarget = switch place {
+                    case .newEntry: .newEntry(groupId: try database.listGroup(id: nil).group.id)
+                    case .entry(let id, _): .entry(entryId: id)
+                    }
+                    let made = try database.createPasskeyAtSite(target: target, request: request)
+                    do {
+                        try Self.save(database, to: file)
+                    } catch {
+                        _ = try? database.undoPasskey(entryId: made.entryId)
+                        throw error
+                    }
+                    return made
+                }
+            }.value
+            isSaving = false
+            switch result {
+            case .success(let made):
+                needsUpgrade = false
+                end(.newPasskey(ASPasskeyRegistrationCredential(
+                    relyingParty: request.rpId,
+                    clientDataHash: request.clientDataHash,
+                    credentialID: made.credentialId,
+                    attestationObject: made.attestationObject
+                )))
+            case .failure(let failure as KeePassError):
+                error = failure.userMessage
+            case .failure:
+                error = String(localized: "The passkey couldn’t be saved to the database file, so it wasn’t made. Check that the file is still there, then try again.")
+            }
+        }
+    }
+
+    /// Writes the database to its file, as the app's `Session` does, in brief: if another app or
+    /// device changed the file since it was read here, its changes are merged in first; the file
+    /// as it was and the new bytes are kept in `Backups`; the write is read back and compared.
+    /// The app merges this save in at its next unlock like any other (`Backups.ours`). Blocking.
+    nonisolated private static func save(
+        _ database: UnlockedDatabase, to file: (url: URL, fingerprint: Data, cleanCount: UInt64)
+    ) throws {
+        let location = Backups.location(file.url)
+        let current = try FileAccess.read(file.url)
+        if FileAccess.fingerprint(current) != file.fingerprint {
+            _ = try database.syncWithFile(file: current, unchangedSince: file.cleanCount)
+        }
+        let bytes = try database.save()
+        try? Backups.standard.keep(location, current)
+        try? Backups.standard.keepUnfinished(location, bytes)
+        try FileAccess.write(file.url, bytes)
+        Backups.standard.saved(location)
     }
 
     // MARK: Choosing
@@ -278,6 +463,8 @@ final class AutoFillModel {
         isUnlocked = false
         matches = []
         results = []
+        passkeys = []
+        creation = nil
         query = ""
         password = ""
         customIcons.use(nil)

@@ -213,6 +213,60 @@ pub struct PasskeyCreation {
     pub candidates: Vec<SearchResult>,
 }
 
+/// A passkey sign-in as Apple's AuthenticationServices asks for one (see the engine's
+/// `site.rs`): the site, which the system has checked, the SHA-256 of the client data it built,
+/// and the credentials the site accepts (empty for any of the user's for the site).
+#[derive(uniffi::Record)]
+pub struct SiteSignIn {
+    pub rp_id: String,
+    pub client_data_hash: Vec<u8>,
+    pub allowed_credentials: Vec<Vec<u8>>,
+}
+
+/// A request to create a passkey as AuthenticationServices asks for it: the site, the account,
+/// the SHA-256 of the client data the system built, the COSE algorithms the site accepts, and
+/// the credentials it already has for the account.
+#[derive(uniffi::Record)]
+pub struct SitePasskeyRequest {
+    pub rp_id: String,
+    pub user_name: String,
+    pub user_handle: Vec<u8>,
+    pub client_data_hash: Vec<u8>,
+    pub algorithms: Vec<i64>,
+    pub excluded_credentials: Vec<Vec<u8>>,
+}
+
+#[cfg(test)]
+impl SitePasskeyRequest {
+    fn clone_for_test(&self) -> Self {
+        Self {
+            rp_id: self.rp_id.clone(),
+            user_name: self.user_name.clone(),
+            user_handle: self.user_handle.clone(),
+            client_data_hash: self.client_data_hash.clone(),
+            algorithms: self.algorithms.clone(),
+            excluded_credentials: self.excluded_credentials.clone(),
+        }
+    }
+}
+
+/// A signed sign-in, in the pieces AuthenticationServices wants. Nothing secret.
+#[derive(uniffi::Record)]
+pub struct PasskeyAssertion {
+    pub credential_id: Vec<u8>,
+    pub authenticator_data: Vec<u8>,
+    pub signature: Vec<u8>,
+    pub user_handle: Vec<u8>,
+}
+
+/// A passkey just made, in the pieces AuthenticationServices wants. Nothing secret.
+#[derive(uniffi::Record)]
+pub struct PasskeyRegistration {
+    pub entry_id: String,
+    pub credential_id: Vec<u8>,
+    pub attestation_object: Vec<u8>,
+}
+
 /// Where a new passkey goes.
 #[derive(uniffi::Enum)]
 pub enum PasskeyTarget {
@@ -673,6 +727,69 @@ impl UnlockedDatabase {
         })
     }
 
+    /// `passkeys_for`, for a sign-in as AuthenticationServices asks for it.
+    pub fn passkeys_for_site(&self, request: SiteSignIn) -> Result<Vec<PasskeyChoice>> {
+        let json = crate::site::assertion_json(&request.rp_id, &request.allowed_credentials);
+        self.passkeys_for(
+            json,
+            PasskeyClient::Browser {
+                client_data_hash: request.client_data_hash,
+            },
+        )
+    }
+
+    /// `assert_passkey`, for a sign-in as AuthenticationServices asks for it. Only call this
+    /// after the user picked the passkey and was verified.
+    pub fn sign_in_at_site(
+        &self,
+        entry_id: String,
+        request: SiteSignIn,
+    ) -> Result<PasskeyAssertion> {
+        let json = crate::site::assertion_json(&request.rp_id, &request.allowed_credentials);
+        let response = self.assert_passkey(
+            entry_id,
+            json,
+            PasskeyClient::Browser {
+                client_data_hash: request.client_data_hash,
+            },
+        )?;
+        let signed = crate::site::assertion(&response)?;
+        Ok(PasskeyAssertion {
+            credential_id: signed.credential_id,
+            authenticator_data: signed.authenticator_data,
+            signature: signed.signature,
+            user_handle: signed.user_handle,
+        })
+    }
+
+    /// `passkey_creation`, for a request as AuthenticationServices asks for it.
+    pub fn passkey_creation_at_site(&self, request: SitePasskeyRequest) -> Result<PasskeyCreation> {
+        self.passkey_creation(site_creation_json(&request))
+    }
+
+    /// `create_passkey`, for a request as AuthenticationServices asks for it. Only call this
+    /// after the user agreed and was verified; if saving then fails, call `undo_passkey`.
+    pub fn create_passkey_at_site(
+        &self,
+        target: PasskeyTarget,
+        request: SitePasskeyRequest,
+    ) -> Result<PasskeyRegistration> {
+        let json = site_creation_json(&request);
+        let created = self.create_passkey(
+            target,
+            json,
+            PasskeyClient::Browser {
+                client_data_hash: request.client_data_hash,
+            },
+        )?;
+        let made = crate::site::registration(&created.response_json)?;
+        Ok(PasskeyRegistration {
+            entry_id: created.entry_id,
+            credential_id: made.credential_id,
+            attestation_object: made.attestation_object,
+        })
+    }
+
     /// Links an app to an entry, after the user agreed. `certificates` are SHA-256 hashes.
     pub fn link_app(
         &self,
@@ -991,6 +1108,16 @@ fn with_client<T>(
     }
 }
 
+fn site_creation_json(request: &SitePasskeyRequest) -> String {
+    crate::site::creation_json(
+        &request.rp_id,
+        &request.user_name,
+        &request.user_handle,
+        &request.algorithms,
+        &request.excluded_credentials,
+    )
+}
+
 fn parse_id(id: &str) -> Result<[u8; 16]> {
     uuid_from_hex(id).ok_or(Error::NotFound)
 }
@@ -1179,6 +1306,83 @@ mod tests {
             UnlockedDatabase::create(" ".into(), Some(b"pw".to_vec()), None),
             Err(Error::Invalid(_))
         ));
+    }
+
+    #[test]
+    fn passkeys_cross_the_bridge_the_way_ios_asks_for_them() {
+        use p256::ecdsa::signature::Verifier;
+        use p256::pkcs8::DecodePrivateKey;
+
+        let db = UnlockedDatabase::create("Keys".into(), Some(b"pw".to_vec()), None).unwrap();
+        let root = db.list_group(None).unwrap().group.id;
+        let client_data_hash = crate::util::sha256(&[b"client data iOS built"]).to_vec();
+        let request = SitePasskeyRequest {
+            rp_id: "Example.com".into(),
+            user_name: "sam".into(),
+            user_handle: vec![7; 16],
+            client_data_hash: client_data_hash.clone(),
+            algorithms: vec![-7],
+            excluded_credentials: vec![],
+        };
+        let summary = db
+            .passkey_creation_at_site(request.clone_for_test())
+            .unwrap();
+        assert_eq!(summary.rp_id, "example.com");
+        let made = db
+            .create_passkey_at_site(
+                PasskeyTarget::NewEntry { group_id: root },
+                request.clone_for_test(),
+            )
+            .unwrap();
+        assert_eq!(made.credential_id.len(), 32);
+        assert!(!made.attestation_object.is_empty());
+
+        // The site already has it: a second one would be a duplicate.
+        let again = SitePasskeyRequest {
+            excluded_credentials: vec![made.credential_id.clone()],
+            ..request.clone_for_test()
+        };
+        assert!(matches!(
+            db.passkey_creation_at_site(again),
+            Err(Error::PasskeyExists)
+        ));
+
+        let sign_in = || SiteSignIn {
+            rp_id: "example.com".into(),
+            client_data_hash: client_data_hash.clone(),
+            allowed_credentials: vec![],
+        };
+        let choices = db.passkeys_for_site(sign_in()).unwrap();
+        assert_eq!(choices.len(), 1);
+        assert_eq!(choices[0].username, "sam");
+        let signed = db
+            .sign_in_at_site(made.entry_id.clone(), sign_in())
+            .unwrap();
+        assert_eq!(signed.credential_id, made.credential_id);
+        assert_eq!(signed.user_handle, vec![7; 16]);
+        assert_eq!(
+            &signed.authenticator_data[..32],
+            crate::util::sha256(&[b"example.com"]).as_slice()
+        );
+
+        // The signature covers the authenticator data and iOS's client data hash, made with the
+        // key stored in the entry.
+        let pem = db
+            .reveal_field(made.entry_id.clone(), "KPEX_PASSKEY_PRIVATE_KEY_PEM".into())
+            .unwrap();
+        let key =
+            p256::ecdsa::SigningKey::from_pkcs8_pem(std::str::from_utf8(&pem).unwrap()).unwrap();
+        let signature = p256::ecdsa::Signature::from_der(&signed.signature).unwrap();
+        let mut message = signed.authenticator_data.clone();
+        message.extend_from_slice(&client_data_hash);
+        key.verifying_key().verify(&message, &signature).unwrap();
+
+        // Only the allowed credentials are offered.
+        let other = SiteSignIn {
+            allowed_credentials: vec![vec![9; 32]],
+            ..sign_in()
+        };
+        assert!(db.passkeys_for_site(other).unwrap().is_empty());
     }
 
     fn open(name: &str) -> Arc<UnlockedDatabase> {

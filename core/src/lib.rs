@@ -21,6 +21,7 @@ mod key;
 mod merge;
 mod model;
 mod passkey;
+mod site;
 mod totp;
 mod util;
 mod webauthn;

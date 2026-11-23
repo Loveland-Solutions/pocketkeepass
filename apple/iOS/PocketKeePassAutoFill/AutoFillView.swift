@@ -12,7 +12,11 @@ struct AutoFillView: View {
                 if model.recent == nil {
                     noDatabase
                 } else if model.isUnlocked {
-                    chooser
+                    switch model.request {
+                    case .password: chooser
+                    case .passkeySignIn: passkeyChooser
+                    case .newPasskey: newPasskey
+                    }
                 } else {
                     unlockForm
                 }
@@ -180,10 +184,103 @@ struct AutoFillView: View {
         .task(id: model.query) { await model.search() }
     }
 
-    /// "Fill in on example.com", or nil when iOS named no website.
+    /// Where this goes: "Fill in on example.com", "Sign in to example.com", "Save a passkey for
+    /// example.com", or nil when iOS named no website.
     private var siteText: String? {
         guard !model.hosts.isEmpty else { return nil }
-        return String(localized: "Fill in on \(model.hosts.formatted(.list(type: .and)))")
+        let site = model.hosts.formatted(.list(type: .and))
+        return switch model.request {
+        case .password: String(localized: "Fill in on \(site)")
+        case .passkeySignIn: String(localized: "Sign in to \(site)")
+        case .newPasskey: String(localized: "Save a passkey for \(site)")
+        }
+    }
+
+    // MARK: Passkeys
+
+    private var passkeyChooser: some View {
+        List {
+            Section {
+                if model.passkeys.isEmpty {
+                    Text("There’s no passkey for this site in the database.")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(model.passkeys, id: \.result.entry.id) { choice in
+                    Button {
+                        model.signIn(with: choice)
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(choice.username.isEmpty ? choice.result.entry.title : choice.username)
+                                Text(choice.result.entry.title.isEmpty ? String(localized: "(no title)") : choice.result.entry.title)
+                                    .font(.caption).foregroundStyle(.secondary)
+                                if let reason = choice.unusableReason {
+                                    Text(reason).font(.caption).foregroundStyle(.red)
+                                }
+                            }
+                        } icon: {
+                            Image(systemName: "person.badge.key.fill").foregroundStyle(.tint)
+                        }
+                    }
+                    .tint(.primary)
+                    .disabled(choice.unusableReason != nil)
+                }
+            } header: {
+                if let site = siteText { Text(site) }
+            } footer: {
+                if let error = model.error { Text(error).foregroundStyle(.red) }
+            }
+        }
+    }
+
+    @ViewBuilder private var newPasskey: some View {
+        Form {
+            if let creation = model.creation {
+                Section {
+                    LabeledContent("Account", value: creation.userName.isEmpty ? creation.userDisplayName : creation.userName)
+                } header: {
+                    if let site = siteText { Text(site) }
+                } footer: {
+                    if model.needsUpgrade {
+                        Text("This database uses the older KDBX 3 format. Saving the passkey upgrades it to KDBX 4, which KeePass 2.35 and later, KeePassXC, and other current KeePass apps open.")
+                    }
+                }
+                Section {
+                    Button {
+                        model.createPasskey(.newEntry)
+                    } label: {
+                        Label("Save in a new entry", systemImage: "plus.circle")
+                    }
+                    ForEach(creation.candidates, id: \.entry.id) { candidate in
+                        Button {
+                            model.createPasskey(.entry(id: candidate.entry.id, title: candidate.entry.title))
+                        } label: {
+                            Label {
+                                Text("Add to “\(candidate.entry.title.isEmpty ? String(localized: "(no title)") : candidate.entry.title)”")
+                            } icon: {
+                                ItemIconView(icon: candidate.entry.icon, kind: .entry)
+                            }
+                        }
+                    }
+                } footer: {
+                    Text("The passkey is saved in the database file before the site gets it, so it’s never left with a passkey PocketKeePass doesn’t have.")
+                }
+                .disabled(model.isSaving)
+            }
+            if model.isSaving {
+                Section {
+                    HStack {
+                        ProgressView()
+                        Text("Saving…")
+                    }
+                }
+            }
+            if let error = model.error {
+                Section {
+                    Text(error).foregroundStyle(.red)
+                }
+            }
+        }
     }
 
     private func row(_ result: SearchResult) -> some View {

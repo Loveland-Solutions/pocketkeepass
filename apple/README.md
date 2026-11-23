@@ -119,6 +119,14 @@ which the file picker tests want to themselves, so it only runs with
 Android app's Kotlin tests also load) with none of Xcode's environment: linked inside Xcode's
 build, it came out malformed and wouldn't load.
 
+`PasskeyTests.testPasskeyOnWebAuthnIO` registers a passkey with PocketKeePass on webauthn.io in
+Safari, then signs in with it, so it needs the internet, browse.kdbx remembered, and the extension
+turned on (`pluginkit`, as above). Run it with `TEST_RUNNER_PASSKEY_SITE=1`. Every run adds an
+entry. If iOS's passkey sheet doesn't offer PocketKeePass, the system log says "no enabled
+credential provider extensions supports passkeys": the simulator kept an older registration of
+the extension. Install the built app with `xcrun simctl install`, turn it on again with
+`pluginkit`, and retry.
+
 ## Releasing (iPhone and iPad)
 
 `tools/release_ios.sh` builds, signs, checks, and uploads a build to App Store Connect, where it
