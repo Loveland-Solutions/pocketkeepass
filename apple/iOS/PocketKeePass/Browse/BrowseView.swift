@@ -74,9 +74,18 @@ struct GroupView: View {
     @State private var error: String?
     @State private var query = ""
     @State private var results: [SearchResult]?
+    @State private var showingSync = false
 
     var body: some View {
         List {
+            if results == nil, listing != nil {
+                Section {
+                    SyncLine { showingSync = true }
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+                }
+                .listSectionSpacing(.compact)
+            }
             if let results {
                 searchResults(results)
             } else if let listing {
@@ -109,6 +118,7 @@ struct GroupView: View {
             }
         }
         .refreshable { await session.checkNow() }
+        .sheet(isPresented: $showingSync) { SyncDetailsView() }
         .modifier(SearchModifier(enabled: id == nil, query: $query))
         .task(id: session.revision) { await load() }
         .task(id: query) { await search() }
