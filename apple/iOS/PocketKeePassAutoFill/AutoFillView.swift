@@ -25,6 +25,7 @@ struct AutoFillView: View {
                 }
             }
         }
+        .environment(model.customIcons)
         .background {
             WindowHooks(
                 onInteraction: { model.interacted() },

@@ -143,6 +143,8 @@ final class Session {
     var isUnlocked: Bool { open != nil }
     var needsUpgrade: Bool { open?.needsUpgrade ?? false }
 
+    /// The open database's custom icons, for the item lists. Emptied on lock.
+    @ObservationIgnored let customIcons = CustomIcons()
     @ObservationIgnored private let backups: Backups
     @ObservationIgnored private let connection: Connection
     @ObservationIgnored private let fileLock = FileLock()
@@ -169,6 +171,7 @@ final class Session {
         lock()
         let open = Open(database: database, recent: recent, url: url, fingerprint: fingerprint, needsUpgrade: needsUpgrade)
         self.open = open
+        customIcons.use(database)
         saveState = .saved
         sync = SyncStatus(storage: FileAccess.storageName(url), checkedAt: .now)
         lastIncoming = nil
@@ -190,6 +193,7 @@ final class Session {
         checkTask?.cancel()
         reconnectTask?.cancel()
         self.open = nil
+        customIcons.use(nil)
         saveState = .saved
         sync = SyncStatus()
         lastIncoming = nil
@@ -247,6 +251,7 @@ final class Session {
     /// The open database was just changed in memory. Screens re-read it, and it's saved.
     func changed() {
         revision += 1
+        customIcons.databaseChanged()
         save()
     }
 
@@ -455,6 +460,7 @@ final class Session {
         case .changes(let report):
             sync.problem = nil
             if report.hasChanges {
+                customIcons.databaseChanged()
                 let incoming = Incoming(at: .now, report: report)
                 sync.incoming = incoming
                 lastIncoming = incoming

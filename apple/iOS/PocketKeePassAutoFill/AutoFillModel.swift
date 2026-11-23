@@ -36,6 +36,8 @@ final class AutoFillModel {
     private(set) var isUnlocked = false
 
     @ObservationIgnored let quickUnlock = QuickUnlock()
+    /// The unlocked database's custom icons, for the list.
+    @ObservationIgnored let customIcons = CustomIcons()
     @ObservationIgnored private var database: UnlockedDatabase?
     @ObservationIgnored private let finish: (Outcome) -> Void
     @ObservationIgnored private var finished = false
@@ -193,6 +195,7 @@ final class AutoFillModel {
             return
         }
         self.database = database
+        customIcons.use(database)
         let targets = targets
         let found = await Task.detached(priority: .userInitiated) { () -> [SearchResult] in
             var seen = Set<String>()
@@ -277,6 +280,7 @@ final class AutoFillModel {
         results = []
         query = ""
         password = ""
+        customIcons.use(nil)
         guard let database else { return }
         self.database = nil
         Task.detached(priority: .userInitiated) { database.lock() }

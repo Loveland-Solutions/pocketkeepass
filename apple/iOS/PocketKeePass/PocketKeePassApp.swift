@@ -19,6 +19,7 @@ struct PocketKeePassApp: App {
         WindowGroup {
             RootView()
                 .environment(session)
+                .environment(session.customIcons)
                 .environment(autoLock)
                 .environment(quickUnlock)
         }
