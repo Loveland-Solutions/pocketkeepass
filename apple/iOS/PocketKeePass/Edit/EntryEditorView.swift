@@ -260,21 +260,3 @@ private struct FieldEditor: View {
         }
     }
 }
-
-/// "Copied …", briefly, at the bottom of the screen.
-struct CopiedToast: View {
-    let message: String?
-
-    var body: some View {
-        if let message {
-            Text(message)
-                .font(.callout)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(.regularMaterial, in: Capsule())
-                .padding(.bottom, 24)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .accessibilityAddTraits(.isStaticText)
-        }
-    }
-}

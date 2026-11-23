@@ -80,16 +80,26 @@ nonisolated enum FileAccess {
     static func bookmark(_ url: URL) throws -> Data {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-        return try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        return try url.bookmarkData(options: bookmarkOptions, includingResourceValuesForKeys: nil, relativeTo: nil)
     }
 
     /// The URL a bookmark points to now, and a fresh bookmark if the old one went stale (the
     /// file was moved or renamed, which iOS follows).
     static func resolve(_ bookmark: Data) throws -> (url: URL, refreshed: Data?) {
         var stale = false
-        let url = try URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
+        let url = try URL(resolvingBookmarkData: bookmark, options: resolveOptions, relativeTo: nil, bookmarkDataIsStale: &stale)
         return (url, stale ? try? self.bookmark(url) : nil)
     }
+
+    #if os(macOS)
+    // A sandboxed Mac app keeps access to a picked file across launches only through a
+    // security-scoped bookmark. iOS's bookmarks of picked files carry their access already.
+    private static let bookmarkOptions: URL.BookmarkCreationOptions = [.withSecurityScope]
+    private static let resolveOptions: URL.BookmarkResolutionOptions = [.withSecurityScope]
+    #else
+    private static let bookmarkOptions: URL.BookmarkCreationOptions = []
+    private static let resolveOptions: URL.BookmarkResolutionOptions = []
+    #endif
 
     /// A SHA-256 hash of a file's bytes, to tell whether it changed since it was last read or
     /// written. The file is encrypted, so this says nothing about what's in it.

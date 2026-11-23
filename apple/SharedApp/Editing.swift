@@ -2,6 +2,12 @@ import Observation
 import PocketKeePassCore
 import SwiftUI
 
+/// A screen in the iPhone app's navigation stack (`Editing.path`), by id.
+enum Route: Hashable {
+    case group(String)
+    case entry(String)
+}
+
 /// An entry or group to delete or move.
 enum EditItem: Equatable {
     case entry(id: String, name: String, inRecycleBin: Bool)
