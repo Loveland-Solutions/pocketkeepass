@@ -265,6 +265,21 @@ class BridgeTest {
     }
 
     @Test
+    fun `a pasted setup key becomes an otp field that makes the same codes`() {
+        val set = totpSetup("gezd gnbv gy3t qojq gezd gnbv gy3t qojq".toByteArray(), "Mail", "alice", 59uL)
+        assertTrue(isTotpField(set.field))
+        assertTrue(isTotpField("TimeOtp-Secret-Base32"))
+        assertFalse(isTotpField("Password"))
+        assertEquals("otp", set.field)
+        assertTrue(String(set.value).startsWith("otpauth://totp/Mail:alice?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"))
+        assertArrayEquals("287082".toByteArray(), set.code)
+        assertEquals(30u, set.periodSeconds)
+
+        val e = assertThrows(KeePassException.Invalid::class.java) { totpSetup("GEZDGNBV".toByteArray(), "", "", 0uL) }
+        assertTrue("too short" in e.message!!)
+    }
+
+    @Test
     fun `passkeys cross as records and sealed classes, and requests and responses as JSON`() {
         UnlockedDatabase.open(fixture("passkey.kdbx"), password, null).use { db ->
             val browser = PasskeyClient.Browser(clientDataHash = ByteArray(32) { 0x5a })

@@ -42,6 +42,7 @@ import mn.lls.pocketkeepass.ui.BrowseScreen
 import mn.lls.pocketkeepass.ui.DeleteDialog
 import mn.lls.pocketkeepass.ui.EntryEditScreen
 import mn.lls.pocketkeepass.ui.GeneratorDialog
+import mn.lls.pocketkeepass.ui.TotpSetupDialog
 import mn.lls.pocketkeepass.ui.GroupDialog
 import mn.lls.pocketkeepass.ui.LockUnsavedDialog
 import mn.lls.pocketkeepass.ui.MoveDialog
@@ -219,6 +220,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                     onBeginEditing = editor::beginEditing,
                     onGenerate = editor::openGenerator,
                     onCopy = editor::copyValue,
+                    onSetUpTotp = editor::openTotpSetup,
                 )
                 entry != null -> EntryScreen(
                     entry = entry,
@@ -280,6 +282,14 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
                     onUse = editor::useGenerated,
                     onCopy = editor::copyGenerated,
                     onDismiss = editor::closeGenerator,
+                )
+            }
+            edit.totpSetup?.let { setup ->
+                TotpSetupDialog(
+                    state = setup,
+                    onCheck = editor::checkTotpSetup,
+                    onAdd = editor::useTotpSetup,
+                    onDismiss = editor::closeTotpSetup,
                 )
             }
             edit.groupForm?.let { form ->

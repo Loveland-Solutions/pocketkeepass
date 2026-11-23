@@ -113,6 +113,16 @@
         <item quantity="one">%d секундын дараа солигдоно</item>
         <item quantity="other">%d секундын дараа солигдоно</item>
     </plurals>
+    <string name="totp_setup">Нэг удаагийн код тохируулах</string>
+    <string name="totp_change">Нэг удаагийн кодыг солих</string>
+    <string name="totp_setup_explained">Сайт хоёр шаттай нэвтрэлтийг асаахад QR код, ихэвчлэн «Уншуулж чадахгүй байна уу?» гэсний доор тохиргооны түлхүүр харуулдаг. Тэр түлхүүрийг (эсвэл otpauth:// холбоосыг) хуулж энд буулгана уу.</string>
+    <string name="totp_setup_key">Тохиргооны түлхүүр</string>
+    <plurals name="totp_setup_code">
+        <item quantity="one">Одоогийн код энэ. Тохиргоог дуусгахын тулд үүнийг сайтад оруулна уу. Код %d секунд тутам солигдоно.</item>
+        <item quantity="other">Одоогийн код энэ. Тохиргоог дуусгахын тулд үүнийг сайтад оруулна уу. Код %d секунд тутам солигдоно.</item>
+    </plurals>
+    <string name="totp_setup_replaces">Энэ нь бичлэгийн одоогийн нэг удаагийн кодыг орлоно.</string>
+    <string name="totp_setup_add">Нэмэх</string>
     <string name="entry_empty">Энэ бичлэгт талбар алга.</string>
 
     <!-- Editing -->

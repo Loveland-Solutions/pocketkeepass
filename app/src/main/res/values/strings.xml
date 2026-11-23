@@ -107,6 +107,16 @@
         <item quantity="one">Changes in %d second</item>
         <item quantity="other">Changes in %d seconds</item>
     </plurals>
+    <string name="totp_setup">Set up one-time code</string>
+    <string name="totp_change">Change one-time code</string>
+    <string name="totp_setup_explained">When a site turns on two-factor sign-in, it shows a QR code and, usually under \"Can\'t scan it?\", a setup key. Copy the key (or an otpauth:// link) and paste it here.</string>
+    <string name="totp_setup_key">Setup key</string>
+    <plurals name="totp_setup_code">
+        <item quantity="one">That\'s the code right now. Enter it on the site to finish. It changes every %d second.</item>
+        <item quantity="other">That\'s the code right now. Enter it on the site to finish. It changes every %d seconds.</item>
+    </plurals>
+    <string name="totp_setup_replaces">This replaces the entry\'s current one-time code.</string>
+    <string name="totp_setup_add">Add</string>
     <string name="entry_empty">This entry has no fields.</string>
 
     <!-- Editing -->
