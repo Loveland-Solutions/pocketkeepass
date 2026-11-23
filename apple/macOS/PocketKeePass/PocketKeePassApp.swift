@@ -89,8 +89,27 @@ private struct WindowGuard: NSViewRepresentable {
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
             #if DEBUG
-            // Store screenshots and UI tests: only a debug build, and only when asked.
-            if ProcessInfo.processInfo.environment["PKP_ALLOW_SCREEN_CAPTURE"] == "1" { return }
+            // Store screenshots and UI tests: only a debug build, and only when asked. The
+            // window's size in points ("1280x800") and appearance ("light" or "dark") can be set
+            // too, so screenshots come out the same on any Mac.
+            let environment = ProcessInfo.processInfo.environment
+            if let window {
+                switch environment["PKP_DEBUG_APPEARANCE"] {
+                case "light": NSApp.appearance = NSAppearance(named: .aqua)
+                case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+                default: break
+                }
+                if let size = environment["PKP_DEBUG_WINDOW"]?.split(separator: "x").compactMap({ Double($0) }), size.count == 2 {
+                    // After SwiftUI has given the window its own size.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        window.setFrame(NSRect(x: 80, y: 80, width: size[0], height: size[1]), display: true)
+                        // In front and active, as a person using it would see it.
+                        NSApp.activate()
+                        window.makeKeyAndOrderFront(nil)
+                    }
+                }
+            }
+            if environment["PKP_ALLOW_SCREEN_CAPTURE"] == "1" { return }
             #endif
             window?.sharingType = .none
         }

@@ -12,6 +12,9 @@ struct BrowserView: View {
     @State private var query = ""
     @State private var editing = Editing()
     @State private var showingSync = false
+    #if DEBUG
+    @Environment(\.openSettings) private var openSettings
+    #endif
 
     var body: some View {
         NavigationSplitView {
@@ -88,11 +91,34 @@ struct BrowserView: View {
         .task(id: session.revision) { await loadTree() }
         #if DEBUG
         .task {
-            // Layout checks without driving the Mac: open a sheet at launch. Debug builds only.
+            // Layout checks and store screenshots without driving the Mac: select a group, an
+            // entry, or a search, or open a sheet or Settings at launch. Debug builds only.
             for _ in 0..<20 where tree.isEmpty { try? await Task.sleep(for: .milliseconds(250)) }
-            switch ProcessInfo.processInfo.environment["PKP_DEBUG_SHOW"] {
+            let environment = ProcessInfo.processInfo.environment
+            if let name = environment["PKP_DEBUG_GROUP"] {
+                func find(_ nodes: [GroupNode]) -> GroupNode? {
+                    for node in nodes {
+                        if node.name == name { return node }
+                        if let found = find(node.children ?? []) { return found }
+                    }
+                    return nil
+                }
+                if let node = find(tree) { selectedGroup = node.id }
+            }
+            if let search = environment["PKP_DEBUG_QUERY"] { query = search }
+            if let title = environment["PKP_DEBUG_ENTRY"] {
+                for _ in 0..<20 {
+                    if let row = entries.first(where: { $0.entry.title == title }) {
+                        selectedEntry = row.id
+                        break
+                    }
+                    try? await Task.sleep(for: .milliseconds(250))
+                }
+            }
+            switch environment["PKP_DEBUG_SHOW"] {
             case "new-entry": if let group = targetGroup { editing.newEntry(session, groupId: group) }
             case "new-group": if let group = targetGroup { editing.newGroup(session, parentId: group) }
+            case "settings": openSettings()
             default: break
             }
         }
