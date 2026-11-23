@@ -11,6 +11,10 @@ nonisolated struct RecentDatabase: Codable, Equatable, Sendable {
     var name: String
     var keyFileBookmark: Data? = nil
     var keyFileName: String? = nil
+    /// Where the file was when last picked or unlocked (`Backups.location`), the key its backups
+    /// are kept under. Remembered so they can be found when the file is gone and its bookmark
+    /// no longer resolves.
+    var location: String? = nil
 
     init(bookmark: Data, name: String) {
         self.bookmark = bookmark
@@ -25,6 +29,7 @@ nonisolated struct RecentDatabase: Codable, Equatable, Sendable {
         name = try container.decode(String.self, forKey: .name)
         keyFileBookmark = try container.decodeIfPresent(Data.self, forKey: .keyFileBookmark)
         keyFileName = try container.decodeIfPresent(String.self, forKey: .keyFileName)
+        location = try container.decodeIfPresent(String.self, forKey: .location)
     }
 
     private static let key = "recent_database"

@@ -21,6 +21,16 @@
         }
       }
     },
+    "%@ (restored)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (сэргээсэн)"
+          }
+        }
+      }
+    },
     "%@ can’t be used by PocketKeePass right now. Check in the iPhone’s Settings that a passcode and %@ are set up, and that PocketKeePass is allowed to use %@.": {
       "localizations": {
         "mn": {
@@ -281,6 +291,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Энэ бүртгэлийн нэвтрэх түлхүүр өгөгдлийн санд аль хэдийн байна."
+          }
+        }
+      }
+    },
+    "A save here was cut short on %@. PocketKeePass kept what it was writing, with your latest changes.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ iPhone дээрх хадгалалт тасалдсан байна (%@). PocketKeePass бичиж байсан хувилбараа таны сүүлийн өөрчлөлтүүдийн хамт хадгалж үлдээсэн."
           }
         }
       }
@@ -1279,12 +1299,42 @@
         }
       }
     },
+    "PocketKeePass couldn’t save the backup into that file. Try another location.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass нөөцийг тэр файлд хадгалж чадсангүй. Өөр байршил сонгоно уу."
+          }
+        }
+      }
+    },
+    "PocketKeePass couldn’t write the backup into the database file. Save it as a new file instead.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass нөөцийг өгөгдлийн сангийн файлд бичиж чадсангүй. Оронд нь шинэ файлаар хадгална уу."
+          }
+        }
+      }
+    },
     "PocketKeePass is written with Claude, an AI model made by Anthropic.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "PocketKeePass нь Anthropic компанийн бүтээсэн хиймэл оюуны загвар болох Claude ашиглан бичигдсэн."
+          }
+        }
+      }
+    },
+    "PocketKeePass kept a copy of this database from just before its last save here, on %@.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass энэ өгөгдлийн сангийн сүүлчийн хадгалалтаас өмнөх хуулбарыг энэ iPhone дээр үлдээсэн байна (%@)."
           }
         }
       }
@@ -1329,12 +1379,42 @@
         }
       }
     },
+    "Replace": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Солих"
+          }
+        }
+      }
+    },
     "Replace it with mine": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Минийхээр солих"
+          }
+        }
+      }
+    },
+    "Restore backup": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нөөцийг сэргээх"
+          }
+        }
+      }
+    },
+    "Restore the backup?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нөөцийг сэргээх үү?"
           }
         }
       }
@@ -1355,6 +1435,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Хуулбар хадгалах…"
+          }
+        }
+      }
+    },
+    "Save as new file…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ файлаар хадгалах…"
           }
         }
       }
@@ -1529,6 +1619,26 @@
         }
       }
     },
+    "The backup was restored. Unlock it as usual.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нөөцийг сэргээлээ. Ердийнхөөрөө түгжээг нь тайлна уу."
+          }
+        }
+      }
+    },
+    "The backup was saved as %@, but PocketKeePass can’t open it from there. Choose it with Change.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нөөцийг %@ нэрээр хадгаллаа, гэхдээ PocketKeePass түүнийг тэндээс нээж чадахгүй байна. «Солих» товчоор сонгоно уу."
+          }
+        }
+      }
+    },
     "The copy couldn’t be saved.": {
       "localizations": {
         "mn": {
@@ -1675,6 +1785,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Энэ нь KeePass өгөгдлийн сан биш байна."
+          }
+        }
+      }
+    },
+    "This replaces %@ with the copy from %@. Changes made after that, here or on another device, will be lost.\n\nIf the file is still syncing from another device, wait for it to finish first, or choose “Save as new file” instead, which leaves the file alone.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ файлыг нөөц хуулбараар (%2$@) солино. Түүнээс хойш энд эсвэл өөр төхөөрөмж дээр хийсэн өөрчлөлтүүд алга болно.\n\nХэрэв файл өөр төхөөрөмжөөс синк хийгдсээр байгаа бол дуусахыг нь хүлээнэ үү. Эсвэл оронд нь «Шинэ файлаар хадгалах» товчийг дарна уу: энэ нь одоогийн файлд хүрэхгүй."
           }
         }
       }

@@ -24,6 +24,7 @@ final class UnlockFlowTests: XCTestCase {
         app.buttons["Unlock"].tap()
         XCTAssertTrue(app.staticTexts["The password or key file is incorrect."].waitForExistence(timeout: 60))
         XCTAssertEqual(password.value as? String ?? "", "Master password") // the placeholder: empty
+        XCTAssertFalse(app.buttons["Restore backup"].exists, "a wrong password offered the backup")
         attach(app, "wrong password")
 
         focus(password)
@@ -233,6 +234,75 @@ final class UnlockFlowTests: XCTestCase {
         app.buttons["Show Password"].tap()
         XCTAssertTrue(app.staticTexts[chosen].waitForExistence(timeout: 5), "the saved password isn't the generated one")
         attach(app, "saved with the generated password")
+        app.buttons["Lock"].tap()
+    }
+
+    /// A damaged database file: the unlock screen offers the copy kept before the last save,
+    /// restores it after asking, and the file unlocks again.
+    ///
+    /// The test can't damage the simulator's copy of browse.kdbx itself, so it runs only with
+    /// `TEST_RUNNER_DAMAGED_FILE=1`, after the file was cut short from the Mac and with a save
+    /// made before that (any run of `testNewEntryIsSaved`). See `apple/README.md`.
+    @MainActor
+    func testRestoreBackupOfDamagedFile() throws {
+        guard ProcessInfo.processInfo.environment["DAMAGED_FILE"] == "1" else {
+            throw XCTSkip("needs browse.kdbx cut short from the Mac first (apple/README.md)")
+        }
+        let app = XCUIApplication()
+        app.launch()
+        pickBrowseDatabase(app)
+        let password = app.secureTextFields["Master password"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        focus(password)
+        password.typeText("test-password\n")
+
+        let offer = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'PocketKeePass kept a copy of this database'")).firstMatch
+        XCTAssertTrue(offer.waitForExistence(timeout: 60), "no backup offered")
+        attach(app, "backup offered")
+        app.buttons["Restore backup"].tap()
+        let replace = app.alerts.buttons["Replace"]
+        XCTAssertTrue(replace.waitForExistence(timeout: 5))
+        replace.tap()
+        XCTAssertTrue(app.staticTexts["The backup was restored. Unlock it as usual."].waitForExistence(timeout: 30))
+        XCTAssertFalse(app.buttons["Restore backup"].exists)
+        attach(app, "restored")
+
+        focus(password)
+        password.typeText("test-password\n")
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 60), "the restored file didn't unlock")
+        app.buttons["Lock"].tap()
+    }
+
+    /// A damaged database file's backup saved as a new file, "browse (restored).kdbx", which
+    /// becomes the database and unlocks. The damaged file is left alone.
+    ///
+    /// Opt-in like `testRestoreBackupOfDamagedFile`, and it leaves the new file next to
+    /// browse.kdbx: delete it afterwards, since the other tests need browse.kdbx alone there.
+    @MainActor
+    func testSaveBackupAsNewFile() throws {
+        guard ProcessInfo.processInfo.environment["DAMAGED_FILE"] == "1" else {
+            throw XCTSkip("needs browse.kdbx cut short from the Mac first (apple/README.md)")
+        }
+        let app = XCUIApplication()
+        app.launch()
+        pickBrowseDatabase(app)
+        let password = app.secureTextFields["Master password"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5))
+        focus(password)
+        password.typeText("test-password\n")
+        XCTAssertTrue(app.buttons["Save as new file…"].waitForExistence(timeout: 60))
+        app.buttons["Save as new file…"].tap()
+        sleep(3)
+        attach(app, "save dialog")
+        let save = app.buttons.matching(NSPredicate(format: "label ==[c] 'save' OR label ==[c] 'move'")).firstMatch
+        XCTAssertTrue(save.waitForExistence(timeout: 10), "the save dialog didn't open")
+        save.tap()
+        XCTAssertTrue(app.staticTexts["The backup was restored. Unlock it as usual."].waitForExistence(timeout: 10), "not taken as the database")
+        XCTAssertTrue(app.staticTexts["browse (restored).kdbx"].exists)
+        focus(password)
+        password.typeText("test-password\n")
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 60), "the new file didn't unlock")
+        attach(app, "unlocked new file")
         app.buttons["Lock"].tap()
     }
 

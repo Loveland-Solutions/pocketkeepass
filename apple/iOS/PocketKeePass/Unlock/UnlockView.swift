@@ -11,6 +11,9 @@ struct UnlockView: View {
     /// as it closes, possibly before its completion runs.
     @State private var pickingFor: Picking = .database
     @FocusState private var passwordFocused: Bool
+    @State private var confirmingRestore = false
+    @State private var backupCopy: KdbxFile?
+    @State private var exportingBackup = false
 
     private enum Picking: Identifiable {
         case database, keyFile
@@ -179,10 +182,66 @@ struct UnlockView: View {
                     Text(error).foregroundStyle(.red)
                 }
             }
+
+            if let backup = model.backup {
+                backupSection(backup)
+            }
+            if model.restored {
+                Section {
+                    Label("The backup was restored. Unlock it as usual.", systemImage: "checkmark.circle")
+                }
+            }
+        }
+        .alert("Restore the backup?", isPresented: $confirmingRestore) {
+            Button("Replace", role: .destructive) { model.restoreBackup() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let backup = model.backup {
+                Text("This replaces \(recent.name) with the copy from \(Self.backupTime(backup)). Changes made after that, here or on another device, will be lost.\n\nIf the file is still syncing from another device, wait for it to finish first, or choose “Save as new file” instead, which leaves the file alone.")
+            }
+        }
+        .fileExporter(isPresented: $exportingBackup, document: backupCopy, contentType: .kdbx, defaultFilename: Self.restoredName(recent.name)) { result in
+            backupCopy = nil
+            switch result {
+            case .success(let url): model.savedBackup(as: url, quickUnlock: quickUnlock)
+            case .failure(let error as CocoaError) where error.code == .userCancelled: break
+            case .failure: model.backupNotSaved()
+            }
         }
         .navigationTitle(Text(verbatim: "PocketKeePass"))
         // With Face ID about to open, the keyboard would only be in the way.
         .onAppear { if !model.canQuickUnlock(quickUnlock) { passwordFocused = true } }
+    }
+
+    /// The database's file is missing or damaged, and a copy of it is kept on this iPhone.
+    private func backupSection(_ backup: Backup) -> some View {
+        Section {
+            Text(backup.unfinished
+                ? String(localized: "A save here was cut short on \(Self.backupTime(backup)). PocketKeePass kept what it was writing, with your latest changes.")
+                : String(localized: "PocketKeePass kept a copy of this database from just before its last save here, on \(Self.backupTime(backup))."))
+            Button("Restore backup") { confirmingRestore = true }
+                .disabled(model.isRestoring || model.isUnlocking)
+            Button("Save as new file…") {
+                Task {
+                    guard let bytes = await model.backupBytes() else { return model.backupNotSaved() }
+                    backupCopy = KdbxFile(data: bytes)
+                    exportingBackup = true
+                }
+            }
+            .disabled(model.isRestoring || model.isUnlocking)
+        }
+    }
+
+    /// "browse (restored)" for browse.kdbx: not the old file's name, which the save dialog would
+    /// offer to replace, and "Save as new file" is meant to leave it alone.
+    private static func restoredName(_ name: String) -> String {
+        let stem = (name as NSString).deletingPathExtension
+        return String(localized: "\(stem.isEmpty ? name : stem) (restored)")
+    }
+
+    /// When the backup was taken, as the iPhone writes dates and times.
+    private static func backupTime(_ backup: Backup) -> String {
+        backup.savedAt.formatted(date: .abbreviated, time: .shortened)
     }
 
     private var passwordDueText: String {
