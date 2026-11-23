@@ -305,6 +305,16 @@
         }
       }
     },
+    "Change one-time code": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэг удаагийн кодыг солих"
+          }
+        }
+      }
+    },
     "Changes in %lld seconds": {
       "localizations": {
         "mn": {
@@ -1491,6 +1501,26 @@
         }
       }
     },
+    "Set up one-time code": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэг удаагийн код тохируулах"
+          }
+        }
+      }
+    },
+    "Setup key": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тохиргооны түлхүүр"
+          }
+        }
+      }
+    },
     "Show %@": {
       "localizations": {
         "mn": {
@@ -1587,6 +1617,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Тэр түлхүүр файлыг уншиж чадсангүй."
+          }
+        }
+      }
+    },
+    "That’s the code right now. Enter it on the site to finish. It changes every %lld seconds.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Одоогийн код энэ. Тохиргоог дуусгахын тулд үүнийг сайтад оруулна уу. Код %lld секунд тутам солигдоно."
           }
         }
       }
@@ -1817,6 +1857,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ файлыг нөөц хуулбараар (%2$@) солино. Түүнээс хойш энд эсвэл өөр төхөөрөмж дээр хийсэн өөрчлөлтүүд алга болно."
+          }
+        }
+      }
+    },
+    "This replaces the entry’s current one-time code.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ нь бичлэгийн одоогийн нэг удаагийн кодыг орлоно."
           }
         }
       }
@@ -2149,6 +2199,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Одоо яах вэ?"
+          }
+        }
+      }
+    },
+    "When a site turns on two-factor sign-in, it shows a QR code and, usually under “Can’t scan it?”, a setup key. Copy the key (or an otpauth:// link) and paste it here.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сайт хоёр шаттай нэвтрэлтийг асаахад QR код, ихэвчлэн «Уншуулж чадахгүй байна уу?» гэсний доор тохиргооны түлхүүр харуулдаг. Тэр түлхүүрийг (эсвэл otpauth:// холбоосыг) хуулж энд буулгана уу."
           }
         }
       }

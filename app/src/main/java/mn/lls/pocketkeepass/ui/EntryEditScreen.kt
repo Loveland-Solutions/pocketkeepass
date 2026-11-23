@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import mn.lls.pocketkeepass.R
+import mn.lls.pocketkeepass.core.isTotpField
 import mn.lls.pocketkeepass.edit.EntryForm
 import mn.lls.pocketkeepass.edit.FormField
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
@@ -67,6 +68,7 @@ fun EntryEditScreen(
     onBeginEditing: (FormField) -> Unit,
     onGenerate: (FormField) -> Unit,
     onCopy: (FormField, label: String) -> Unit,
+    onSetUpTotp: () -> Unit,
 ) {
     var confirmDiscard by remember { mutableStateOf(false) }
     val close = { if (form.isModified()) confirmDiscard = true else onClose() }
@@ -125,10 +127,17 @@ fun EntryEditScreen(
                     )
                 }
             }
-            TextButton(onClick = { form.addField() }) {
-                Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.add_field))
+            Row {
+                TextButton(onClick = { form.addField() }) {
+                    Icon(painterResource(R.drawable.ic_add), contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.add_field))
+                }
+                TextButton(onClick = onSetUpTotp) {
+                    Icon(painterResource(R.drawable.ic_timer), contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(if (form.hasTotp()) R.string.totp_change else R.string.totp_setup))
+                }
             }
             OutlinedTextField(
                 state = form.tags,
@@ -180,7 +189,8 @@ private fun FieldEditor(
                 },
             )
         }
-        if (field.protected || field.standardKey == EntryForm.PASSWORD) {
+        // Not for one-time code settings: a random password there would make no codes.
+        if ((field.protected || field.standardKey == EntryForm.PASSWORD) && !(isCustom && isTotpField(field.key))) {
             TextButton(onClick = onGenerate) {
                 Icon(painterResource(R.drawable.ic_refresh), contentDescription = null)
                 Spacer(Modifier.width(8.dp))

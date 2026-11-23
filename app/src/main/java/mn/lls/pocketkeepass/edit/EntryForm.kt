@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import mn.lls.pocketkeepass.core.EntryDetails
 import mn.lls.pocketkeepass.core.FieldEdit
+import mn.lls.pocketkeepass.core.isTotpField
 import mn.lls.pocketkeepass.security.toUtf8Bytes
 
 /**
@@ -37,6 +38,25 @@ class EntryForm private constructor(
     /** Adds an empty custom field. */
     fun addField(): FormField = FormField(previousKey = null, standardKey = null, name = "", protected = false, value = "")
         .also(fields::add)
+
+    /**
+     * Sets up a one-time code: [value] goes into the custom field [key] (`otp`), protected, and
+     * the entry's other one-time code settings (KeePass 2's `TimeOtp-*`, the older `TOTP Seed`)
+     * are removed, so no old secret is left behind. Saving keeps the old version in history.
+     */
+    fun setTotp(key: String, value: CharSequence) {
+        fields.filter { it.standardKey == null && it.key != key && isTotpField(it.key) }.forEach(::removeField)
+        val field = fields.firstOrNull { it.standardKey == null && it.key == key }
+            ?: FormField(previousKey = null, standardKey = null, name = key, protected = true, value = "").also(fields::add)
+        field.protected = true
+        field.beginEditing(value)
+    }
+
+    /** Whether the form has one-time code settings, in any format, which setting one up replaces. */
+    fun hasTotp(): Boolean = fields.any { it.standardKey == null && isTotpField(it.key) }
+
+    /** What the title and username fields hold, or "" where a protected value isn't fetched. */
+    fun text(standardKey: String): String = fields.firstOrNull { it.standardKey == standardKey }?.value?.text?.toString() ?: ""
 
     fun removeField(field: FormField) {
         if (field.standardKey != null) return
@@ -110,8 +130,9 @@ class EntryForm private constructor(
 
         const val TITLE = "Title"
         const val PASSWORD = "Password"
+        const val USERNAME = "UserName"
         const val NOTES = "Notes"
-        val STANDARD_KEYS = listOf(TITLE, "UserName", PASSWORD, "URL", NOTES)
+        val STANDARD_KEYS = listOf(TITLE, USERNAME, PASSWORD, "URL", NOTES)
     }
 }
 

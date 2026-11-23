@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.nio.CharBuffer
@@ -26,10 +27,13 @@ import mn.lls.pocketkeepass.core.EntryDetails
 import mn.lls.pocketkeepass.core.GroupChoice
 import mn.lls.pocketkeepass.core.KeePassException
 import mn.lls.pocketkeepass.core.PasswordOptions
+import mn.lls.pocketkeepass.core.TotpSetupResult
 import mn.lls.pocketkeepass.core.UnlockedDatabase
 import mn.lls.pocketkeepass.core.generatePassword
 import mn.lls.pocketkeepass.core.passwordStrengthBits
+import mn.lls.pocketkeepass.core.totpSetup
 import mn.lls.pocketkeepass.security.decodeUtf8
+import mn.lls.pocketkeepass.security.toUtf8Bytes
 import mn.lls.pocketkeepass.security.wipe
 import mn.lls.pocketkeepass.ui.userMessage
 
@@ -77,6 +81,21 @@ data class GeneratorState(
     val error: String?,
 )
 
+/**
+ * Setting up a one-time code for the entry editor: what the user pasted ([input], a secure
+ * field's state, wiped when the dialog closes), and what it makes: the current [code] to enter
+ * on the site, or why it can't be used ([error]). [code] is a `String` for Compose to draw, held
+ * only while the dialog is open, like a shown code on the entry screen.
+ */
+data class TotpSetupState(
+    val input: TextFieldState,
+    val code: String? = null,
+    val periodSeconds: Int = 30,
+    val error: String? = null,
+    /** The form already has a one-time code that "Add" would replace. */
+    val replaces: Boolean = false,
+)
+
 /** Choosing where to move [item]: [groups] are the places it can go, drawn as a tree. */
 data class MoveChoice(val item: Item, val groups: List<GroupChoice>)
 
@@ -85,6 +104,8 @@ data class EditState(
     val entryForm: EntryForm? = null,
     /** The password generator, while it's open over the entry editor. */
     val generator: GeneratorState? = null,
+    /** Setting up a one-time code, while it's open over the entry editor. */
+    val totpSetup: TotpSetupState? = null,
     /** The group dialog, while it's open. */
     val groupForm: GroupForm? = null,
     /** Asking whether to delete this. */
@@ -311,6 +332,78 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Opens the one-time code setup for the entry being edited. */
+    fun openTotpSetup() {
+        val form = _state.value.entryForm ?: return
+        _state.update { it.copy(totpSetup = TotpSetupState(TextFieldState(), replaces = form.hasTotp())) }
+    }
+
+    /**
+     * Checks what's in the setup field and shows the code it makes, or why it can't be used.
+     * Called as the user types or pastes, and when the code rolls over. On the main thread: the
+     * engine only parses text and computes one HMAC.
+     */
+    fun checkTotpSetup() {
+        val setup = _state.value.totpSetup ?: return
+        if (setup.input.text.isBlank()) {
+            _state.update { it.copy(totpSetup = setup.copy(code = null, error = null)) }
+            return
+        }
+        val checked = try {
+            val result = runTotpSetup(setup) ?: return
+            result.value.wipe()
+            val code = try {
+                String(result.code.decodeUtf8())
+            } finally {
+                result.code.wipe()
+            }
+            setup.copy(code = code, periodSeconds = result.periodSeconds.toInt(), error = null)
+        } catch (e: KeePassException) {
+            setup.copy(code = null, error = e.userMessage(getApplication<Application>().resources))
+        }
+        _state.update { it.copy(totpSetup = checked) }
+    }
+
+    /** Puts the one-time code into the form's `otp` field and closes the setup. Saved with the entry. */
+    fun useTotpSetup() {
+        val setup = _state.value.totpSetup ?: return
+        val form = _state.value.entryForm ?: return
+        val result = try {
+            runTotpSetup(setup) ?: return
+        } catch (e: KeePassException) {
+            _state.update { it.copy(totpSetup = setup.copy(code = null, error = e.userMessage(getApplication<Application>().resources))) }
+            return
+        }
+        result.code.wipe()
+        val chars = try {
+            result.value.decodeUtf8()
+        } finally {
+            result.value.wipe()
+        }
+        try {
+            form.setTotp(result.field, CharBuffer.wrap(chars))
+        } finally {
+            chars.wipe()
+        }
+        closeTotpSetup()
+    }
+
+    fun closeTotpSetup() {
+        _state.value.totpSetup?.input?.wipeText()
+        _state.update { it.copy(totpSetup = null) }
+    }
+
+    /** The engine's check of what was pasted, labelled with the form's title and username. */
+    private fun runTotpSetup(setup: TotpSetupState): TotpSetupResult? {
+        val form = _state.value.entryForm ?: return null
+        val input = setup.input.text.toUtf8Bytes()
+        return try {
+            totpSetup(input, form.text(EntryForm.TITLE), form.text(EntryForm.USERNAME), (System.currentTimeMillis() / 1000).toULong())
+        } finally {
+            input.wipe()
+        }
+    }
+
     fun closeGenerator() {
         wipeGenerated()
         _state.update { it.copy(generator = null) }
@@ -364,8 +457,9 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
 
     fun closeEntryForm() {
         _state.value.entryForm?.wipe()
+        _state.value.totpSetup?.input?.wipeText()
         wipeGenerated()
-        _state.update { it.copy(entryForm = null, generator = null, error = null) }
+        _state.update { it.copy(entryForm = null, generator = null, totpSetup = null, error = null) }
     }
 
     fun saveGroup() {
@@ -507,6 +601,7 @@ class EditViewModel(app: Application) : AndroidViewModel(app) {
         val current = _state.value
         current.entryForm?.wipe()
         current.groupForm?.wipe()
+        current.totpSetup?.input?.wipeText()
         wipeGenerated()
         _state.value = EditState()
     }

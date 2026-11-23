@@ -196,3 +196,70 @@ fn keepassxc_shows_the_same_codes() {
         );
     }
 }
+
+/// A setup key turned into an `otp` field by `totp_setup`, saved, and read by KeePassXC, which
+/// shows the same code we do. Skipped if KeePassXC isn't installed.
+#[test]
+fn keepassxc_reads_a_code_we_set_up() {
+    use pocketkeepass_core::{EntryEdit, FieldEdit, FieldValue, OTP_FIELD, totp_setup};
+    let cli = std::env::var_os("KEEPASSXC_CLI")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| "/Applications/KeePassXC.app/Contents/MacOS/keepassxc-cli".into());
+    if !cli.exists() {
+        eprintln!("SKIPPED: keepassxc-cli not found (set KEEPASSXC_CLI to its path)");
+        return;
+    }
+    let set = totp_setup("jbsw y3dp ehpk 3pxp jbsw y3dp ehpk 3pxp", "Mail", "alice").unwrap();
+    let mut db = open("kdbx4-argon2id-chacha20.kdbx", Some(PASSWORD), None).unwrap();
+    let root = db.root().uuid().unwrap();
+    let field = |key, value, protected| FieldEdit {
+        key,
+        value: FieldValue::Set(value),
+        protected,
+    };
+    db.create_entry(
+        &root,
+        &EntryEdit {
+            fields: vec![
+                field("Title", "Set up here", false),
+                field(OTP_FIELD, &set.value, true),
+            ],
+            tags: vec![],
+        },
+    )
+    .unwrap();
+    let path = std::env::temp_dir().join(format!("pkp-totp-setup-{}.kdbx", std::process::id()));
+    std::fs::write(&path, db.save().unwrap()).unwrap();
+
+    let now = || {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs()
+    };
+    let matched = (0..3).any(|_| {
+        let before = now();
+        let mut child = Command::new(&cli)
+            .args(["show", "--quiet", "--totp"])
+            .arg(&path)
+            .arg("Set up here")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let mut stdin = child.stdin.take().unwrap();
+        stdin.write_all(PASSWORD).unwrap();
+        stdin.write_all(b"\n").unwrap();
+        drop(stdin);
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success(), "keepassxc-cli failed");
+        if before / 30 != now() / 30 {
+            return false;
+        }
+        let theirs = String::from_utf8(output.stdout).unwrap();
+        assert_eq!(*set.totp.code_at(before), *theirs.trim());
+        true
+    });
+    std::fs::remove_file(&path).ok();
+    assert!(matched, "the code kept changing while KeePassXC ran");
+}

@@ -76,6 +76,56 @@ final class FeatureTests: XCTestCase {
         app.buttons["Lock"].tap()
     }
 
+    /// Replacing a one-time code from the editor. The fixture's entry has one in KeePass 2's
+    /// format (`TimeOtp-Secret-Base32`): the editor offers to change it, a key cut short is
+    /// explained, the whole key shows the current code, and "Add" replaces the old settings with
+    /// an `otp` field. Once saved, the entry screen shows the new code.
+    @MainActor
+    func testSetUpOneTimeCode() throws {
+        let app = launch("kdbx4-argon2id-chacha20.kdbx")
+        unlock(app, "test-password")
+        let entry = app.staticTexts["Test"]
+        XCTAssertTrue(entry.waitForExistence(timeout: 60))
+        entry.tap()
+        XCTAssertTrue(app.staticTexts["One-time code"].waitForExistence(timeout: 5), "the fixture's code isn't shown")
+        app.buttons["Edit"].tap()
+
+        XCTAssertTrue(app.textFields.matching(NSPredicate(format: "value == 'TimeOtp-Secret-Base32'")).firstMatch.waitForExistence(timeout: 5))
+        // Below the custom fields: the form only makes the rows on screen.
+        let change = app.buttons["Change one-time code"]
+        for _ in 0..<6 where !change.isHittable { app.swipeUp() }
+        XCTAssertTrue(change.exists, "an entry with KeePass 2 settings didn't offer \"Change\"")
+        change.tap()
+        let key = app.secureTextFields["Setup key"]
+        XCTAssertTrue(key.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["This replaces the entry’s current one-time code."].exists)
+        focus(key)
+        key.typeText("JBSW Y3DP")
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'too short'")).firstMatch.waitForExistence(timeout: 5),
+                      "a key cut short wasn't explained")
+        XCTAssertFalse(app.buttons["Add"].isEnabled)
+        key.typeText(" EHPK 3PXP JBSW Y3DP EHPK 3PXP")
+        let code = app.staticTexts.matching(NSPredicate(format: "label MATCHES '[0-9]{6}'")).firstMatch // read without the space
+        XCTAssertTrue(code.waitForExistence(timeout: 5), "no code shown")
+        attach(app, "setup")
+        app.buttons["Add"].tap()
+
+        // The old settings are gone from the form, and the new ones are in an otp field.
+        XCTAssertTrue(app.buttons["Change one-time code"].waitForExistence(timeout: 5))
+        for _ in 0..<6 where !app.textFields.matching(NSPredicate(format: "value == 'otp'")).firstMatch.exists { app.swipeDown() }
+        XCTAssertTrue(app.textFields.matching(NSPredicate(format: "value == 'otp'")).firstMatch.exists, "no otp field in the form")
+        XCTAssertFalse(app.textFields.matching(NSPredicate(format: "value == 'TimeOtp-Secret-Base32'")).firstMatch.exists,
+                       "the old secret was left in the entry")
+        attach(app, "form")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.staticTexts["One-time code"].waitForExistence(timeout: 60), "no one-time code row after saving")
+        app.buttons["Show One-time code"].tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label MATCHES '[0-9]{6}'")).firstMatch.waitForExistence(timeout: 5))
+        attach(app, "entry with a code")
+        app.buttons["Lock"].tap()
+    }
+
     /// A passkey shows as one row, its fields hidden; one that can't be used says why.
     @MainActor
     func testPasskeyRow() throws {

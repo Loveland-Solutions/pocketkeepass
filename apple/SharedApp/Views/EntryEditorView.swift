@@ -16,6 +16,7 @@ struct EntryEditorView: View {
     @State private var error: String?
     @State private var askingDiscard = false
     @State private var copiedMessage: String?
+    @State private var settingUpTotp = false
     @FocusState private var focusedField: FormField.ID?
 
     var body: some View {
@@ -42,6 +43,9 @@ struct EntryEditorView: View {
                     Button("Add field", systemImage: "plus") {
                         let field = withAnimation { form.addField() }
                         focusedField = field.id
+                    }
+                    Button(form.hasTotp ? "Change one-time code" : "Set up one-time code", systemImage: "timer") {
+                        settingUpTotp = true
                     }
                 }
                 if let notes = form.notesField {
@@ -82,6 +86,9 @@ struct EntryEditorView: View {
                 }
             }
             .overlay(alignment: .bottom) { CopiedToast(message: copiedMessage) }
+            .sheet(isPresented: $settingUpTotp) {
+                TotpSetupView(form: form).macSheetFrame(width: 460, height: 420)
+            }
         }
         .interactiveDismissDisabled(form.isModified)
         .onDisappear { form.clear() }
@@ -164,8 +171,10 @@ private struct FieldEditor: View {
 
     /// The password, and any protected custom field (a PIN, a recovery code). Using a generated
     /// password replaces the value, so an unfetched one is never fetched for it.
+    /// The password, and protected custom fields, but not one-time code settings: a random
+    /// password there would make no codes.
     private var offersGenerator: Bool {
-        field.key == "Password" && !field.isCustom || field.isCustom && field.isProtected
+        field.key == "Password" && !field.isCustom || field.isCustom && field.isProtected && !isTotpField(key: field.key)
     }
 
     @ViewBuilder
