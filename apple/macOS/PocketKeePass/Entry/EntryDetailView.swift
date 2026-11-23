@@ -7,6 +7,7 @@ import SwiftUI
 struct EntryDetailView: View {
     let id: String
     @Environment(Session.self) private var session
+    @Environment(Editing.self) private var editing
     @State private var entry: EntryDetails?
     @State private var error: String?
     /// Protected values the user chose to see, by field key. A shown value has to be a `String`
@@ -27,6 +28,30 @@ struct EntryDetailView: View {
         }
         .navigationTitle(entry.map { $0.title.isEmpty ? String(localized: "(no title)") : $0.title } ?? "")
         .overlay(alignment: .bottom) { CopiedToast(message: copiedMessage) }
+        .toolbar {
+            if let entry {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        editing.editEntry(session, entry)
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .keyboardShortcut("e", modifiers: .command)
+                    .help(Text("Edit (⌘E)"))
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        let item = EditItem.entry(id: entry.id, name: entry.title, inRecycleBin: entry.isInRecycleBin)
+                        Button("Duplicate") { editing.duplicate(session, id: entry.id, open: true) }
+                        Button("Move…") { editing.move(session, item) }
+                        Button("Delete…", role: .destructive) { editing.delete(session, item) }
+                            .keyboardShortcut(.delete, modifiers: .command)
+                    } label: {
+                        Label("More", systemImage: "ellipsis.circle")
+                    }
+                }
+            }
+        }
         .task(id: session.revision) {
             shown = [:]
             await load()

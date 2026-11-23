@@ -30,7 +30,7 @@ struct GroupEditorView: View {
                 }
             }
             .navigationTitle(form.isNew ? "New group" : "Edit group")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -93,7 +93,7 @@ struct MovePickerView: View {
                 }
             }
             .navigationTitle(String(localized: "Move “\(choice.item.displayName)” to"))
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

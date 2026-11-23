@@ -71,7 +71,7 @@ struct SyncDetailsView: View {
                 }
             }
             .navigationTitle(sync.storage.map { String(localized: "Syncing with \($0)") } ?? String(localized: "Syncing"))
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
@@ -85,7 +85,7 @@ struct SyncDetailsView: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .sheetSize()
     }
 
     private static func lines(_ sync: SyncStatus, now: Date) -> [String] {

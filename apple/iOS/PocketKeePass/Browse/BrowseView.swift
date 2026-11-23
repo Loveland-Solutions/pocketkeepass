@@ -27,7 +27,7 @@ struct BrowseView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { SaveBar() }
         .sheet(isPresented: $showingSettings) { SettingsView() }
-        .modifier(EditingPresenter(editing: editing))
+        .modifier(EditingPresenter(editing: editing) { id in editing.path.append(.entry(id)) })
         .environment(editing)
     }
 }

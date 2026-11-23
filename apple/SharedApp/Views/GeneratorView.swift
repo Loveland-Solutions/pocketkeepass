@@ -69,7 +69,7 @@ struct GeneratorView: View {
                 }
             }
             .navigationTitle("Generate password")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

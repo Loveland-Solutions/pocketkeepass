@@ -28,6 +28,7 @@ struct PocketKeePassApp: App {
                 .frame(minWidth: 760, minHeight: 480)
                 .onAppear { delegate.session = session }
         }
+        .defaultSize(width: 1100, height: 720)
         .commands {
             CommandGroup(after: .appInfo) {
                 Button("Lock") { session.lock() }

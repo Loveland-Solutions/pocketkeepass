@@ -29,8 +29,7 @@ struct EntryEditorView: View {
                 ForEach(form.customFields) { field in
                     Section {
                         TextField("Field name", text: Bindable(field).name)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
+                            .plainTextEntry()
                             .focused($focusedField, equals: field.id)
                         FieldEditor(field: field, label: String(localized: "Value"), entryId: form.entryId, copied: showCopied)
                         Toggle("Protect (hide and encrypt)", isOn: Bindable(field).isProtected)
@@ -52,7 +51,7 @@ struct EntryEditorView: View {
                 }
                 Section {
                     TextField("Tags", text: $form.tags)
-                        .textInputAutocapitalization(.never)
+                        .plainTextEntry()
                 } header: {
                     Text("Tags")
                 } footer: {
@@ -65,7 +64,7 @@ struct EntryEditorView: View {
                 }
             }
             .navigationTitle(form.isNew ? "New entry" : "Edit entry")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -158,6 +157,7 @@ private struct FieldEditor: View {
             Button("Generate password", systemImage: "wand.and.stars") { generating = true }
                 .sheet(isPresented: $generating) {
                     GeneratorView(label: label) { field.setValue($0) }
+                        .formStyle(.grouped).macSheetFrame(width: 480, height: 600)
                 }
         }
     }
@@ -179,14 +179,12 @@ private struct FieldEditor: View {
                 .lineLimit(field.key == EntryForm.notes ? 3... : 1...)
         } else if field.key == "URL" {
             TextField(label, text: value)
-                .keyboardType(.URL)
+                .urlKeyboard()
                 .textContentType(.URL)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
+                .plainTextEntry()
         } else if field.key == "UserName" {
             TextField(label, text: value)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
+                .plainTextEntry()
         } else {
             TextField(label, text: value)
         }
@@ -222,8 +220,7 @@ private struct FieldEditor: View {
                     SecureField(label, text: value)
                 }
             }
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
+            .plainTextEntry()
             Button {
                 var bytes = Data((field.value ?? "").utf8)
                 Clipboard.shared.copy(bytes)

@@ -6,19 +6,24 @@ import SwiftUI
 /// questions. Put once on the browser's root.
 struct EditingPresenter: ViewModifier {
     @Bindable var editing: Editing
+    /// Shows an entry: the iPhone pushes its screen, the Mac selects it.
+    var openEntry: (String) -> Void
     @Environment(Session.self) private var session
 
     func body(content: Content) -> some View {
         content
             .sheet(item: $editing.entryForm) { form in
                 // A new entry opens once it's saved, as on Android.
-                EntryEditorView(form: form) { id in editing.path.append(.entry(id)) }
+                EntryEditorView(form: form, created: openEntry)
+                    .formStyle(.grouped).macSheetFrame(width: 560, height: 640)
             }
             .sheet(item: $editing.groupForm) { form in
                 GroupEditorView(form: form)
+                    .formStyle(.grouped).macSheetFrame(width: 460, height: 320)
             }
             .sheet(item: $editing.move) { choice in
                 MovePickerView(choice: choice, databaseName: session.fileName) { editing.moveTo(choice.item, groupId: $0) }
+                    .formStyle(.grouped).macSheetFrame(width: 420, height: 480)
             }
             .upgradeAlert(isPresented: $editing.askingUpgrade) {
                 let edit = editing.pendingUpgrade
