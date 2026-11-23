@@ -47,7 +47,7 @@ pub(crate) const CIPHER_TWOFISH: [u8; 16] = uuid("AD68F29F-576F-4BB9-A36A-D47AF9
 pub(crate) const KDF_AES: [u8; 16] = uuid("C9D9F39A-628A-4460-BF74-0D08C18A4FEA");
 const KDF_AES_KEEPASSXC: [u8; 16] = uuid("7C02BB82-79A7-4AC0-927D-114A00648238");
 const KDF_ARGON2D: [u8; 16] = uuid("EF636DDF-8C29-444B-91F7-A9A403E30A0C");
-const KDF_ARGON2ID: [u8; 16] = uuid("9E298B19-56DB-4773-B23D-FC3EC6F0A1E6");
+pub(crate) const KDF_ARGON2ID: [u8; 16] = uuid("9E298B19-56DB-4773-B23D-FC3EC6F0A1E6");
 
 // How much key derivation work a file may ask for. The settings come from the file's header,
 // which can't be checked before the key derivation has run, so anyone who can write the file

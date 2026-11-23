@@ -11,6 +11,7 @@
 
 mod autofill;
 mod browse;
+mod create;
 mod edit;
 mod error;
 pub mod ffi;
@@ -20,6 +21,7 @@ mod key;
 mod merge;
 mod model;
 mod passkey;
+mod site;
 mod totp;
 mod util;
 mod webauthn;

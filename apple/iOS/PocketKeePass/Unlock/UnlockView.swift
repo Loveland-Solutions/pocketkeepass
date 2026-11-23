@@ -14,6 +14,7 @@ struct UnlockView: View {
     @State private var confirmingRestore = false
     @State private var backupCopy: KdbxFile?
     @State private var exportingBackup = false
+    @State private var creating = false
 
     private enum Picking: Identifiable {
         case database, keyFile
@@ -40,6 +41,9 @@ struct UnlockView: View {
                 case .keyFile: model.pickedKeyFile(url, quickUnlock: quickUnlock)
                 }
             }
+        }
+        .sheet(isPresented: $creating) {
+            CreateDatabaseView()
         }
         // The prompt can only show while the app is active: right after a lock in the
         // background, it waits for the user to come back.
@@ -78,7 +82,14 @@ struct UnlockView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            Text("Choose a .kdbx file from this iPhone or from any cloud storage app.")
+            Button {
+                creating = true
+            } label: {
+                Text("Create new database").frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            Text("Choose a .kdbx file from this iPhone or from any cloud storage app, or start a new one.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -104,6 +115,8 @@ struct UnlockView: View {
                     Label(recent.name, systemImage: "doc.fill")
                         .lineLimit(2)
                 }
+                Button("Create new database") { creating = true }
+                    .disabled(model.isUnlocking)
             }
 
             Section {

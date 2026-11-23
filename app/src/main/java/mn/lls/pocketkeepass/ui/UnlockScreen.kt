@@ -58,7 +58,7 @@ import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 /**
  * Asks for the master password and/or key file of the chosen database.
  *
- * Without [onChangeDatabase], [onAddKeyFile], or [onRemoveKeyFile], that choice isn't offered:
+ * Without [onChangeDatabase], [onAddKeyFile], [onRemoveKeyFile], or [onCreateDatabase], that choice isn't offered:
  * the screen autofill shows on top of another app only unlocks. The same goes for restoring the
  * backup ([onRestoreBackup], [onSaveBackupAs]) when the file is missing or damaged.
  */
@@ -74,6 +74,7 @@ fun UnlockScreen(
     onOfferQuickUnlock: () -> Unit,
     onRestoreBackup: (() -> Unit)? = null,
     onSaveBackupAs: (() -> Unit)? = null,
+    onCreateDatabase: (() -> Unit)? = null,
 ) {
     val enabled = !state.unlocking && !state.restoring
     var confirmRestore by remember { mutableStateOf(false) }
@@ -112,6 +113,11 @@ fun UnlockScreen(
                     TextButton(onClick = onChangeDatabase, enabled = enabled) {
                         Text(stringResource(R.string.change_database))
                     }
+                }
+            }
+            if (onCreateDatabase != null) {
+                TextButton(onClick = onCreateDatabase, enabled = enabled) {
+                    Text(stringResource(R.string.create_database))
                 }
             }
 

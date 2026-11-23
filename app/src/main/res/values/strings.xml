@@ -20,6 +20,21 @@
     <string name="open_database">Open database</string>
     <string name="open_database_hint">Choose a .kdbx file from this phone or from any cloud storage app.</string>
 
+    <!-- A new database -->
+    <string name="create_database">Create new database</string>
+    <string name="new_database_title">New database</string>
+    <string name="new_database_default_name">Passwords</string>
+    <string name="new_database_name">Name</string>
+    <string name="new_database_name_hint">The file is named after it. You can rename the file later.</string>
+    <string name="new_database_password_again">Type it again</string>
+    <string name="new_database_passwords_differ">The two passwords are different.</string>
+    <string name="new_database_password_hint">This one password opens everything else, so make it long and memorable: several unrelated words work well. If it’s forgotten, nobody can open the database, not even us.</string>
+    <string name="create">Create</string>
+    <string name="new_database_creating">Creating… This takes a few seconds.</string>
+    <string name="new_database_choose_location">Choose where to save it</string>
+    <string name="new_database_sync_hint">Save it in Google Drive or another storage app to use it on your other devices too, with PocketKeePass or any KeePass app.</string>
+    <string name="new_database_cant_save">The new database couldn’t be saved there. Try another location.</string>
+    <string name="new_database_type_again">Type the master password again.</string>
     <!-- Unlock -->
     <string name="change_database">Change</string>
     <string name="master_password">Master password</string>

@@ -31,6 +31,26 @@
         }
       }
     },
+    "Account": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бүртгэл"
+          }
+        }
+      }
+    },
+    "Add to “%@”": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бичлэгт нэмэх: %@"
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "mn": {
@@ -161,6 +181,36 @@
         }
       }
     },
+    "Save a passkey for %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэвтрэх түлхүүр хадгалах сайт: %@"
+          }
+        }
+      }
+    },
+    "Save in a new entry": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шинэ бичлэгт хадгалах"
+          }
+        }
+      }
+    },
+    "Saving…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалж байна…"
+          }
+        }
+      }
+    },
     "Search all entries": {
       "localizations": {
         "mn": {
@@ -187,6 +237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нууц үгийг харуулах"
+          }
+        }
+      }
+    },
+    "Sign in to %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэвтрэх сайт: %@"
           }
         }
       }
@@ -241,6 +301,26 @@
         }
       }
     },
+    "The passkey couldn’t be saved to the database file, so it wasn’t made. Check that the file is still there, then try again.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэвтрэх түлхүүрийг өгөгдлийн сангийн файлд хадгалж чадаагүй тул үүсгэсэнгүй. Файл байгаа эсэхийг шалгаад дахин оролдоно уу."
+          }
+        }
+      }
+    },
+    "The passkey is saved in the database file before the site gets it, so it’s never left with a passkey PocketKeePass doesn’t have.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нэвтрэх түлхүүрийг сайт авахаас өмнө өгөгдлийн сангийн файлд хадгалдаг тул PocketKeePass апп дээр байхгүй нэвтрэх түлхүүр сайтад хэзээ ч үлдэхгүй."
+          }
+        }
+      }
+    },
     "The password or key file is incorrect.": {
       "localizations": {
         "mn": {
@@ -251,12 +331,32 @@
         }
       }
     },
+    "There’s no passkey for this site in the database.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ сайтын нэвтрэх түлхүүр өгөгдлийн санд алга."
+          }
+        }
+      }
+    },
     "This database uses the older KDBX 3 format. It has to be upgraded to KDBX 4 before it can be saved.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Энэ өгөгдлийн сан хуучин KDBX 3 форматтай. Хадгалахаас өмнө KDBX 4 болгон шинэчлэх шаардлагатай."
+          }
+        }
+      }
+    },
+    "This database uses the older KDBX 3 format. Saving the passkey upgrades it to KDBX 4, which KeePass 2.35 and later, KeePassXC, and other current KeePass apps open.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ өгөгдлийн сан хуучин KDBX 3 форматтай. Нэвтрэх түлхүүрийг хадгалахад KDBX 4 болгон шинэчилнэ. KeePass 2.35 болон түүнээс хойшхи хувилбар, KeePassXC болон бусад одоогийн KeePass аппууд үүнийг нээдэг."
           }
         }
       }

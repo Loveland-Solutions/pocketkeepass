@@ -241,6 +241,7 @@ impl VariantDictionary {
     }
 
     // Value type tags.
+    pub const U32: u8 = 0x04;
     pub const U64: u8 = 0x05;
     pub const BYTES: u8 = 0x42;
 

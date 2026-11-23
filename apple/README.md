@@ -110,6 +110,33 @@ the test then goes through the field's edit menu (AutoFill › Passwords). One s
 taking typed text in PocketKeePass's password field after a run of these (even `main`'s build,
 even after a reboot); another was fine. If that happens, use a fresh simulator.
 
+`testCreateDatabase` (a new database: named, saved with the system's save dialog into "On My
+iPhone", opened, an entry added, locked, and unlocked) leaves the new file in "On My iPhone",
+which the file picker tests want to themselves, so it only runs with
+`TEST_RUNNER_CREATE_DATABASE=1`, on a simulator of its own.
+
+`apple/build-engine.sh` builds the Mac copy of the engine (`core/target/release`, which the
+Android app's Kotlin tests also load) with none of Xcode's environment: linked inside Xcode's
+build, it came out malformed and wouldn't load.
+
+`PasskeyTests.testPasskeyOnWebAuthnIO` registers a passkey with PocketKeePass on webauthn.io in
+Safari, then signs in with it, so it needs the internet, browse.kdbx remembered, and the extension
+turned on (`pluginkit`, as above). Run it with `TEST_RUNNER_PASSKEY_SITE=1`. Every run adds an
+entry. If iOS's passkey sheet doesn't offer PocketKeePass, the system log says "no enabled
+credential provider extensions supports passkeys": the simulator kept an older registration of
+the extension. Install the built app with `xcrun simctl install`, turn it on again with
+`pluginkit`, and retry.
+
+## Releasing (iPhone and iPad)
+
+`tools/release_ios.sh` builds, signs, checks, and uploads a build to App Store Connect, where it
+shows under TestFlight; `--check` stops before the upload. It signs with the Loveland Solutions
+team (`44H5SLX8KR`) through the team's App Store Connect API key, the same one BetterBudget's
+release uses (`~/.config/betterbudget/`, see the script). No iPhone is registered on the team, so
+a device gets the app only through TestFlight. Giving a build to testers and submitting it for
+review are clicks in App Store Connect. The listing and the answers App Store Connect asks for
+are in `art/app-store/listing.md`.
+
 Screenshots: `xcrun simctl io booted screenshot shot.png`. iOS can't block screenshots, unlike
 Android's `FLAG_SECURE`; the app covers itself in the app switcher and while the screen is being
 recorded or mirrored.

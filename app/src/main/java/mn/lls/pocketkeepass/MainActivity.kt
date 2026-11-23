@@ -53,6 +53,7 @@ import mn.lls.pocketkeepass.ui.UpgradeDialog
 import mn.lls.pocketkeepass.ui.rememberJustSaved
 import mn.lls.pocketkeepass.ui.EntryScreen
 import mn.lls.pocketkeepass.ui.UnlockScreen
+import mn.lls.pocketkeepass.ui.CreateDatabaseScreen
 import mn.lls.pocketkeepass.ui.WelcomeScreen
 import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
@@ -154,6 +155,10 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
     val saveCopy = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
         uri?.let(editor::saveCopy)
     }
+    val saveNewDatabase = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        uri?.let(viewModel::newDatabaseSaved)
+    }
+    val newDatabase by viewModel.newDatabase.collectAsStateWithLifecycle()
 
     // Why the last save failed, while its dialog is open. It opens by itself when a save fails.
     var showSaveProblem by remember { mutableStateOf(false) }
@@ -165,11 +170,26 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
     EditEvents(editor, viewModel, snackbar)
     IncomingChanges(viewModel, snackbar)
 
+    val creating = newDatabase
+    if (creating != null) {
+        CreateDatabaseScreen(
+            state = creating,
+            name = viewModel.newName,
+            password = viewModel.newPassword,
+            passwordAgain = viewModel.newPasswordAgain,
+            onCreate = viewModel::createNewDatabase,
+            onChooseLocation = { saveNewDatabase.launch(creating.fileName + ".kdbx") },
+            onCancel = viewModel::cancelNewDatabase,
+        )
+        return
+    }
+
     when (val current = state) {
         DatabaseState.NoDatabase -> WelcomeScreen(
             // Asking the Rust engine for its version also proves it loaded on this device.
             engineVersion = remember { engineVersion() },
             onOpenDatabase = { pickDatabase.launch(ANY_FILE) },
+            onCreateDatabase = viewModel::startNewDatabase,
         )
         is DatabaseState.Locked -> UnlockScreen(
             state = current,
@@ -182,6 +202,7 @@ private fun App(viewModel: DatabaseViewModel = viewModel(), editor: EditViewMode
             onOfferQuickUnlock = viewModel::offerQuickUnlock,
             onRestoreBackup = viewModel::restoreBackup,
             onSaveBackupAs = { saveBackupAs.launch(current.database.name.substringBeforeLast('.') + " (restored).kdbx") },
+            onCreateDatabase = viewModel::startNewDatabase,
         )
         is DatabaseState.Unlocked -> {
             val databaseName = current.summary.name.ifEmpty { current.database.name.substringBeforeLast('.') }

@@ -42,9 +42,13 @@ for target in aarch64-apple-ios aarch64-apple-ios-sim aarch64-apple-darwin x86_6
     build "$target"
 done
 
-# The bindings come from the compiled library's metadata, built for this Mac.
+# The bindings come from the compiled library's metadata, built for this Mac. This library is
+# linked, and it's the one the Android app's Kotlin tests load (core/target/release), so it's built
+# with none of Xcode's environment: linked inside Xcode's build, it came out malformed ("mis-aligned
+# LINKEDIT string pool") and refused to load.
 unset CARGO_ENCODED_RUSTFLAGS
-cargo build --manifest-path "$core/Cargo.toml" --release --locked --target-dir "$target_dir" \
+env -i HOME="$HOME" PATH="$PATH" ${CARGO_HOME:+CARGO_HOME="$CARGO_HOME"} ${RUSTUP_HOME:+RUSTUP_HOME="$RUSTUP_HOME"} \
+    cargo build --manifest-path "$core/Cargo.toml" --release --locked --target-dir "$target_dir" \
     --features bindgen
 generated="$target_dir/swift-bindings"
 rm -rf "$generated"

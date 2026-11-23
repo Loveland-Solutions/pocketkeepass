@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +21,7 @@ import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
 /** Shown until the user has chosen a database. */
 @Composable
-fun WelcomeScreen(engineVersion: String, onOpenDatabase: () -> Unit) {
+fun WelcomeScreen(engineVersion: String, onOpenDatabase: () -> Unit, onCreateDatabase: () -> Unit) {
     Scaffold { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
@@ -31,6 +32,9 @@ fun WelcomeScreen(engineVersion: String, onOpenDatabase: () -> Unit) {
             Text(stringResource(R.string.home_tagline), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
             Button(onClick = onOpenDatabase) {
                 Text(stringResource(R.string.open_database))
+            }
+            OutlinedButton(onClick = onCreateDatabase) {
+                Text(stringResource(R.string.create_database))
             }
             Text(
                 stringResource(R.string.open_database_hint),
@@ -56,5 +60,5 @@ fun WelcomeScreen(engineVersion: String, onOpenDatabase: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 private fun WelcomeScreenPreview() {
-    PocketKeePassTheme { WelcomeScreen(engineVersion = "0.1.0", onOpenDatabase = {}) }
+    PocketKeePassTheme { WelcomeScreen(engineVersion = "0.1.0", onOpenDatabase = {}, onCreateDatabase = {}) }
 }

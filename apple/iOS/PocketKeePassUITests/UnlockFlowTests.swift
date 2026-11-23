@@ -560,6 +560,71 @@ final class UnlockFlowTests: XCTestCase {
         attach(safari, "filled")
     }
 
+    /// A new database: named, a master password typed twice, saved with the system's save
+    /// dialog into "On My iPhone", opened straight away, an entry added, then locked and
+    /// unlocked with that password.
+    ///
+    /// It leaves the new file in "On My iPhone", which the file picker tests want to themselves,
+    /// so it runs only with `TEST_RUNNER_CREATE_DATABASE=1`, on a simulator of its own (see
+    /// `apple/README.md`).
+    @MainActor
+    func testCreateDatabase() throws {
+        guard ProcessInfo.processInfo.environment["CREATE_DATABASE"] == "1" else {
+            throw XCTSkip("leaves a new file in On My iPhone (apple/README.md)")
+        }
+        let app = XCUIApplication()
+        app.launch()
+        if app.buttons["Lock"].waitForExistence(timeout: 3) { tapWhenReady(app.buttons["Lock"]) }
+        let create = app.buttons["Create new database"]
+        XCTAssertTrue(create.waitForExistence(timeout: 10))
+        create.tap()
+
+        let name = "New \(UUID().uuidString.prefix(6))"
+        let nameField = app.textFields["new-database-name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 5))
+        focus(nameField)
+        let current = nameField.value as? String ?? ""
+        nameField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count) + name)
+        let password = app.secureTextFields["new-master-password"]
+        focus(password)
+        password.typeText("new-db-password")
+        let again = app.secureTextFields["new-master-password-again"]
+        focus(again)
+        // (Different passwords are refused: `CreateDatabaseTests`.)
+        again.typeText("new-db-password")
+        XCTAssertFalse(app.staticTexts["The two passwords are different."].exists)
+        attach(app, "new database form")
+        app.buttons["Create"].tap()
+
+        // The system's save dialog, in "On My iPhone".
+        let save = app.buttons.matching(NSPredicate(format: "label IN {'Save', 'Move'}")).firstMatch
+        XCTAssertTrue(save.waitForExistence(timeout: 60), "no save dialog\n" + app.debugDescription)
+        let onMyPhone = app.buttons["On My iPhone"].firstMatch
+        if onMyPhone.exists { onMyPhone.tap() }
+        attach(app, "save dialog")
+        save.tap()
+
+        // Open straight away, empty.
+        let title = app.staticTexts["\(name).kdbx"]
+        XCTAssertTrue(title.waitForExistence(timeout: 30), "the new database didn't open\n" + app.debugDescription)
+        if app.alerts.buttons["Not now"].waitForExistence(timeout: 3) { app.alerts.buttons["Not now"].tap() }
+        attach(app, "new database open")
+        addEntry(app, title: "First entry", password: "s3cret")
+        XCTAssertTrue(app.staticTexts["Saved"].waitForExistence(timeout: 60), "never showed Saved")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // Locked, then unlocked from the file with the new password.
+        tapWhenReady(app.buttons["Lock"])
+        let master = app.secureTextFields["Master password"]
+        XCTAssertTrue(master.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["\(name).kdbx"].exists, "not the remembered database")
+        focus(master)
+        master.typeText("new-db-password\n")
+        XCTAssertTrue(app.staticTexts["First entry"].waitForExistence(timeout: 60), "the entry wasn't in the file")
+        attach(app, "unlocked again")
+        app.buttons["Lock"].tap()
+    }
+
     /// Taps once the element can take it: right after a Face ID prompt or a sheet closes, it's
     /// still covered for a moment.
     @MainActor
