@@ -3,6 +3,9 @@ import Foundation
 import LocalAuthentication
 import Observation
 import PocketKeePassCore
+#if os(macOS)
+import notify
+#endif
 
 /// One AutoFill request: unlock the remembered database, then
 /// - for a password: offer the entries saved for the site asking (or any entry, by search), and
@@ -420,8 +423,12 @@ final class AutoFillModel {
         let location = Backups.location(file.url)
         guard file.direct else {
             // The Mac's copy, not the file: the new bytes wait as an unfinished save, which the
-            // app merges into the file and writes at its next unlock, like a save held offline.
+            // app merges into the file and writes: at once if it's open (told by the notice),
+            // else at its next unlock, like a save held offline.
             try Backups.standard.keepUnfinished(location, try database.save())
+            #if os(macOS)
+            notify_post(Backups.extensionSavedNotice)
+            #endif
             return
         }
         let current = try FileAccess.read(file.url)

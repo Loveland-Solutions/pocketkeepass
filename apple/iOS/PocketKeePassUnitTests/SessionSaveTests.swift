@@ -121,6 +121,46 @@ struct SessionSaveTests {
         session.lock()
     }
 
+    /// The extension's bytes, as `anUnfinishedSaveLeftByAutoFill…` makes them.
+    private func leaveUnfinishedSave(_ title: String, for url: URL) throws {
+        let extensionCopy = try Self.open(url)
+        defer { extensionCopy.lock() }
+        _ = try extensionCopy.createEntry(
+            groupId: extensionCopy.listGroup(id: nil).group.id,
+            fields: [FieldEdit(key: "Title", value: Data(title.utf8), previousKey: nil, isProtected: false)],
+            tags: []
+        )
+        try backups.keepUnfinished(Backups.location(url), extensionCopy.save())
+    }
+
+    /// The same while the app is open: the next check takes it in and writes it.
+    @Test func anUnfinishedSaveLeftByAutoFillWhileOpenReachesTheFileAtTheNextCheck() async throws {
+        let url = try copy("kdbx4-argon2id-chacha20.kdbx")
+        let session = try unlocked(url)
+        await session.checkNow() // after the unlock's own restore, which would take it in otherwise
+        try leaveUnfinishedSave("test entry from autofill", for: url)
+
+        await session.checkNow()
+        try await waitUntilSaved(session)
+        #expect(try titles(in: url) == ["test entry from autofill"])
+        #expect(session.lastIncoming?.report.entriesAdded == 1)
+        session.lock()
+    }
+
+    /// A change made in the app before the next check doesn't replace the extension's save.
+    @Test func aSaveInTheAppKeepsAnUnfinishedSaveLeftByAutoFill() async throws {
+        let url = try copy("kdbx4-argon2id-chacha20.kdbx")
+        let session = try unlocked(url)
+        await session.checkNow() // after the unlock's own restore, which would take it in otherwise
+        try leaveUnfinishedSave("test entry from autofill", for: url)
+
+        try await addEntry("test entry here", to: session)
+        try await waitUntilSaved(session)
+        #expect(try titles(in: url) == ["test entry from autofill", "test entry here"])
+        #expect(!backups.hasUnfinished(Backups.location(url)))
+        session.lock()
+    }
+
     #if os(macOS)
     /// The Mac keeps the file as last read or written for its AutoFill extension, which can't
     /// open the file itself.

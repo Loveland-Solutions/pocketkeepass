@@ -1,5 +1,8 @@
 import Foundation
 import Observation
+#if os(macOS)
+import notify
+#endif
 import PocketKeePassCore
 #if os(iOS)
 import UIKit
@@ -111,6 +114,9 @@ final class Session {
         var cleanCount: UInt64
         /// KDBX 3: has to be upgraded, with the user's consent, before its first change.
         var needsUpgrade: Bool
+        /// The fingerprint of the last unfinished save this app wrote or already took in. One
+        /// that differs was written by the AutoFill extension (`takeExtensionSave`).
+        var knownUnfinished: Data?
 
         init(database: UnlockedDatabase, recent: RecentDatabase, url: URL, fingerprint: Data, needsUpgrade: Bool) {
             self.database = database
@@ -161,11 +167,19 @@ final class Session {
     @ObservationIgnored private var watcher: FileWatcher?
     /// Whether the app is on screen, so the file is worth watching.
     @ObservationIgnored private var visible = false
+    @ObservationIgnored private var extensionNotice: Int32 = 0
 
     init(backups: Backups = .standard, connection: Connection = Connection()) {
         self.backups = backups
         self.connection = connection
         connection.onReconnect = { [weak self] in self?.reconnected() }
+        #if os(macOS)
+        // The AutoFill extension saved a new passkey for us to write: take it in now rather than
+        // at the next 30-second check.
+        notify_register_dispatch(Backups.extensionSavedNotice, &extensionNotice, .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.check() }
+        }
+        #endif
     }
 
     /// A database was just unlocked from `file`. Any other one is locked first.
@@ -405,18 +419,23 @@ final class Session {
     private func check() {
         guard let open, checkTask == nil else { return }
         checkTask = Task {
-            let outcome: Taken? = await fileLock.run {
-                guard self.open === open else { return nil }
+            let (outcome, tookExtensionSave): (Taken?, Bool) = await fileLock.run {
+                guard self.open === open else { return (nil, false) }
+                let tookExtensionSave = await takeExtensionSave(open)
                 let url = open.url
                 let presenter = watcher
                 guard let current = try? await Self.io({ try FileAccess.read(url, presenter: presenter) }) else {
-                    return .failed(.cantRead)
+                    return (.failed(.cantRead), tookExtensionSave)
                 }
-                if FileAccess.fingerprint(current) == open.fingerprint { return .same }
-                return await take(open, current)
+                if FileAccess.fingerprint(current) == open.fingerprint { return (.same, tookExtensionSave) }
+                return (await take(open, current), tookExtensionSave)
             }
             checkTask = nil
             guard self.open === open, let outcome else { return }
+            if tookExtensionSave {
+                // Already in memory; it goes into the file with this save.
+                save()
+            }
             switch outcome {
             // take() records what it took in; these two never reached it.
             case .same:
@@ -426,8 +445,47 @@ final class Session {
                 sync.checkedAt = .now
                 sync.problem = problem
             case .changes(let report):
-                if report.merged { save() }
+                if report.merged, !tookExtensionSave { save() }
             }
+        }
+    }
+
+    /// Takes in a save the AutoFill extension left for the app to write, and returns whether it
+    /// brought anything. On the Mac the extension can't write the file (macOS ties the file's
+    /// bookmark to the app), so a new passkey waits as an unfinished save (`Backups`). The app
+    /// takes it in at its next unlock (`restoreOurs`), and while it's open, here: at every check,
+    /// and before every save, which would otherwise replace the extension's copy with its own.
+    /// Merging needs key derivation, so each copy is tried once. Hold `fileLock`.
+    private func takeExtensionSave(_ open: Open) async -> Bool {
+        let backups = backups
+        let location = open.location
+        let database = open.database
+        let known = open.knownUnfinished
+        let (fingerprint, report) = await Task.detached(priority: .utility) { () -> (Data?, SyncReport?) in
+            guard let copy = backups.unfinished(location) else { return (nil, nil) }
+            let fingerprint = FileAccess.fingerprint(copy)
+            guard fingerprint != known else { return (nil, nil) }
+            // Another master key since, or a copy that won't open: left as it is.
+            return (fingerprint, try? database.mergeSavedCopy(file: copy))
+        }.value
+        if let fingerprint { open.knownUnfinished = fingerprint }
+        guard let report, report.merged, self.open === open else { return false }
+        revision += 1
+        customIcons.databaseChanged()
+        let incoming = Incoming(at: .now, report: report)
+        sync.incoming = incoming
+        lastIncoming = incoming
+        return true
+    }
+
+    /// Whether the unfinished save on disk, if any, is one this app wrote or already took in.
+    private func unfinishedIsKnown(_ open: Open) async -> Bool {
+        let backups = backups
+        let location = open.location
+        let known = open.knownUnfinished
+        return await Self.io {
+            guard let copy = backups.unfinished(location) else { return true }
+            return FileAccess.fingerprint(copy) == known
         }
     }
 
@@ -497,6 +555,8 @@ final class Session {
         let fingerprint = open.fingerprint
         let restored = await fileLock.run {
             guard self.open === open else { return false }
+            // Taken in here (or found already in the file), so not again by `takeExtensionSave`.
+            open.knownUnfinished = await Self.io { backups.unfinished(location).map(FileAccess.fingerprint) }
             return await Task.detached(priority: .utility) { () -> Bool in
                 guard let ours = backups.ours(location) else { return false }
                 if FileAccess.fingerprint(ours) == fingerprint {
@@ -541,6 +601,7 @@ final class Session {
         // Each round merges what another device saved meanwhile; it would take a device saving
         // every few seconds to need more than a couple.
         for _ in 0...Self.maxMerges {
+            _ = await takeExtensionSave(open)
             let count: UInt64
             let bytes: Data
             do {
@@ -556,8 +617,10 @@ final class Session {
 
             if !FileAccess.isOnThisDevice(url) && !connection.isOnline {
                 // A storage app could upload this later over whatever the file is by then.
+                guard await unfinishedIsKnown(open) else { continue } // the extension saved meanwhile
                 do {
                     try await Self.io { try backups.keepUnfinished(location, bytes) }
+                    open.knownUnfinished = FileAccess.fingerprint(bytes)
                     return .held
                 } catch {
                     return .failed(.cantWrite) // nowhere to keep it: in memory only
@@ -592,7 +655,10 @@ final class Session {
             }
             // If a copy can't be kept (storage full), the save goes ahead: older copies are still
             // there, and refusing would leave the changes to be lost at the next lock.
-            try? await Self.io { try backups.keepUnfinished(location, bytes) }
+            guard await unfinishedIsKnown(open) else { continue } // the extension saved meanwhile
+            if (try? await Self.io({ try backups.keepUnfinished(location, bytes) })) != nil {
+                open.knownUnfinished = FileAccess.fingerprint(bytes)
+            }
             do {
                 try await Self.io { try FileAccess.write(url, bytes, presenter: presenter) }
             } catch is WriteCheckFailed {
