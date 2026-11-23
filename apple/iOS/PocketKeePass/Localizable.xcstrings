@@ -449,6 +449,36 @@
         }
       }
     },
+    "Check now": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Одоо шалгах"
+          }
+        }
+      }
+    },
+    "Checking %@ for changes…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ дээрх өөрчлөлтийг шалгаж байна…"
+          }
+        }
+      }
+    },
+    "Checking the file for changes…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлын өөрчлөлтийг шалгаж байна…"
+          }
+        }
+      }
+    },
     "Choose a .kdbx file from this iPhone or from any cloud storage app.": {
       "localizations": {
         "mn": {
@@ -639,6 +669,26 @@
         }
       }
     },
+    "Every change you make is saved into the file straight away, and %@ uploads it from there. PocketKeePass can’t see when the upload has finished. While this iPhone is offline, your changes wait on it and go into the file once it’s back online.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таны хийсэн өөрчлөлт бүр шууд файлд хадгалагдаж, %@ тэндээс нь байршуулна. PocketKeePass байршуулалт хэзээ дууссаныг харж чадахгүй. Энэ iPhone интернэтгүй үед таны өөрчлөлтүүд энд хүлээгдэж, дахин холбогдмогц файлд орно."
+          }
+        }
+      }
+    },
+    "Every change you make is saved into the file straight away. If the file is in a storage app (such as Dropbox or OneDrive), that app uploads it from there: iOS doesn’t tell PocketKeePass which app holds the file, or when the upload has finished. While this iPhone is offline, your changes wait on it and go into the file once it’s back online.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таны хийсэн өөрчлөлт бүр шууд файлд хадгалагдана. Хэрэв файл хадгалах сангийн аппад (жишээ нь Dropbox, OneDrive) байгаа бол тэр апп тэндээс нь байршуулна. Файл аль аппад байгаа, байршуулалт хэзээ дууссаныг iOS мэдэгддэггүй. Энэ iPhone интернэтгүй үед таны өөрчлөлтүүд энд хүлээгдэж, дахин холбогдмогц файлд орно."
+          }
+        }
+      }
+    },
     "Everything in the recycle bin is deleted for good. This can’t be undone. A new recycle bin appears the next time you delete something.": {
       "localizations": {
         "mn": {
@@ -745,6 +795,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Түлхүүр файл: %@"
+          }
+        }
+      }
+    },
+    "Last changes from another device came in at %@: %@.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өөр төхөөрөмжийн хамгийн сүүлийн өөрчлөлтүүд %1$@ цагт орж ирсэн: %2$@."
+          }
+        }
+      }
+    },
+    "Last checked for changes from other devices %@.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бусад төхөөрөмжийн өөрчлөлтийг хамгийн сүүлд %@ шалгасан."
           }
         }
       }
@@ -955,6 +1025,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Тэмдэглэл"
+          }
+        }
+      }
+    },
+    "Nothing has been changed on this iPhone since unlocking.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжээ тайлснаас хойш энэ iPhone дээр юу ч өөрчлөөгүй."
           }
         }
       }
@@ -1195,6 +1275,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нууц үгийг харуулах"
+          }
+        }
+      }
+    },
+    "Shows how syncing works and when it last happened": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Синк хэрхэн ажилладаг, хамгийн сүүлд хэзээ болсныг харуулна"
+          }
+        }
+      }
+    },
+    "Syncing": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Синк"
+          }
+        }
+      }
+    },
+    "Syncing with %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Синк: %@"
           }
         }
       }
@@ -1559,6 +1669,26 @@
         }
       }
     },
+    "Up to date with %@ · checked %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: сүүлийн хувилбар · %2$@ шалгасан"
+          }
+        }
+      }
+    },
+    "Up to date with the file · checked %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл: сүүлийн хувилбар · %@ шалгасан"
+          }
+        }
+      }
+    },
     "Updated from %@: %@": {
       "localizations": {
         "mn": {
@@ -1649,6 +1779,16 @@
         }
       }
     },
+    "While PocketKeePass is open, it checks the file every 30 seconds (or pull down on the list to check now) and takes in changes made on other devices. If two devices changed the database at the same time, both sets of changes are kept. When an entry was changed in both places, the newer version is kept and the other goes into its history.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass нээлттэй байх үедээ файлыг 30 секунд тутам шалгаж (одоо шалгах бол жагсаалтыг доош татна уу), бусад төхөөрөмж дээр хийсэн өөрчлөлтүүдийг авна. Хоёр төхөөрөмж өгөгдлийн санг нэгэн зэрэг өөрчилсөн бол хоёулангийнх нь өөрчлөлт хадгалагдана. Нэг бичлэгийг хоёр газар өөрчилсөн бол шинэ хувилбар нь үлдэж, нөгөө нь түүний түүхэнд орно."
+          }
+        }
+      }
+    },
     "Your KeePass passwords, free and offline.": {
       "localizations": {
         "mn": {
@@ -1679,6 +1819,16 @@
         }
       }
     },
+    "Your last change was saved to the file at %@.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таны сүүлийн өөрчлөлтийг файлд %@ цагт хадгалсан."
+          }
+        }
+      }
+    },
     "You’re offline. Your changes are kept on this iPhone and go into the file once you’re back online.": {
       "localizations": {
         "mn": {
@@ -1695,6 +1845,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "iCloud Drive"
+          }
+        }
+      }
+    },
+    "just now": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "дөнгөж сая"
           }
         }
       }

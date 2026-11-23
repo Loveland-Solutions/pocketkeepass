@@ -91,6 +91,18 @@ final class UnlockFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts[title].exists, "the new entry isn't listed")
         attach(app, "saved")
 
+        // The sync line, and what it opens: the save is there, and "Check now" works.
+        let syncLine = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Up to date with the file · checked'")).firstMatch
+        XCTAssertTrue(syncLine.waitForExistence(timeout: 5), "no sync line")
+        syncLine.tap()
+        XCTAssertTrue(app.navigationBars["Syncing"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Your last change was saved to the file at'")).firstMatch.exists)
+        app.buttons["Check now"].tap()
+        XCTAssertTrue(app.buttons["Check now"].waitForExistence(timeout: 30), "the check never finished")
+        XCTAssertTrue(app.staticTexts["Last checked for changes from other devices just now."].exists)
+        attach(app, "sync details")
+        app.buttons["Done"].tap()
+
         // From the file again.
         app.buttons["Lock"].tap()
         XCTAssertTrue(password.waitForExistence(timeout: 5))

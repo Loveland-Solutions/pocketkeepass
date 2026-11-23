@@ -61,6 +61,8 @@ struct SyncStatus: Equatable {
     var incoming: Incoming?
     /// Why the last check couldn't take the file in, or nil if it could.
     var problem: SyncProblem?
+    /// The user asked for a check (pull to refresh, "Check now"), and it's running.
+    var checking = false
 }
 
 /// The one open database, app-wide. Screens read it from here and never keep their own
@@ -335,8 +337,11 @@ final class Session {
 
     /// Reads the file now, for changes made elsewhere (pull to refresh). Returns when done.
     func checkNow() async {
+        guard let open else { return }
+        sync.checking = true
         check()
         await checkTask?.value
+        if self.open === open { sync.checking = false }
     }
 
     private func startWatching() {

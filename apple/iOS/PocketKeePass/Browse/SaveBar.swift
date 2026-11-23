@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 /// The strip at the bottom of the browser: "Saving…", then "Saved" for 2 seconds; a save held
 /// back while offline; a save that failed, with what to do about it; changes that came in from
-/// another device; and why the file couldn't be checked.
+/// another device. (Why the file couldn't be checked is on the `SyncLine`.)
 struct SaveBar: View {
     @Environment(Session.self) private var session
     @State private var justSaved = false
@@ -84,9 +84,6 @@ struct SaveBar: View {
             if justSaved {
                 return AnyView(Label("Saved", systemImage: "checkmark"))
             }
-            if let problem = session.sync.problem {
-                return AnyView(Label(Self.describe(problem), systemImage: "exclamationmark.arrow.trianglehead.2.clockwise.rotate.90"))
-            }
             if let incoming {
                 return AnyView(Label(incoming, systemImage: "arrow.down.circle"))
             }
@@ -156,14 +153,19 @@ struct SaveBar: View {
 
     /// "Updated from iCloud Drive: 1 new entry, 2 entries changed".
     static func describe(_ report: SyncReport, storage: String?) -> String {
+        let changes = changes(report)
+        if let storage { return String(localized: "Updated from \(storage): \(changes)") }
+        return String(localized: "Updated from another device: \(changes)")
+    }
+
+    /// "1 new entry, 2 entries changed": only the kinds of change there were.
+    static func changes(_ report: SyncReport) -> String {
         var parts: [String] = []
         if report.entriesAdded > 0 { parts.append(String(localized: "\(Int(report.entriesAdded)) new entries")) }
         if report.entriesChanged > 0 { parts.append(String(localized: "\(Int(report.entriesChanged)) entries changed")) }
         if report.entriesRemoved > 0 { parts.append(String(localized: "\(Int(report.entriesRemoved)) entries removed")) }
         if report.groupsChanged > 0 { parts.append(String(localized: "\(Int(report.groupsChanged)) groups changed")) }
-        let changes = ListFormatter.localizedString(byJoining: parts)
-        if let storage { return String(localized: "Updated from \(storage): \(changes)") }
-        return String(localized: "Updated from another device: \(changes)")
+        return ListFormatter.localizedString(byJoining: parts)
     }
 }
 
