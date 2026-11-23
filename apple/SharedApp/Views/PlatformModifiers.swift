@@ -21,6 +21,16 @@ extension View {
         #endif
     }
 
+    /// Marks a secure field as a one-time code on iPhone, so iOS doesn't take it for a password
+    /// field and offer to keep what's typed in the iCloud Keychain. Nothing on the Mac.
+    func oneTimeCodeContent() -> some View {
+        #if os(iOS)
+        textContentType(.oneTimeCode)
+        #else
+        self
+        #endif
+    }
+
     /// The URL keyboard on iPhone.
     func urlKeyboard() -> some View {
         #if os(iOS)

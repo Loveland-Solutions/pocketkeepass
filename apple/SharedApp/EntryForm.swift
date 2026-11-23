@@ -81,6 +81,29 @@ final class EntryForm: Identifiable {
         return field
     }
 
+    /// Sets up a one-time code: `value` goes into the custom field `key` (`otp`), protected, and
+    /// the entry's other one-time code settings (KeePass 2's `TimeOtp-*`, the older `TOTP Seed`)
+    /// are removed, so no old secret is left behind. Saving keeps the old version in history.
+    func setTotp(_ key: String, value: String) {
+        for field in fields where field.isCustom && field.key != key && isTotpField(key: field.key) {
+            removeField(field)
+        }
+        let field = fields.first { $0.isCustom && $0.key == key } ?? addField()
+        field.name = key
+        field.isProtected = true
+        field.setValue(value)
+    }
+
+    /// Whether the form has one-time code settings, in any format, which setting one up replaces.
+    var hasTotp: Bool {
+        fields.contains { $0.isCustom && isTotpField(key: $0.key) }
+    }
+
+    /// What a standard field holds, or "" where a protected value isn't fetched.
+    func text(_ standardKey: String) -> String {
+        fields.first { $0.standardKey == standardKey }?.value ?? ""
+    }
+
     func removeField(_ field: FormField) {
         guard field.standardKey == nil else { return }
         fields.removeAll { $0 === field }
@@ -111,8 +134,9 @@ final class EntryForm: Identifiable {
 
     static let title = "Title"
     static let password = "Password"
+    static let userName = "UserName"
     static let notes = "Notes"
-    static let standardKeys = [title, "UserName", password, "URL", notes]
+    static let standardKeys = [title, userName, password, "URL", notes]
 }
 
 /// One field as it should be saved. A nil `value` keeps what the entry has.
