@@ -55,13 +55,21 @@ struct RootView: View {
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
-            case .active: autoLock.becameActive()
-            case .background: autoLock.enteredBackground()
+            case .active:
+                autoLock.becameActive()
+                session.setVisible(true)
+            case .background:
+                session.setVisible(false)
+                autoLock.enteredBackground()
             default: break
             }
         }
         .onChange(of: session.isUnlocked) { _, unlocked in
-            if unlocked { autoLock.restart() }
+            if unlocked {
+                autoLock.restart()
+                // Unlocked while on screen: watching starts with it (`Session.start`).
+                if scenePhase == .active { session.setVisible(true) }
+            }
         }
     }
 }

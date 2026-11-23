@@ -33,7 +33,8 @@ cd apple/iOS && xcodebuild -project PocketKeePass.xcodeproj -scheme PocketKeePas
 ```
 
 `iOS/PocketKeePassUnitTests` (Swift Testing, hosted in the app) covers app logic that needs no
-screen: quick unlock's expiry rule and the checks made before a Face ID prompt.
+screen: quick unlock's expiry rule and the checks made before a Face ID prompt, backups, and
+saving through `Session` into copies of `core/tests/fixtures` (merging, restoring, upgrading).
 
 The UI test (`iOS/PocketKeePassUITests`) drives the app through the system file picker: open,
 wrong password, unlock, browse, search, show and copy a protected field, and lock. Setup, once per
@@ -44,6 +45,11 @@ where `<group>` is the one whose `.com.apple.mobile_container_manager.metadata.p
 `group.com.apple.FileProvider.LocalStorage`. Keep it alone in that folder: the picker runs in
 another process, taps on its elements don't always arrive, so the test taps the first icon of
 the grid by position.
+
+`testNewEntryIsSaved` writes to that copy of `browse.kdbx`: the first run upgrades it to KDBX 4
+(after asking), and every run adds an entry. Copy the fixture in again to start over. If the
+picker says "On My iPhone is Empty" with the file in place, the simulator's Files index is stale:
+use a fresh simulator (`xcrun simctl create`), open Files once, and copy the file in.
 
 `testFaceIDQuickUnlock` (the offer after the master password, turning it on, unlocking with Face
 ID after a lock, turning it off) needs Face ID enrolled in that simulator and the Mac answering
