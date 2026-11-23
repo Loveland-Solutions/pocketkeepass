@@ -46,6 +46,17 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BB0000000000000000000703"
+               BuildableName = "PocketKeePassUnitTests.xctest"
+               BlueprintName = "PocketKeePassUnitTests"
+               ReferencedContainer = "container:PocketKeePass.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

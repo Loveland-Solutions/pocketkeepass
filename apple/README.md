@@ -58,6 +58,7 @@ cd apple/macOS && xcodebuild -project PocketKeePass.xcodeproj -scheme PocketKeeP
     -destination 'platform=macOS,arch=arm64' -derivedDataPath ../build/mac-signed \
     -allowProvisioningUpdates -authenticationKeyPath <AuthKey_….p8> \
     -authenticationKeyID <key ID> -authenticationKeyIssuerID <issuer ID> build
+# `test` instead of `build` runs PocketKeePassUnitTests (the iPhone's folder, built for the Mac).
 ```
 
 `iOS/PocketKeePassUnitTests` (Swift Testing, hosted in the app) covers app logic that needs no

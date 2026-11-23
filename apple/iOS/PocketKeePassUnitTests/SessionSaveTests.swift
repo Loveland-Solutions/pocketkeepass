@@ -100,6 +100,52 @@ struct SessionSaveTests {
         session.lock()
     }
 
+    /// What the Mac's AutoFill extension does with a new passkey when it can't reach the file:
+    /// keeps the new bytes as an unfinished save. The next unlock writes them into the file.
+    @Test func anUnfinishedSaveLeftByAutoFillReachesTheFileAtTheNextUnlock() async throws {
+        let url = try copy("kdbx4-argon2id-chacha20.kdbx")
+        let extensionCopy = try Self.open(url)
+        _ = try extensionCopy.createEntry(
+            groupId: extensionCopy.listGroup(id: nil).group.id,
+            fields: [FieldEdit(key: "Title", value: Data("test entry from autofill".utf8), previousKey: nil, isProtected: false)],
+            tags: []
+        )
+        try backups.keepUnfinished(Backups.location(url), extensionCopy.save())
+        extensionCopy.lock()
+
+        let session = try unlocked(url)
+        for _ in 0..<600 where (try titles(in: url)).isEmpty {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        #expect(try titles(in: url) == ["test entry from autofill"])
+        session.lock()
+    }
+
+    #if os(macOS)
+    /// The Mac keeps the file as last read or written for its AutoFill extension, which can't
+    /// open the file itself.
+    @Test func theMacKeepsTheLatestFileForAutoFill() async throws {
+        let url = try copy("kdbx4-argon2id-chacha20.kdbx")
+        let location = Backups.location(url)
+        let session = Session(backups: backups)
+        let database = try Self.open(url)
+        session.start(
+            database, recent: RecentDatabase(bookmark: Data(), name: url.lastPathComponent), url: url,
+            fingerprint: FileAccess.fingerprint(try Data(contentsOf: url)), needsUpgrade: false,
+            file: try Data(contentsOf: url)
+        )
+        for _ in 0..<100 where backups.latest(location) == nil { try await Task.sleep(for: .milliseconds(50)) }
+        #expect(backups.latest(location) == (try Data(contentsOf: url)))
+
+        try await addEntry("test entry one", to: session)
+        try await waitUntilSaved(session)
+        let saved = try Data(contentsOf: url)
+        for _ in 0..<100 where backups.latest(location) != saved { try await Task.sleep(for: .milliseconds(50)) }
+        #expect(backups.latest(location) == saved)
+        session.lock()
+    }
+    #endif
+
     @Test func aFileChangedElsewhereIsMergedNotReplaced() async throws {
         let url = try copy("kdbx4-argon2id-chacha20.kdbx")
         let session = try unlocked(url)
