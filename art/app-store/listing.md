@@ -91,11 +91,13 @@ Open a KeePass database (.kdbx) from Files, unlock it, and use it as you would o
 
 ## Export compliance
 
-The app sets `ITSAppUsesNonExemptEncryption` to YES: the engine uses standard encryption
-(AES, ChaCha20, Twofish) itself, not only Apple's, which is App Store Connect's own test for
-needing documentation. App Store Connect then asks about each build: the algorithms are
-standard, not proprietary. What's still to file (the US self-classification report, the French
-declaration or leaving France out) is the open item in CLAUDE.md.
+The app leaves `ITSAppUsesNonExemptEncryption` out, so App Store Connect asks about each build.
+The engine uses standard encryption (AES, ChaCha20, Twofish) itself, not only Apple's, which is
+App Store Connect's own test for needing documentation, so the honest answers are: yes, it uses
+encryption; the algorithms are standard, not proprietary; and it uses them instead of Apple's.
+What's still to file (the US self-classification report, the French declaration or leaving
+France out) is the open item in CLAUDE.md. Once documentation is approved, set the key to YES
+with its `ITSEncryptionExportComplianceCode`; YES without a code fails the upload.
 
 ## Screenshots
 
