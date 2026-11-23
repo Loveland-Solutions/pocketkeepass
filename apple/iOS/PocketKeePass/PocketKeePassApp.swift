@@ -5,6 +5,7 @@ import SwiftUI
 struct PocketKeePassApp: App {
     @State private var session: Session
     @State private var autoLock: AutoLock
+    @State private var quickUnlock = QuickUnlock()
 
     init() {
         Preferences.register()
@@ -18,6 +19,7 @@ struct PocketKeePassApp: App {
             RootView()
                 .environment(session)
                 .environment(autoLock)
+                .environment(quickUnlock)
         }
     }
 }
@@ -36,6 +38,7 @@ struct RootView: View {
                 UnlockView()
             }
         }
+        .modifier(QuickUnlockOffer())
         .background {
             WindowHooks(
                 onInteraction: { autoLock.interacted() },

@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ can’t be used by PocketKeePass right now. Check in the iPhone’s Settings that a passcode and %@ are set up, and that PocketKeePass is allowed to use %@.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass одоогоор %1$@ ашиглах боломжгүй байна. Тохиргоо аппад нууц код болон %2$@ тохируулсан эсэх, мөн PocketKeePass апп %3$@ ашиглах зөвшөөрөлтэй эсэхийг шалгана уу."
+          }
+        }
+      }
+    },
+    "%@ is locked after too many tries. Use your master password, or unlock the iPhone with its passcode to turn %@ back on.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хэт олон удаа оролдсон тул %1$@ түр түгжигдлээ. Үндсэн нууц үгээ ашиглана уу. Эсвэл утасны түгжээг нууц кодоор тайлбал %2$@ дахин ажиллана."
+          }
+        }
+      }
+    },
     "%@, %@": {
       "localizations": {
         "mn": {
@@ -139,12 +159,42 @@
         }
       }
     },
+    "Anyone whose face or fingerprint is set up on this iPhone can then open it. Changing those turns this off, and your master password is always needed to turn it back on.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ингэвэл энэ iPhone дээр царай эсвэл хурууны хээ нь бүртгэлтэй хэн ч үүнийг нээж чадна. Тэдгээрийг өөрчлөхөд энэ тохиргоо унтарч, дахин асаахад үргэлж үндсэн нууц үг шаардлагатай."
+          }
+        }
+      }
+    },
+    "Ask for the master password every": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үндсэн нууц үгийг дахин асуух давтамж"
+          }
+        }
+      }
+    },
     "Auto-lock": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Автомат түгжээ"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цуцлах"
           }
         }
       }
@@ -333,6 +383,16 @@
         }
       }
     },
+    "It’s also needed after every restart of the iPhone. Typing it now and then keeps you from forgetting it, and means a lost iPhone takes more than a face or fingerprint to open.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мөн iPhone дахин асах бүрд үүнийг асууна. Ингэснээр та нууц үгээ мартахгүй, гээгдсэн утсыг зөвхөн царай эсвэл хурууны хээгээр нээх боломжгүй болно."
+          }
+        }
+      }
+    },
     "Key file: %@": {
       "localizations": {
         "mn": {
@@ -389,6 +449,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Үндсэн нууц үг"
+          }
+        }
+      }
+    },
+    "Next time, open %@ with %@ instead of typing your master password. You can change this any time in settings.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дараагийн удаа %1$@ өгөгдлийн санг үндсэн нууц үгээ бичихгүйгээр %2$@ ашиглан нээгээрэй. Үүнийг тохиргооноос хүссэн үедээ өөрчилж болно."
+          }
+        }
+      }
+    },
+    "Not now": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Одоо биш"
           }
         }
       }
@@ -509,6 +589,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Бичлэг хайх"
+          }
+        }
+      }
+    },
+    "Set up %@ in the iPhone’s Settings to use this.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үүнийг ашиглахын тулд Тохиргоо аппад %@ тохируулна уу."
           }
         }
       }
@@ -653,6 +743,66 @@
         }
       }
     },
+    "Turn on": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Асаах"
+          }
+        }
+      }
+    },
+    "Turn on unlocking with %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ашиглан түгжээ тайлахыг асаах"
+          }
+        }
+      }
+    },
+    "Type your master password this time. PocketKeePass asks for it after the iPhone restarts and every %lld days, so you don’t forget it.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Type your master password this time. PocketKeePass asks for it after the iPhone restarts and every day, so you don’t forget it."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Type your master password this time. PocketKeePass asks for it after the iPhone restarts and every %lld days, so you don’t forget it."
+                }
+              }
+            }
+          }
+        },
+        "mn": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Энэ удаа үндсэн нууц үгээ бичнэ үү. Мартахгүйн тулд PocketKeePass үүнийг iPhone дахин асах бүрд болон өдөр бүр асуудаг."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Энэ удаа үндсэн нууц үгээ бичнэ үү. Мартахгүйн тулд PocketKeePass үүнийг iPhone дахин асах бүрд болон %lld өдөр тутам асуудаг."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "URL": {
       "localizations": {
         "mn": {
@@ -673,12 +823,92 @@
         }
       }
     },
+    "Unlock %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Түгжээг тайлах: %@"
+          }
+        }
+      }
+    },
+    "Unlock this database with %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ өгөгдлийн санг %@ ашиглан нээх"
+          }
+        }
+      }
+    },
+    "Unlock with %@": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ашиглан түгжээ тайлах"
+          }
+        }
+      }
+    },
+    "Unlock with %@?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ашиглан нээх үү?"
+          }
+        }
+      }
+    },
+    "Unlocking with %@ stays on.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ашиглан түгжээ тайлах тохиргоо асаалттай хэвээр байна."
+          }
+        }
+      }
+    },
+    "Unlocking with %@ was turned off because the faces, fingerprints, or passcode on this iPhone changed. Unlock with your master password, then turn it back on in settings.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ iPhone дээрх царай, хурууны хээ эсвэл нууц код өөрчлөгдсөн тул %@ ашиглан түгжээ тайлахыг унтраалаа. Үндсэн нууц үгээрээ түгжээг тайлаад, тохиргооноос дахин асаана уу."
+          }
+        }
+      }
+    },
+    "Unlocking with %@ was turned off because this database’s master password or key file changed. Unlock with the new one, then turn it back on in settings.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ өгөгдлийн сангийн үндсэн нууц үг эсвэл түлхүүр файл өөрчлөгдсөн тул %@ ашиглан түгжээ тайлахыг унтраалаа. Шинэ нууц үгээрээ түгжээг тайлаад, тохиргооноос дахин асаана уу."
+          }
+        }
+      }
+    },
     "Unlocking… This can take a few seconds.": {
       "localizations": {
         "mn": {
           "stringUnit": {
             "state": "translated",
             "value": "Түгжээг тайлж байна… Хэдэн секунд болж магадгүй."
+          }
+        }
+      }
+    },
+    "Use master password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үндсэн нууц үг ашиглах"
           }
         }
       }

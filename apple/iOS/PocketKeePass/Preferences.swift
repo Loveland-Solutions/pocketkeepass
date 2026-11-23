@@ -24,10 +24,10 @@ enum Preferences {
     static var clipboardSeconds: Int { UserDefaults.standard.integer(forKey: clipboardKey) }
 }
 
-/// "30 seconds", "5 minutes", "1 hour", in the user's language.
+/// "30 seconds", "5 minutes", "1 hour", "14 days", in the user's language.
 func durationText(seconds: Int) -> String {
     let formatter = DateComponentsFormatter()
     formatter.unitsStyle = .full
-    formatter.allowedUnits = seconds >= 3600 ? [.hour] : seconds >= 60 ? [.minute] : [.second]
+    formatter.allowedUnits = seconds >= 86_400 ? [.day] : seconds >= 3600 ? [.hour] : seconds >= 60 ? [.minute] : [.second]
     return formatter.string(from: TimeInterval(seconds)) ?? "\(seconds)"
 }

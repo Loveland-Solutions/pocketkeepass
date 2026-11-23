@@ -3,6 +3,8 @@ import UniformTypeIdentifiers
 
 struct UnlockView: View {
     @Environment(Session.self) private var session
+    @Environment(QuickUnlock.self) private var quickUnlock
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model = UnlockModel()
     @State private var picking: Picking?
     /// What the open picker is for. Kept apart from `picking`, which the picker's binding clears
@@ -31,9 +33,20 @@ struct UnlockView: View {
             ) { result in
                 guard case .success(let url) = result else { return }
                 switch pickingFor {
-                case .database: model.pickedDatabase(url)
-                case .keyFile: model.pickedKeyFile(url)
+                case .database: model.pickedDatabase(url, quickUnlock: quickUnlock)
+                case .keyFile: model.pickedKeyFile(url, quickUnlock: quickUnlock)
                 }
+            }
+        }
+        // The prompt can only show while the app is active: right after a lock in the
+        // background, it waits for the user to come back.
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            model.refreshBiometry()
+            if model.recent == nil {
+                quickUnlock.forgetAll()
+            } else {
+                model.offerQuickUnlock(into: session, quickUnlock: quickUnlock)
             }
         }
     }
@@ -104,7 +117,7 @@ struct UnlockView: View {
                     .autocorrectionDisabled()
                     .focused($passwordFocused)
                     .submitLabel(.go)
-                    .onSubmit { model.unlock(into: session) }
+                    .onSubmit { model.unlock(into: session, quickUnlock: quickUnlock) }
                     .disabled(model.isUnlocking)
 
                     Button {
@@ -118,7 +131,7 @@ struct UnlockView: View {
 
                 if let keyFileName = recent.keyFileName {
                     LabeledContent {
-                        Button("Remove", role: .destructive) { model.removeKeyFile() }
+                        Button("Remove", role: .destructive) { model.removeKeyFile(quickUnlock: quickUnlock) }
                             .disabled(model.isUnlocking)
                     } label: {
                         Text("Key file: \(keyFileName)")
@@ -129,9 +142,27 @@ struct UnlockView: View {
                 }
             }
 
+            if model.canQuickUnlock(quickUnlock) {
+                Section {
+                    Button {
+                        model.quickUnlock(into: session, quickUnlock: quickUnlock)
+                    } label: {
+                        Label("Unlock with \(model.biometry.kind.name)", systemImage: model.biometry.kind.symbol)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(model.isUnlocking)
+                }
+            } else if model.isPasswordDue(quickUnlock) {
+                Section {
+                    Text(passwordDueText)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section {
                 Button {
-                    model.unlock(into: session)
+                    model.unlock(into: session, quickUnlock: quickUnlock)
                 } label: {
                     if model.isUnlocking {
                         HStack {
@@ -150,7 +181,14 @@ struct UnlockView: View {
             }
         }
         .navigationTitle(Text(verbatim: "PocketKeePass"))
-        .onAppear { passwordFocused = true }
+        // With Face ID about to open, the keyboard would only be in the way.
+        .onAppear { if !model.canQuickUnlock(quickUnlock) { passwordFocused = true } }
+    }
+
+    private var passwordDueText: String {
+        let days = quickUnlock.intervalDays
+        let rule = String(localized: "Type your master password this time. PocketKeePass asks for it after the iPhone restarts and every \(days) days, so you don’t forget it.")
+        return rule + " " + String(localized: "Unlocking with \(model.biometry.kind.name) stays on.")
     }
 }
 
