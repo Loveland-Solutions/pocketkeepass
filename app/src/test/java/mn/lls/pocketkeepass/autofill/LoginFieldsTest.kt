@@ -118,4 +118,51 @@ class LoginFieldsTest {
         )
         assertEquals(LoginFields<String>(null, "pass", "example.com", false), chooseLoginFields(mixed))
     }
+
+    @Test
+    fun `a sign-up form is saved from its new password`() {
+        val signUp = listOf(
+            field("name"),
+            FieldInfo("email", hints = listOf("emailAddress")),
+            FieldInfo("new", hints = listOf("newPassword"), inputType = password, focused = true),
+            FieldInfo("confirm", hints = listOf("newPassword"), inputType = password),
+        )
+        assertEquals(SaveFields("email", "new", null, false), chooseSaveFields(signUp))
+    }
+
+    @Test
+    fun `a login form is saved from the fields it's filled in`() {
+        val form = listOf(field("search"), field("name"), field("secret", password, focused = true))
+        assertEquals(SaveFields("name", "secret", null, false), chooseSaveFields(form))
+        // Nothing focused yet: the first password decides the page.
+        assertEquals(SaveFields("name", "secret", null, false), chooseSaveFields(form.map { it.copy(focused = false) }))
+    }
+
+    @Test
+    fun `changing a password saves the new one, without a username`() {
+        val change = listOf(
+            field("current", password, focused = true),
+            FieldInfo("new", htmlType = "password", htmlAutocomplete = "new-password"),
+            FieldInfo("again", htmlType = "password", htmlAutocomplete = "new-password"),
+        )
+        assertEquals(SaveFields<String>(null, "new", null, false), chooseSaveFields(change))
+    }
+
+    @Test
+    fun `nothing is saved without a password field`() {
+        assertNull(chooseSaveFields(listOf(FieldInfo("email", hints = listOf("emailAddress"), focused = true))))
+        assertNull(chooseSaveFields(listOf(field("search", focused = true))))
+        assertNull(chooseSaveFields(emptyList<FieldInfo<String>>()))
+    }
+
+    @Test
+    fun `only the focused field's own web page is saved from`() {
+        val page = listOf(
+            field("user", domain = "example.com"),
+            field("framed-user", domain = "ads.example.net"),
+            field("framed-pass", password, domain = "ads.example.net"),
+            field("pass", password, focused = true, domain = "example.com"),
+        )
+        assertEquals(SaveFields("user", "pass", "example.com", false), chooseSaveFields(page))
+    }
 }

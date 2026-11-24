@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import mn.lls.pocketkeepass.R
+import mn.lls.pocketkeepass.autofill.AutofillPreferences
 import mn.lls.pocketkeepass.passkey.PocketPasskeyService
 import mn.lls.pocketkeepass.security.AccessibleToToolsOnly
 import mn.lls.pocketkeepass.security.AutoLockSettings
@@ -241,6 +242,28 @@ private fun AutofillSetting() {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+    if (supported && on) {
+        val preferences = remember(context) { AutofillPreferences(context) }
+        var offerToSave by remember { mutableStateOf(preferences.offerToSave) }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .toggleable(offerToSave, role = Role.Switch) { value ->
+                    preferences.offerToSave = value
+                    offerToSave = value
+                }
+                .padding(top = 8.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.autofill_offer_save), Modifier.weight(1f))
+            Switch(checked = offerToSave, onCheckedChange = null)
+        }
+        Text(
+            stringResource(R.string.autofill_offer_save_explained),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 /**

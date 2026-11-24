@@ -337,18 +337,18 @@ fn trust(entry: &Entry<'_>, client: &Client<'_>) -> AppTrust {
 }
 
 /// One field of an edit, owning its value.
-struct Field {
-    key: String,
-    value: Spec,
-    protected: bool,
+pub(crate) struct Field {
+    pub(crate) key: String,
+    pub(crate) value: Spec,
+    pub(crate) protected: bool,
 }
 
-enum Spec {
+pub(crate) enum Spec {
     Keep,
     Set(Zeroizing<String>),
 }
 
-fn set(key: &str, value: impl Into<String>, protected: bool) -> Field {
+pub(crate) fn set(key: &str, value: impl Into<String>, protected: bool) -> Field {
     Field {
         key: key.to_owned(),
         value: Spec::Set(Zeroizing::new(value.into())),
@@ -357,7 +357,7 @@ fn set(key: &str, value: impl Into<String>, protected: bool) -> Field {
 }
 
 /// Every field of an existing entry, kept as it is.
-fn keep_all(entry: &Entry<'_>) -> Vec<Field> {
+pub(crate) fn keep_all(entry: &Entry<'_>) -> Vec<Field> {
     entry
         .fields()
         .map(|f| Field {
@@ -369,7 +369,7 @@ fn keep_all(entry: &Entry<'_>) -> Vec<Field> {
 }
 
 /// Sets a field, replacing one with the same name or adding it at the end.
-fn put(fields: &mut Vec<Field>, field: Field) {
+pub(crate) fn put(fields: &mut Vec<Field>, field: Field) {
     match fields.iter_mut().find(|f| f.key == field.key) {
         Some(existing) => *existing = field,
         None => fields.push(field),
@@ -421,7 +421,7 @@ fn link_fields(
     );
 }
 
-fn edit_from(fields: &[Field]) -> Vec<FieldEdit<'_>> {
+pub(crate) fn edit_from(fields: &[Field]) -> Vec<FieldEdit<'_>> {
     fields
         .iter()
         .map(|f| FieldEdit {

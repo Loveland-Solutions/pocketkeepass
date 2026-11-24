@@ -18,6 +18,7 @@ pub mod ffi;
 mod generator;
 mod kdbx;
 mod key;
+mod login;
 mod merge;
 mod model;
 mod passkey;
@@ -34,6 +35,7 @@ pub use error::Error;
 pub use generator::{PasswordOptions, Symbols};
 pub use kdbx::FormatVersion;
 pub use key::CompositeKey;
+pub use login::{LoginCandidate, LoginPlace};
 pub use merge::SyncChanges;
 pub use model::{
     DEFAULT_ENTRY_ICON, DEFAULT_GROUP_ICON, Database, Entry, Field, Group, Icon,

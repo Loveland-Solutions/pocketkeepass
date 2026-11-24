@@ -1,0 +1,12 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autofill Probe sign-up page</title>
+<h3>Probe sign-up page</h3>
+<!-- Submitting hides the form, which browsers take as a finished sign-up and offer to save. -->
+<form id="form" onsubmit="this.hidden = true; document.getElementById('done').hidden = false; return false">
+  <p><input name="email" type="email" autocomplete="username" placeholder="Email"></p>
+  <p><input name="new-password" type="password" autocomplete="new-password" placeholder="Choose a password"></p>
+  <p><input name="confirm-password" type="password" autocomplete="new-password" placeholder="Type it again"></p>
+  <p><button type="submit">Sign up</button></p>
+</form>
+<p id="done" hidden>Signed up.</p>

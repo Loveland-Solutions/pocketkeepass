@@ -3,9 +3,10 @@ package mn.lls.pocketkeepass.autofill
 import android.app.assist.AssistStructure
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.view.View
 import android.view.autofill.AutofillId
-import androidx.core.content.IntentCompat
+import androidx.core.os.BundleCompat
 import mn.lls.pocketkeepass.core.FillTarget
 
 /**
@@ -32,8 +33,15 @@ class Fill(
     val claimedDomain: String?,
     /** The website was loaded over plain `http`. */
     val plainHttp: Boolean,
+    /** Where to fill in. Both null on a form that's only for saving (a sign-up form). */
     val username: AutofillId?,
     val password: AutofillId?,
+    /**
+     * Where to read a login typed by hand, to offer saving it. Null if the form has no password
+     * field to save from. See [chooseSaveFields].
+     */
+    val saveUsername: AutofillId? = null,
+    val savePassword: AutofillId? = null,
 ) {
     /** The app reported a website, but it isn't a browser we can verify. */
     val unverifiedBrowser: Boolean get() = claimedDomain != null
@@ -48,13 +56,19 @@ class Fill(
 
     val fields: List<AutofillId> get() = listOfNotNull(username, password)
 
-    fun putInto(intent: Intent): Intent = intent
-        .putExtra(PACKAGE, packageName)
-        .putExtra(DOMAIN, domain)
-        .putExtra(CLAIMED_DOMAIN, claimedDomain)
-        .putExtra(PLAIN_HTTP, plainHttp)
-        .putExtra(USERNAME, username)
-        .putExtra(PASSWORD, password)
+    fun putInto(intent: Intent): Intent = intent.putExtras(toBundle())
+
+    /** Everything, for an intent or for the response's client state (see [from]). */
+    fun toBundle(): Bundle = Bundle().apply {
+        putString(PACKAGE, packageName)
+        putString(DOMAIN, domain)
+        putString(CLAIMED_DOMAIN, claimedDomain)
+        putBoolean(PLAIN_HTTP, plainHttp)
+        putParcelable(USERNAME, username)
+        putParcelable(PASSWORD, password)
+        putParcelable(SAVE_USERNAME, saveUsername)
+        putParcelable(SAVE_PASSWORD, savePassword)
+    }
 
     companion object {
         private const val PACKAGE = "fill.package"
@@ -63,18 +77,23 @@ class Fill(
         private const val CLAIMED_DOMAIN = "fill.claimed_domain"
         private const val USERNAME = "fill.username"
         private const val PASSWORD = "fill.password"
+        private const val SAVE_USERNAME = "fill.save_username"
+        private const val SAVE_PASSWORD = "fill.save_password"
 
-        fun from(intent: Intent): Fill? {
-            val fill = Fill(
-                packageName = intent.getStringExtra(PACKAGE) ?: return null,
-                domain = intent.getStringExtra(DOMAIN),
-                claimedDomain = intent.getStringExtra(CLAIMED_DOMAIN),
-                plainHttp = intent.getBooleanExtra(PLAIN_HTTP, false),
-                username = IntentCompat.getParcelableExtra(intent, USERNAME, AutofillId::class.java),
-                password = IntentCompat.getParcelableExtra(intent, PASSWORD, AutofillId::class.java),
-            )
-            return fill.takeIf { it.fields.isNotEmpty() }
-        }
+        /** The form a suggestion fills in, or null if it has no fields to fill. */
+        fun from(intent: Intent): Fill? = intent.extras?.let(::from)?.takeIf { it.fields.isNotEmpty() }
+
+        /** A form as [toBundle] wrote it, or null if [bundle] doesn't hold one. */
+        fun from(bundle: Bundle): Fill? = Fill(
+            packageName = bundle.getString(PACKAGE) ?: return null,
+            domain = bundle.getString(DOMAIN),
+            claimedDomain = bundle.getString(CLAIMED_DOMAIN),
+            plainHttp = bundle.getBoolean(PLAIN_HTTP, false),
+            username = BundleCompat.getParcelable(bundle, USERNAME, AutofillId::class.java),
+            password = BundleCompat.getParcelable(bundle, PASSWORD, AutofillId::class.java),
+            saveUsername = BundleCompat.getParcelable(bundle, SAVE_USERNAME, AutofillId::class.java),
+            savePassword = BundleCompat.getParcelable(bundle, SAVE_PASSWORD, AutofillId::class.java),
+        )
 
         /**
          * Finds the login form on the screen Android described, or null if there's none, or
@@ -92,18 +111,27 @@ class Fill(
             for (i in 0 until structure.windowNodeCount) {
                 collect(structure.getWindowNodeAt(i).rootViewNode, webDomain = null, plainHttp = false, depth = 0, fields)
             }
-            val login = chooseLoginFields(fields) ?: return null
+            val login = chooseLoginFields(fields)
+            // Saving only from the same page as filling, so the login is saved for that page.
+            val save = chooseSaveFields(fields)?.takeIf { save ->
+                login == null || (save.webDomain == login.webDomain && save.plainHttp == login.plainHttp)
+            }
+            val webDomain = login?.webDomain ?: save?.webDomain
+            val plainHttp = login?.plainHttp ?: save?.plainHttp ?: false
+            if (login == null && save == null) return null
             // A page that isn't http or https (a file, an app's own content) has no site to
             // match, whatever host it reports.
-            if (login.webDomain == NOT_A_WEBSITE) return null
-            val trusted = login.webDomain != null && browsers.isTrusted(packageName)
+            if (webDomain == NOT_A_WEBSITE) return null
+            val trusted = webDomain != null && browsers.isTrusted(packageName)
             return Fill(
                 packageName,
-                domain = login.webDomain.takeIf { trusted },
-                claimedDomain = login.webDomain.takeIf { !trusted },
-                plainHttp = login.plainHttp,
-                username = login.username,
-                password = login.password,
+                domain = webDomain.takeIf { trusted },
+                claimedDomain = webDomain.takeIf { !trusted },
+                plainHttp = plainHttp,
+                username = login?.username,
+                password = login?.password,
+                saveUsername = save?.username,
+                savePassword = save?.password,
             )
         }
 

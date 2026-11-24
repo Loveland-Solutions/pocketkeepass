@@ -224,7 +224,7 @@ fn is_ip_address(host: &str) -> bool {
 
 /// A host name in the form hosts are compared in: lowercase, without a trailing dot or a
 /// leading "www.". `None` if it can't be a host name at all.
-fn normalize_host(host: &str) -> Option<String> {
+pub(crate) fn normalize_host(host: &str) -> Option<String> {
     let host = host.trim().to_lowercase();
     let host = host.strip_suffix('.').unwrap_or(&host);
     let host = host.strip_prefix("www.").unwrap_or(host);

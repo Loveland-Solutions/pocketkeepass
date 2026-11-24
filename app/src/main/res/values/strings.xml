@@ -235,7 +235,20 @@
     <!-- Autofill: the suggestions Android shows under a login field in other apps -->
     <string name="autofill_unlock">Unlock PocketKeePass</string>
     <string name="autofill_search">Search PocketKeePass</string>
-    <string name="autofill_save_unsupported">PocketKeePass can\'t save new logins yet.</string>
+    <string name="autofill_save_nothing">PocketKeePass couldn\'t read a password from that form.</string>
+    <string name="autofill_save_for">Save login · %1$s</string>
+    <string name="autofill_save_username">Username: %1$s</string>
+    <string name="autofill_save_no_username">No username was typed, so only the password is saved.</string>
+    <string name="autofill_save_unverified">This app says the page is from %1$s. PocketKeePass can\'t check that, so the login is saved for both this app and that website, and only offered where both match.</string>
+    <string name="autofill_save_update_password">Replace its password</string>
+    <string name="autofill_save_replace">Replace its username and password</string>
+    <string name="autofill_saving">Saving the login…</string>
+    <string name="autofill_not_saved">The login is in PocketKeePass, but not yet in the database file. %1$s</string>
+    <string name="autofill_save_already">That login is already in PocketKeePass.</string>
+    <string name="autofill_saved">Saved in PocketKeePass</string>
+    <string name="autofill_saved_waiting">Saved on this phone. It goes into the database file once the phone is back online.</string>
+    <string name="autofill_save_locked">PocketKeePass locked before the login was saved. Type it into the form again to save it.</string>
+    <string name="autofill_save_expired">That login is no longer waiting to be saved. Type it into the form again to save it.</string>
     <!-- Autofill: choosing an entry. "Fill in" is a small label above the website or app name. -->
     <string name="app_with_package">%1$s (%2$s)</string>
     <string name="autofill_fill_in">Fill in · %1$s</string>
@@ -266,6 +279,8 @@
     <string name="autofill">Autofill</string>
     <string name="autofill_switch">Fill in usernames and passwords in other apps</string>
     <string name="autofill_explained">Android then offers your entries when you tap a login field, in apps and in browsers. Nothing is filled in until you pick an entry. In Chrome, also turn on Settings › Autofill services › Autofill using another service.</string>
+    <string name="autofill_offer_save">Offer to save logins you type</string>
+    <string name="autofill_offer_save_explained">After you type a username and password into a login or sign-up form, Android asks whether to save them in PocketKeePass.</string>
     <string name="autofill_unsupported">This phone doesn\'t support autofill.</string>
     <string name="clipboard">Clipboard</string>
     <string name="clipboard_timeout">Clear copied fields after:</string>

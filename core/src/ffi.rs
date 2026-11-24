@@ -160,6 +160,25 @@ pub enum FillTarget {
     },
 }
 
+/// An entry already linked to where a login was typed. See `login_candidates`.
+#[derive(uniffi::Record)]
+pub struct LoginCandidate {
+    pub result: SearchResult,
+    /// The entry's username is the one typed.
+    pub same_username: bool,
+    /// And its password is the one typed: nothing to save.
+    pub same_password: bool,
+}
+
+/// Where `save_login` puts a typed login.
+#[derive(uniffi::Enum)]
+pub enum LoginPlace {
+    /// A new entry in this group. An empty title is replaced by the site or app.
+    NewEntry { group_id: String, title: String },
+    /// An existing entry, whose previous version goes into its history.
+    Entry { entry_id: String },
+}
+
 /// Who is asking for a passkey. See the engine's `webauthn::Client`.
 #[derive(uniffi::Enum)]
 pub enum PasskeyClient {
@@ -543,27 +562,67 @@ impl UnlockedDatabase {
     /// `reveal_field`.
     pub fn autofill_matches(&self, target: FillTarget) -> Result<Vec<SearchResult>> {
         self.with(|db| {
-            let target = match &target {
-                FillTarget::App { package } => crate::FillTarget::App { package },
-                FillTarget::Web { domain, plain_http } => crate::FillTarget::Web {
-                    domain,
-                    plain_http: *plain_http,
-                },
-                FillTarget::AppWeb {
-                    package,
-                    domain,
-                    plain_http,
-                } => crate::FillTarget::AppWeb {
-                    package,
-                    domain,
-                    plain_http: *plain_http,
-                },
-            };
             Ok(db
-                .autofill_matches(target)
+                .autofill_matches(fill_target(&target))
                 .iter()
                 .map(search_result)
                 .collect())
+        })
+    }
+
+    /// The entries linked to where a login was typed, for offering to save it: each says
+    /// whether it already has the typed username, and the password too (then there's nothing
+    /// to save). The comparison happens here, so protected values never cross the bridge.
+    /// `username` and `password` are UTF-8, and wiped on this side after use.
+    pub fn login_candidates(
+        &self,
+        target: FillTarget,
+        username: Vec<u8>,
+        password: Vec<u8>,
+    ) -> Result<Vec<LoginCandidate>> {
+        let (username, password) = (Zeroizing::new(username), Zeroizing::new(password));
+        let (username, password) = (
+            utf8("The username", &username)?,
+            utf8("The password", &password)?,
+        );
+        self.with(|db| {
+            Ok(db
+                .login_candidates(fill_target(&target), username, password)
+                .iter()
+                .map(|c| LoginCandidate {
+                    result: search_result(&c.hit),
+                    same_username: c.same_username,
+                    same_password: c.same_password,
+                })
+                .collect())
+        })
+    }
+
+    /// Saves a typed login in a new entry linked to `target`, or into an existing entry
+    /// (replacing its password, and its username unless `username` is empty), and returns the
+    /// entry's id. `username` and `password` are UTF-8, and wiped on this side after use.
+    pub fn save_login(
+        &self,
+        target: FillTarget,
+        place: LoginPlace,
+        username: Vec<u8>,
+        password: Vec<u8>,
+    ) -> Result<String> {
+        let (username, password) = (Zeroizing::new(username), Zeroizing::new(password));
+        let (username, password) = (
+            utf8("The username", &username)?,
+            utf8("The password", &password)?,
+        );
+        let place = match &place {
+            LoginPlace::NewEntry { group_id, title } => crate::LoginPlace::NewEntry {
+                group: parse_id(group_id)?,
+                title,
+            },
+            LoginPlace::Entry { entry_id } => crate::LoginPlace::Entry(parse_id(entry_id)?),
+        };
+        self.with_mut(|db| {
+            let id = db.save_login(fill_target(&target), place, username, password)?;
+            Ok(uuid_to_hex(&id))
         })
     }
 
@@ -1116,6 +1175,30 @@ fn site_creation_json(request: &SitePasskeyRequest) -> String {
         &request.algorithms,
         &request.excluded_credentials,
     )
+}
+
+fn fill_target(target: &FillTarget) -> crate::FillTarget<'_> {
+    match target {
+        FillTarget::App { package } => crate::FillTarget::App { package },
+        FillTarget::Web { domain, plain_http } => crate::FillTarget::Web {
+            domain,
+            plain_http: *plain_http,
+        },
+        FillTarget::AppWeb {
+            package,
+            domain,
+            plain_http,
+        } => crate::FillTarget::AppWeb {
+            package,
+            domain,
+            plain_http: *plain_http,
+        },
+    }
+}
+
+/// Bytes from the app as text, or `Invalid` naming what they were.
+fn utf8<'a>(what: &str, bytes: &'a [u8]) -> Result<&'a str> {
+    std::str::from_utf8(bytes).map_err(|_| Error::Invalid(format!("{what} isn't valid text.")))
 }
 
 fn parse_id(id: &str) -> Result<[u8; 16]> {
