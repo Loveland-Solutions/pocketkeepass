@@ -97,9 +97,10 @@ The app leaves `ITSAppUsesNonExemptEncryption` out, so App Store Connect asks ab
 The engine uses standard encryption (AES, ChaCha20, Twofish) itself, not only Apple's, which is
 App Store Connect's own test for needing documentation, so the honest answers are: yes, it uses
 encryption; the algorithms are standard, not proprietary; and it uses them instead of Apple's.
-What's still to file (the US self-classification report, the French declaration or leaving
-France out) is the open item in CLAUDE.md. Once documentation is approved, set the key to YES
-with its `ITSEncryptionExportComplianceCode`; YES without a code fails the upload.
+France is left out of Pricing and Availability (not sold there, so no French declaration), and
+the answer to "distributed in France?" is always No. The US self-classification report is the
+open item in CLAUDE.md. YES without an `ITSEncryptionExportComplianceCode` fails the upload, so
+the key stays out.
 
 ## Screenshots
 
