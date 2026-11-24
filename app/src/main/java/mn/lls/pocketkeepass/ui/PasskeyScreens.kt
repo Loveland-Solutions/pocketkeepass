@@ -209,7 +209,7 @@ fun PasskeyFailedScreen(message: String, onClose: () -> Unit) {
 }
 
 @Composable
-private fun PasskeyFrame(
+internal fun PasskeyFrame(
     label: String,
     title: String,
     subtitle: String?,
@@ -252,7 +252,7 @@ private fun PasskeyFrame(
 
 /** A short message over the other app, with buttons. */
 @Composable
-private fun PasskeyMessage(message: String, progress: Boolean = false, buttons: @Composable () -> Unit = {}) {
+internal fun PasskeyMessage(message: String, progress: Boolean = false, buttons: @Composable () -> Unit = {}) {
     Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Surface(shape = MaterialTheme.shapes.extraLarge, tonalElevation = 6.dp, shadowElevation = 6.dp) {
             Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -267,12 +267,12 @@ private fun PasskeyMessage(message: String, progress: Boolean = false, buttons: 
 }
 
 @Composable
-private fun Note(text: String) {
+internal fun Note(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable
-private fun Choice(selected: Boolean, onSelect: () -> Unit, content: @Composable () -> Unit) {
+internal fun Choice(selected: Boolean, onSelect: () -> Unit, content: @Composable () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()

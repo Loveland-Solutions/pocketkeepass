@@ -1,7 +1,6 @@
 package mn.lls.pocketkeepass.autofill
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.SystemClock
 import android.service.autofill.Dataset
@@ -79,7 +78,7 @@ class AutofillActivity : ComponentActivity() {
         }
         val entryId = intent.getStringExtra(EXTRA_ENTRY_ID)
         val search = intent.getBooleanExtra(EXTRA_SEARCH, false)
-        val target = describe(fill)
+        val target = describe(this, fill)
 
         enableEdgeToEdge()
         lifecycleScope.launch {
@@ -192,23 +191,6 @@ class AutofillActivity : ComponentActivity() {
     private fun cancel() {
         setResult(RESULT_CANCELED)
         finish()
-    }
-
-    /** Where the entry will go, for the user to check. */
-    private fun describe(fill: Fill): FillDestination {
-        fill.domain?.let { domain ->
-            val kind = if (fill.plainHttp) R.string.autofill_kind_website_http else R.string.autofill_kind_website
-            return FillDestination(getString(kind), domain, label = null, isWebsite = true)
-        }
-        // The app picks its own name, up to a thousand characters with line breaks, so it could
-        // pretend to be a website. Only its first line is shown, short, below the package name.
-        val label = try {
-            packageManager.getApplicationLabel(packageManager.getApplicationInfo(fill.packageName, 0)).toString()
-        } catch (_: PackageManager.NameNotFoundException) {
-            null // Android only shows us some of the installed apps
-        }?.lineSequence()?.firstOrNull()?.trim()?.take(40)?.takeIf { it.isNotEmpty() && it != fill.packageName }
-        val kind = if (fill.unverifiedBrowser) R.string.autofill_kind_app_page else R.string.autofill_kind_app
-        return FillDestination(getString(kind), fill.packageName, label, isWebsite = false)
     }
 
     companion object {

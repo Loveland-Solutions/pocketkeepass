@@ -177,6 +177,29 @@ class BridgeTest {
     }
 
     @Test
+    fun `a typed login is compared inside the engine, then saved where autofill finds it`() {
+        UnlockedDatabase.open(fixture("autofill.kdbx"), password, null).use { db ->
+            val example = FillTarget.Web("example.com", plainHttp = false)
+            // "Example" has a protected username and password: compared there, never sent here.
+            val same = db.loginCandidates(example, "jo-protected".toByteArray(), "example-pw".toByteArray()).single()
+            assertTrue(same.sameUsername && same.samePassword)
+            val changed = db.loginCandidates(example, "jo-protected".toByteArray(), "new-pw".toByteArray()).single()
+            assertTrue(changed.sameUsername && !changed.samePassword)
+
+            db.saveLogin(example, LoginPlace.Entry(changed.result.entry.id), "jo-protected".toByteArray(), "new-pw".toByteArray())
+            assertArrayEquals("new-pw".toByteArray(), db.revealField(changed.result.entry.id, "Password"))
+
+            val app = FillTarget.App("com.example.newapp")
+            val root = db.listGroup(null).group.id
+            val id = db.saveLogin(app, LoginPlace.NewEntry(root, "New App"), "me".toByteArray(), "pw".toByteArray())
+            assertEquals(listOf(id), db.autofillMatches(app).map { it.entry.id })
+            assertThrows(KeePassException.Invalid::class.java) {
+                db.saveLogin(app, LoginPlace.NewEntry(root, ""), "me".toByteArray(), ByteArray(0))
+            }
+        }
+    }
+
+    @Test
     fun `an entry arrives without protected values, which come one at a time as bytes`() {
         UnlockedDatabase.open(fixture("browse.kdbx"), password, null).use { db ->
             val bank = db.entry("08".repeat(16))

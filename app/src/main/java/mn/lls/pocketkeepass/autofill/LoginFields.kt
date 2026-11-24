@@ -117,3 +117,37 @@ fun <Id> chooseLoginFields(fields: List<FieldInfo<Id>>): LoginFields<Id>? {
         ?: before.lastOrNull()?.takeIf { it.kind == FieldKind.Text }
     return LoginFields(username?.id, page[passwordAt].id, anchor.webDomain, anchor.plainHttp)
 }
+
+/** The fields whose typed values autofill may offer to save, and the web page they're on. */
+data class SaveFields<Id>(
+    val username: Id?,
+    val password: Id,
+    val webDomain: String?,
+    val plainHttp: Boolean,
+)
+
+/**
+ * Picks the fields to save from, once the user has typed into them. Null if there's no password
+ * field to save.
+ *
+ * Unlike [chooseLoginFields], a field for a new password counts, and comes first: on a sign-up
+ * form it's the password to keep, and on a "change password" form it's the new one, not the
+ * current one. The username is found as for filling: the nearest field before the password that
+ * looks like a username, or the field right before it. Only fields of one web page, as there.
+ */
+fun <Id> chooseSaveFields(fields: List<FieldInfo<Id>>): SaveFields<Id>? {
+    val passwordLike = { field: FieldInfo<Id> -> field.kind == FieldKind.Password || field.kind == FieldKind.NewPassword }
+    val anchor = fields.firstOrNull { it.focused }
+        ?: fields.firstOrNull(passwordLike)
+        ?: return null
+    val page = fields.filter { it.webDomain == anchor.webDomain && it.plainHttp == anchor.plainHttp }
+    val passwordAt = page.indexOfFirst { it.kind == FieldKind.NewPassword }.takeIf { it >= 0 }
+        ?: page.indexOfFirst { it.kind == FieldKind.Password }.takeIf { it >= 0 }
+        ?: return null
+    // Before the first password-like field, so a "current password" isn't taken for the username.
+    val firstPassword = page.indexOfFirst(passwordLike)
+    val before = page.subList(0, minOf(passwordAt, firstPassword))
+    val username = before.lastOrNull { it.kind == FieldKind.Username }
+        ?: before.lastOrNull()?.takeIf { it.kind == FieldKind.Text }
+    return SaveFields(username?.id, page[passwordAt].id, anchor.webDomain, anchor.plainHttp)
+}

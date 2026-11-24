@@ -44,7 +44,7 @@ adb shell am start -a android.intent.action.VIEW -d http://localhost:8765/login.
 adb shell am start -n mn.lls.pocketkeepass.autofillprobe/.ProbeActivity --es form web --es url http://localhost:8765/login.html
 ```
 
-An entry with the URL `http://localhost:8765` matches it. Chrome also needs Settings › Autofill
+An entry with the URL `http://localhost:8765` matches it. `signup.html` is a sign-up form (an email and two new-password fields) whose form disappears on submit, which Chrome takes as a finished sign-up: use it to try saving a login from a browser. Chrome also needs Settings › Autofill
 services › Autofill using another service, once.
 
 `adb shell cmd autofill set log_level verbose` and `adb shell dumpsys autofill` show what Android's

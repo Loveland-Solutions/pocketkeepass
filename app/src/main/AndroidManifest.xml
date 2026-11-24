@@ -83,6 +83,13 @@
             android:theme="@style/Theme.PocketKeePass.Autofill"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Opened when the user agrees to save a login typed into another app, on top of it. -->
+        <activity
+            android:name=".autofill.SaveLoginActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PocketKeePass.Autofill"
+            android:windowSoftInputMode="adjustResize" />
+
         <!--
             The passkey provider (Android 14+, off below that). Only Android itself can connect to
             it (BIND_CREDENTIAL_PROVIDER_SERVICE), once the user turns PocketKeePass on under

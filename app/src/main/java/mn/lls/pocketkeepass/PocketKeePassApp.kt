@@ -2,6 +2,7 @@ package mn.lls.pocketkeepass
 
 import android.app.Application
 import java.io.File
+import mn.lls.pocketkeepass.autofill.PendingLogins
 import mn.lls.pocketkeepass.files.Backups
 import mn.lls.pocketkeepass.files.Connection
 import mn.lls.pocketkeepass.files.Documents
@@ -24,6 +25,9 @@ class PocketKeePassApp : Application() {
     /** The previous version of the database, from just before each save. */
     lateinit var backups: Backups
         private set
+
+    /** Logins typed into other apps that the user asked to save, until the save screen takes them. */
+    val pendingLogins = PendingLogins()
 
     override fun onCreate() {
         super.onCreate()

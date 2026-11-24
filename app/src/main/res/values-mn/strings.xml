@@ -233,7 +233,20 @@
     <!-- Autofill -->
     <string name="autofill_unlock">PocketKeePass — түгжээ тайлах</string>
     <string name="autofill_search">PocketKeePass — хайх</string>
-    <string name="autofill_save_unsupported">PocketKeePass шинэ нэвтрэх мэдээллийг хараахан хадгалж чадахгүй.</string>
+    <string name="autofill_save_nothing">PocketKeePass тэр маягтаас нууц үг уншиж чадсангүй.</string>
+    <string name="autofill_save_for">Нэвтрэх мэдээлэл хадгалах · %1$s</string>
+    <string name="autofill_save_username">Хэрэглэгчийн нэр: %1$s</string>
+    <string name="autofill_save_no_username">Хэрэглэгчийн нэр бичээгүй тул зөвхөн нууц үгийг хадгална.</string>
+    <string name="autofill_save_unverified">Энэ апп хуудсыг дараах вэбсайтынх гэж мэдэгдэж байна: %1$s. PocketKeePass үүнийг шалгаж чадахгүй тул нэвтрэх мэдээллийг энэ апп болон тэр вэбсайтын аль алинд нь зориулж хадгална. Хоёулаа таарсан үед л санал болгоно.</string>
+    <string name="autofill_save_update_password">Нууц үгийг нь солих</string>
+    <string name="autofill_save_replace">Хэрэглэгчийн нэр, нууц үгийг нь солих</string>
+    <string name="autofill_saving">Нэвтрэх мэдээллийг хадгалж байна…</string>
+    <string name="autofill_not_saved">Нэвтрэх мэдээлэл PocketKeePass-д байгаа ч өгөгдлийн сангийн файлд хараахан ороогүй байна. %1$s</string>
+    <string name="autofill_save_already">Тэр нэвтрэх мэдээлэл PocketKeePass-д аль хэдийн байна.</string>
+    <string name="autofill_saved">PocketKeePass-д хадгаллаа</string>
+    <string name="autofill_saved_waiting">Энэ утсанд хадгаллаа. Утас интернэтэд дахин холбогдмогц өгөгдлийн сангийн файлд орно.</string>
+    <string name="autofill_save_locked">Нэвтрэх мэдээллийг хадгалахаас өмнө PocketKeePass түгжигдсэн. Хадгалахын тулд маягтад дахин бичнэ үү.</string>
+    <string name="autofill_save_expired">Тэр нэвтрэх мэдээлэл хадгалагдахыг хүлээхээ больсон. Хадгалахын тулд маягтад дахин бичнэ үү.</string>
     <string name="app_with_package">%1$s (%2$s)</string>
     <string name="autofill_fill_in">Бөглөх газар · %1$s</string>
     <string name="autofill_kind_website">Вэбсайт</string>
@@ -264,6 +277,8 @@
     <string name="autofill_switch">Бусад аппад хэрэглэгчийн нэр, нууц үгийг бөглөх</string>
     <!-- Chrome's own menu names, as Chrome shows them in Mongolian -->
     <string name="autofill_explained">Ингэвэл та апп эсвэл хөтөч дээр нэвтрэх талбарт дарахад Android таны бичлэгүүдийг санал болгоно. Та бичлэг сонгохоос нааш юу ч бөглөгдөхгүй. Chrome дээр мөн Тохиргоо › Автоматаар бөглөх үйлчилгээ › Өөр үйлчилгээ ашиглан автоматаар бөглөхийг асаана уу.</string>
+    <string name="autofill_offer_save">Бичсэн нэвтрэх мэдээллээ хадгалахыг санал болгох</string>
+    <string name="autofill_offer_save_explained">Нэвтрэх эсвэл бүртгүүлэх маягтад хэрэглэгчийн нэр, нууц үг бичсний дараа Android тэдгээрийг PocketKeePass-д хадгалах эсэхийг асууна.</string>
     <string name="autofill_unsupported">Энэ утас автоматаар бөглөхийг дэмждэггүй.</string>
     <string name="clipboard">Түр санах ой</string>
     <string name="clipboard_timeout">Хуулсан талбарыг арилгах хугацаа:</string>
