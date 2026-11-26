@@ -142,10 +142,10 @@ final class QuickUnlock {
     // MARK: Turning it on and off
 
     /// Turns quick unlock on for `database`, unlocked as `open`, after a Face ID check of its
-    /// own. Returns false if the Keychain refused. Throws the check's error if it failed or was
-    /// cancelled; the caller decides what's worth showing. The app's `enable(_:session:)` is
-    /// the usual way in.
-    func store(_ database: RecentDatabase, open: UnlockedDatabase, biometry: Biometry) async throws -> Bool {
+    /// own. Throws [KeychainRefused] if the Keychain wouldn't keep the item, or the check's
+    /// error if it failed or was cancelled; the caller decides what's worth showing. The app's
+    /// `enable(_:session:)` is the usual way in.
+    func store(_ database: RecentDatabase, open: UnlockedDatabase, biometry: Biometry) async throws {
         let context = LAContext()
         context.localizedCancelTitle = String(localized: "Cancel")
         _ = try await context.evaluatePolicy(
@@ -155,16 +155,15 @@ final class QuickUnlock {
         // The face/fingerprint set as it is now, from the check that just passed.
         let state = context.domainState.biometry.stateHash
         let service = self.service
-        let stored = try await Task.detached(priority: .userInitiated) { () throws -> Bool in
+        let status = try await Task.detached(priority: .userInitiated) { () throws -> OSStatus in
             var hash = try open.keyHash()
             defer { hash.wipe() }
             return Self.store(hash, service: service, account: database.id)
         }.value
-        guard stored else { return false }
+        guard status == errSecSuccess else { throw KeychainRefused(status: status) }
         defaults.set(database.id, forKey: Keys.database)
         defaults.set(state, forKey: Keys.biometryState)
         revision += 1
-        return true
     }
 
     /// Turns quick unlock off: forgets which database it was for and deletes the Keychain item.
@@ -241,12 +240,14 @@ final class QuickUnlock {
 
     // MARK: The Keychain
 
-    nonisolated private static func store(_ hash: Data, service: String, account: String) -> Bool {
+    /// Stores the item, and says how the Keychain answered. A build signed without a
+    /// provisioning profile gets errSecMissingEntitlement (-34018) on the Mac.
+    nonisolated private static func store(_ hash: Data, service: String, account: String) -> OSStatus {
         deleteItems(service: service)
         var error: Unmanaged<CFError>?
         guard let access = SecAccessControlCreateWithFlags(
             nil, kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly, .biometryCurrentSet, &error
-        ) else { return false }
+        ) else { return errSecParam }
         var item: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecUseDataProtectionKeychain: true,
@@ -258,7 +259,7 @@ final class QuickUnlock {
         // Shared with the AutoFill extension. Reads and deletes search every group the app may
         // use, so an item from before this is still found (by the app).
         if service == defaultService { item[kSecAttrAccessGroup] = AppGroup.id }
-        return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
+        return SecItemAdd(item as CFDictionary, nil)
     }
 
     /// Reads the hash with an LAContext that just passed Face ID, so the Keychain doesn't ask
@@ -320,6 +321,11 @@ final class QuickUnlock {
     }
 
     struct Invalidated: Error {}
+
+    /// The Keychain wouldn't keep the item, with its status code.
+    struct KeychainRefused: Error {
+        let status: OSStatus
+    }
 }
 
 /// What the device offers for quick unlock.

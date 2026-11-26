@@ -95,6 +95,8 @@ struct QuickUnlockOffer: ViewModifier {
     @Environment(Session.self) private var session
     @Environment(QuickUnlock.self) private var quickUnlock
     @Environment(AutoLock.self) private var autoLock
+    /// Why turning it on didn't work, shown once the offer has closed.
+    @State private var failure: String?
 
     func body(content: Content) -> some View {
         @Bindable var quickUnlock = quickUnlock
@@ -111,6 +113,15 @@ struct QuickUnlockOffer: ViewModifier {
         } message: {
             Text("Next time, open \(session.fileName) with \(name) instead of typing your master password. You can change this any time in settings.")
         }
+        .alert(
+            Text("\(name) wasn’t turned on"),
+            isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } }),
+            presenting: failure
+        ) { _ in
+            // No buttons: the system's own OK.
+        } message: { failure in
+            Text(failure)
+        }
     }
 
     private func answer(turnOn: Bool) {
@@ -119,9 +130,9 @@ struct QuickUnlockOffer: ViewModifier {
         quickUnlock.offered(recent)
         guard turnOn else { return }
         Task {
-            // A failure here (Face ID refused, the Keychain) leaves it off; settings can try again
-            // and show why.
-            _ = await quickUnlock.turnOn(session: session)
+            // A failure leaves it off and says why; settings can try again. A cancelled check
+            // says nothing.
+            failure = await quickUnlock.turnOn(session: session)
             autoLock.interacted()
         }
     }

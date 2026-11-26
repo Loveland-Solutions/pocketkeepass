@@ -8,9 +8,14 @@ extension QuickUnlock {
     /// check's error if it failed or was cancelled; the caller decides what's worth showing.
     func enable(_ database: RecentDatabase, session: Session, biometry: Biometry) async throws {
         guard let open = session.database else { return }
-        let stored = try await store(database, open: open, biometry: biometry)
-        if !stored || session.database !== open {
-            // Locked meanwhile, or the Keychain refused: stays off.
+        do {
+            try await store(database, open: open, biometry: biometry)
+        } catch {
+            disable()
+            throw error
+        }
+        if session.database !== open {
+            // Locked meanwhile: stays off.
             disable()
         }
     }
@@ -25,6 +30,8 @@ extension QuickUnlock {
             return nil
         } catch let failure as LAError where [.userCancel, .systemCancel, .appCancel].contains(failure.code) {
             return nil
+        } catch let refused as KeychainRefused {
+            return String(localized: "The Keychain wouldn’t keep what \(biometry.kind.name) needs (error \(Int(refused.status))), so it stays off. Your master password still works.")
         } catch {
             return error.localizedDescription
         }

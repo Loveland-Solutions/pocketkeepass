@@ -41,6 +41,16 @@
         }
       }
     },
+    "%@ wasn’t turned on": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ асаагдсангүй"
+          }
+        }
+      }
+    },
     "%lld entries changed": {
       "localizations": {
         "mn": {
@@ -1627,6 +1637,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Одоогийн код энэ. Тохиргоог дуусгахын тулд үүнийг сайтад оруулна уу. Код %lld секунд тутам солигдоно."
+          }
+        }
+      }
+    },
+    "The Keychain wouldn’t keep what %@ needs (error %lld), so it stays off. Your master password still works.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain нь %1$@ ажиллахад хэрэгтэй зүйлийг хадгалсангүй (алдаа %2$lld), тиймээс унтраалттай хэвээр байна. Үндсэн нууц үг тань ажилласаар байна."
           }
         }
       }
