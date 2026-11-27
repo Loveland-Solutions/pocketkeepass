@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- What an entry or group carries while it's dragged onto a group in the sidebar
+	     (`DraggedItem`): its id, kind, and name, never a field's value. Declared so drags
+	     inside the app match; no other app accepts it. -->
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>mn.lls.pocketkeepass.item</string>
+			<key>UTTypeDescription</key>
+			<string>PocketKeePass entry or group</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
