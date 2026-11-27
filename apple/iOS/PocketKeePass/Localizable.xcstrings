@@ -889,6 +889,16 @@
         }
       }
     },
+    "Find…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хайх…"
+          }
+        }
+      }
+    },
     "For %@": {
       "localizations": {
         "mn": {
@@ -1535,6 +1545,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Хадгалах"
+          }
+        }
+      }
+    },
+    "Save (⌘S)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалах (⌘S)"
           }
         }
       }

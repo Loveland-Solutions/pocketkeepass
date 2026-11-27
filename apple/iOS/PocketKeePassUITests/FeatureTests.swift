@@ -147,6 +147,31 @@ final class FeatureTests: XCTestCase {
         app.buttons["Lock"].tap()
     }
 
+    /// ⌘F on a keyboard, from inside a group: back to the top, with the cursor in the search
+    /// field, so typing searches straight away.
+    @MainActor
+    func testFindShortcut() throws {
+        let app = launch("browse.kdbx")
+        unlock(app, "test-password")
+        let work = app.staticTexts["Work"]
+        XCTAssertTrue(work.waitForExistence(timeout: 60))
+        work.tap()
+        XCTAssertTrue(app.staticTexts["Servers"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.searchFields["Search entries"].exists, "search is only on the top screen")
+
+        app.typeKey("f", modifierFlags: .command)
+        let search = app.searchFields["Search entries"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5), "⌘F didn't go back to the search field")
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        expectation(for: focused, evaluatedWith: search)
+        waitForExpectations(timeout: 5)
+        app.typeText("rack 4")
+        XCTAssertTrue(app.staticTexts["Database Server"].waitForExistence(timeout: 5), "typing after ⌘F didn't search")
+        attach(app, "find shortcut")
+        app.buttons.matching(NSPredicate(format: "label ==[c] 'cancel' OR label ==[c] 'close'")).firstMatch.tap()
+        app.buttons["Lock"].tap()
+    }
+
     /// Groups: new (upgrading KDBX 3 after asking), renamed and moved from the long-press
     /// menu, deleted into the recycle bin, which is then emptied. And duplicating an entry
     /// from its long-press menu.

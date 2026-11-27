@@ -571,6 +571,16 @@
         }
       }
     },
+    "Discard Changes": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өөрчлөлтийг хаях"
+          }
+        }
+      }
+    },
     "Discard mine and reload": {
       "localizations": {
         "mn": {
@@ -661,6 +671,16 @@
         }
       }
     },
+    "Edit…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Засах…"
+          }
+        }
+      }
+    },
     "Empty Recycle Bin…": {
       "localizations": {
         "mn": {
@@ -747,6 +767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Талбарын нэр"
+          }
+        }
+      }
+    },
+    "Find…": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хайх…"
           }
         }
       }
@@ -847,6 +877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Мөн Mac дахин асах бүрд үүнийг асууна. Ингэснээр та нууц үгээ мартахгүй, гээгдсэн Mac-ийг зөвхөн хурууны хээгээр нээх боломжгүй болно."
+          }
+        }
+      }
+    },
+    "Keep Editing": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Үргэлжлүүлэн засах"
           }
         }
       }
@@ -1431,6 +1471,16 @@
         }
       }
     },
+    "Save (⌘S)": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хадгалах (⌘S)"
+          }
+        }
+      }
+    },
     "Save a copy…": {
       "localizations": {
         "mn": {
@@ -1447,6 +1497,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Шинэ файлаар хадгалах…"
+          }
+        }
+      }
+    },
+    "Save changes to this entry?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бичлэгийн өөрчлөлтийг хадгалах уу?"
+          }
+        }
+      }
+    },
+    "Save changes to “%@”?": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” бичлэгийн өөрчлөлтийг хадгалах уу?"
           }
         }
       }
@@ -2259,6 +2329,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Таны өөрчлөлтүүд файлд хадгалагдаагүй байна."
+          }
+        }
+      }
+    },
+    "Your changes to this entry aren’t saved yet.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бичлэгт хийсэн өөрчлөлт хараахан хадгалагдаагүй байна."
           }
         }
       }

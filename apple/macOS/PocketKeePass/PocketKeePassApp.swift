@@ -35,6 +35,7 @@ struct PocketKeePassApp: App {
                     .keyboardShortcut("l", modifiers: .command)
                     .disabled(!session.isUnlocked)
             }
+            FindCommands()
         }
 
         Settings {

@@ -29,6 +29,13 @@ struct BrowseView: View {
         .sheet(isPresented: $showingSettings) { SettingsView() }
         .modifier(EditingPresenter(editing: editing) { id in editing.path.append(.entry(id)) })
         .environment(editing)
+        .background {
+            // ⌘F on a keyboard (holding ⌘ lists it). iOS has no menu bar command for an
+            // iPhone app, so the shortcut lives on a button that isn't drawn.
+            Button("Find…") { editing.find() }
+                .keyboardShortcut("f", modifiers: .command)
+                .hidden()
+        }
     }
 }
 
@@ -63,6 +70,7 @@ struct GroupView: View {
     @State private var query = ""
     @State private var results: [SearchResult]?
     @State private var showingSync = false
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         List {
@@ -107,7 +115,16 @@ struct GroupView: View {
         }
         .refreshable { await session.checkNow() }
         .sheet(isPresented: $showingSync) { SyncDetailsView() }
-        .modifier(SearchModifier(enabled: id == nil, query: $query))
+        .modifier(SearchModifier(enabled: id == nil, query: $query, focused: $searchFocused))
+        .task(id: editing.findRequests) {
+            // Find (⌘F). The screens above may still be sliding away, and focus only sticks
+            // once the search field is on screen, so try a few times.
+            guard id == nil, editing.findRequests > 0 else { return }
+            for _ in 0..<10 where !searchFocused {
+                searchFocused = true
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
         .task(id: session.revision) { await load() }
         .task(id: query) { await search() }
     }
@@ -235,10 +252,12 @@ struct GroupView: View {
 private struct SearchModifier: ViewModifier {
     var enabled: Bool
     @Binding var query: String
+    var focused: FocusState<Bool>.Binding
 
     func body(content: Content) -> some View {
         if enabled {
             content.searchable(text: $query, prompt: Text("Search entries"))
+                .searchFocused(focused)
         } else {
             content
         }
