@@ -4,6 +4,7 @@
 #   tools/release_play.sh "What changed, in a sentence or two."
 #   tools/release_play.sh --draft "…"   leaves the release as a draft, to roll out from Play Console
 #                                        (Play only takes drafts until the app's first review passes)
+#   PKP_PLAY_TRACK=production tools/release_play.sh "…"   another track (internal by default)
 #
 #   1. builds the signed .aab (the version code is the commit count, see app/build.gradle.kts)
 #   2. checks it doesn't ask for the internet
@@ -17,7 +18,7 @@
 set -eu
 
 package=mn.lls.pocketkeepass
-track=internal
+track=${PKP_PLAY_TRACK:-internal}
 key=${PKP_PLAY_KEY:-$HOME/.config/betterbudget/play-service-account.json}
 api=https://androidpublisher.googleapis.com/androidpublisher/v3/applications/$package
 upload_api=https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/$package
@@ -142,4 +143,4 @@ call -X PUT -H 'Content-Type: application/json' -d "$body" "$api/edits/$edit/tra
 call -X POST -H 'Content-Length: 0' "$api/edits/$edit:commit"
 edit=
 
-echo "PocketKeePass $version ($code) is on Play's Internal testing track ($status)."
+echo "PocketKeePass $version ($code) is on Play's $track track ($status)."
