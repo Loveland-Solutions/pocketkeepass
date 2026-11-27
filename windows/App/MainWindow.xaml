@@ -7,11 +7,6 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="420">
-        <TextBlock Text="PocketKeePass" Style="{StaticResource TitleLargeTextBlockStyle}" HorizontalAlignment="Center" />
-        <TextBlock x:Name="EngineStatus" Style="{StaticResource BodyTextBlockStyle}" HorizontalAlignment="Center" />
-        <TextBlock Text="An independent app for KeePass databases. Written with Claude."
-                   Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                   TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" />
-    </StackPanel>
+    <!-- The unlock screen while locked, the browse screen while a database is open. -->
+    <Frame x:Name="Screens" />
 </Window>

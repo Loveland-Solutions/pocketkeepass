@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Mongolian (Cyrillic). The rules and terms are in Android's values-mn/strings.xml header: a
+  placeholder never gets a case ending attached. Most strings are Android's translations.
+-->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="WelcomeTagline.Text" xml:space="preserve"><value>Таны KeePass нууц үгнүүд — үнэгүй, интернэтгүй.</value></data>
+  <data name="OpenDatabaseButton.Content" xml:space="preserve"><value>Өгөгдлийн сан нээх</value></data>
+  <data name="OpenDatabaseHint.Text" xml:space="preserve"><value>Энэ компьютер дээрх, эсвэл OneDrive, Dropbox зэрэг хадгалах сангийн аппын синк хийдэг хавтсанд байгаа .kdbx файлыг сонгоно уу.</value></data>
+  <data name="Credits.Text" xml:space="preserve"><value>KeePass өгөгдлийн санд зориулсан бие даасан апп. Claude ашиглан бичсэн.</value></data>
+  <data name="UnlockCredits.Text" xml:space="preserve"><value>KeePass өгөгдлийн санд зориулсан бие даасан апп. Claude ашиглан бичсэн.</value></data>
+  <data name="AboutButton.Content" xml:space="preserve"><value>Тухай</value></data>
+  <data name="UnlockAboutButton.Content" xml:space="preserve"><value>Тухай</value></data>
+  <data name="ChangeDatabaseButton.Content" xml:space="preserve"><value>Солих</value></data>
+  <data name="PasswordBox.Header" xml:space="preserve"><value>Үндсэн нууц үг</value></data>
+  <data name="AddKeyFileButton.Content" xml:space="preserve"><value>Түлхүүр файл нэмэх</value></data>
+  <data name="RemoveKeyFileButton.Content" xml:space="preserve"><value>Хасах</value></data>
+  <data name="UnlockButton.Content" xml:space="preserve"><value>Түгжээ тайлах</value></data>
+  <data name="UnlockingText.Text" xml:space="preserve"><value>Түгжээг тайлж байна… Хэдэн секунд болж магадгүй.</value></data>
+  <data name="LockButton.Content" xml:space="preserve"><value>Түгжих</value></data>
+  <data name="UpButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Буцах</value></data>
+  <data name="UpButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Буцах</value></data>
+  <data name="SearchBox.PlaceholderText" xml:space="preserve"><value>Бичлэг хайх</value></data>
+  <data name="SearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Хайх</value></data>
+  <data name="SearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve"><value>Гарчиг, хэрэглэгчийн нэр, URL, тэмдэглэл, шошгоос хайна. Нууц үг болон бусад хамгаалагдсан талбараас хэзээ ч хайхгүй.</value></data>
+  <data name="SearchBox.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Гарчиг, хэрэглэгчийн нэр, URL, тэмдэглэл, шошгоос хайна. Нууц үг болон бусад хамгаалагдсан талбараас хэзээ ч хайхгүй.</value></data>
+  <data name="KeyFile" xml:space="preserve"><value>Түлхүүр файл: {0}</value></data>
+  <data name="CantReadDatabase" xml:space="preserve"><value>PocketKeePass өгөгдлийн сангийн файлыг нээж чадахгүй байна. Файлыг зөөсөн, нэрийг нь өөрчилсөн эсвэл устгасан байж магадгүй. Дахин сонгоно уу.</value></data>
+  <data name="CantReadKeyFile" xml:space="preserve"><value>PocketKeePass түлхүүр файлыг нээж чадахгүй байна. Файлыг зөөсөн, нэрийг нь өөрчилсөн эсвэл устгасан байж магадгүй. Хасаад дахин нэмнэ үү.</value></data>
+  <data name="ErrorWrongKey" xml:space="preserve"><value>Нууц үг эсвэл түлхүүр файл буруу байна.</value></data>
+  <data name="ErrorInvalidKeyFile" xml:space="preserve"><value>Тэр түлхүүр файлыг уншиж чадсангүй.</value></data>
+  <data name="ErrorNotKeePass" xml:space="preserve"><value>Энэ нь KeePass өгөгдлийн сан биш байна.</value></data>
+  <data name="ErrorNeedsUpgrade" xml:space="preserve"><value>Энэ өгөгдлийн сан хуучин KDBX 3 форматтай. Хадгалахаас өмнө KDBX 4 болгон шинэчлэх шаардлагатай.</value></data>
+  <data name="ErrorRandom" xml:space="preserve"><value>Энэ төхөөрөмж найдвартай санамсаргүй тоо гаргаж чадаагүй тул өгөгдлийн санг хадгалсангүй.</value></data>
+  <data name="ErrorSaveCheckFailed" xml:space="preserve"><value>Өгөгдлийн сангийн шинэ хуулбар аюулгүй байдлын шалгалтад тэнцээгүй тул хадгалсангүй.</value></data>
+  <data name="ErrorLocked" xml:space="preserve"><value>Өгөгдлийн сан түгжээтэй байна.</value></data>
+  <data name="ErrorNotFound" xml:space="preserve"><value>Тэр бүлэг эсвэл бичлэг өгөгдлийн санд байхгүй болсон байна.</value></data>
+  <data name="ErrorPasskeyExists" xml:space="preserve"><value>Энэ бүртгэлийн нэвтрэх түлхүүр өгөгдлийн санд аль хэдийн байна.</value></data>
+  <data name="SyncSettingsChanged" xml:space="preserve"><value>Өгөгдлийн сангийн аюулгүй байдлын тохиргоог өөр төхөөрөмж дээр өөрчилсөн байна. Өөрчлөлтийг авахын тулд түгжээд, дахин түгжээг нь тайлна уу.</value></data>
+  <data name="SearchNoResults" xml:space="preserve"><value>Тохирох бичлэг алга.</value></data>
+  <data name="GroupEmpty" xml:space="preserve"><value>Энэ бүлэг хоосон байна.</value></data>
+  <data name="UntitledGroup" xml:space="preserve"><value>(нэргүй)</value></data>
+  <data name="UntitledEntry" xml:space="preserve"><value>(гарчиггүй)</value></data>
+  <data name="About" xml:space="preserve"><value>Тухай</value></data>
+  <data name="AboutKeePass" xml:space="preserve"><value>PocketKeePass нь KeePass өгөгдлийн санг (.kdbx) нээж, хадгалдаг. KeePass болон түүний файлын форматыг Dominik Reichl (keepass.info) бүтээсэн. PocketKeePass бол бие даасан апп. Үүнийг KeePass төсөл хийгээгүй, дэмжээгүй бөгөөд тэдний кодыг огт ашигладаггүй.</value></data>
+  <data name="AboutClaude" xml:space="preserve"><value>PocketKeePass нь Anthropic компанийн бүтээсэн хиймэл оюуны загвар болох Claude ашиглан бичигдсэн.</value></data>
+  <data name="AboutLicense" xml:space="preserve"><value>GPLv3 лицензтэй, үнэгүй, нээлттэй эхийн програм хангамж.</value></data>
+  <data name="Close" xml:space="preserve"><value>Хаах</value></data>
+  <data name="EngineVersion" xml:space="preserve"><value>Хөдөлгүүр {0}</value></data>
+</root>

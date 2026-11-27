@@ -14,10 +14,14 @@
     <Platforms>ARM64;x64</Platforms>
     <RuntimeIdentifiers>win-arm64;win-x64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
-    <!-- Unpackaged for now, with the Windows App SDK inside the app's folder. Packaging (MSIX,
-         for the Microsoft Store) comes with the release work. -->
-    <WindowsPackageType>None</WindowsPackageType>
+    <!-- Packaged (MSIX, Package.appxmanifest): an identity for Windows Hello, the Store, and
+         per-app settings (ApplicationData). The Windows App SDK is inside the package, so it
+         needs no runtime installed. Developer builds are registered from the build folder:
+         see ../README.md. -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -29,6 +33,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.7.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\*.png" />
+    <None Remove="Assets\render.sh" />
   </ItemGroup>
 
   <ItemGroup>

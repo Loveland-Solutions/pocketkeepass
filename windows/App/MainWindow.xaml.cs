@@ -1,6 +1,9 @@
 using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
-using PocketKeePass.Core;
+using Microsoft.UI.Xaml.Media.Animation;
+using PocketKeePass.Browse;
+using PocketKeePass.Unlock;
+using Windows.Graphics;
 using WinRT.Interop;
 
 namespace PocketKeePass;
@@ -11,8 +14,29 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         ExcludeFromCapture();
-        // A first sign of life from the engine, until opening a database is built.
-        EngineStatus.Text = $"Engine {PocketkeepassCoreMethods.EngineVersion()}";
+        AppWindow.Resize(new SizeInt32(1000, 720));
+        AppWindow.SetIcon("Assets/Square44x44Logo.targetsize-32_altform-unplated.png");
+
+        Session.Shared.StateChanged += ShowScreen;
+        // Closing the window locks the database, and an unlock still running is locked as soon as
+        // it finishes (Session.Start).
+        Closed += (_, _) =>
+        {
+            Session.Shared.StateChanged -= ShowScreen;
+            Session.Shared.Close();
+        };
+        ShowScreen();
+    }
+
+    /// <summary>
+    /// The screen for the session's state. Each visit makes a new page, so nothing from an
+    /// unlocked database (lists, a search) outlives it in a cached page.
+    /// </summary>
+    private void ShowScreen()
+    {
+        var screen = Session.Shared.Database == null ? typeof(UnlockPage) : typeof(BrowsePage);
+        Screens.Navigate(screen, null, new SuppressNavigationTransitionInfo());
+        Screens.BackStack.Clear();
     }
 
     /// <summary>
