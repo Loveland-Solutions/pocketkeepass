@@ -179,6 +179,43 @@ pub enum LoginPlace {
     Entry { entry_id: String },
 }
 
+/// A key that isn't a character, for auto-type. See `AutoTypeStep`.
+#[derive(uniffi::Enum)]
+pub enum AutoTypeKey {
+    Tab,
+    Enter,
+    Space,
+    Backspace,
+    Delete,
+    Escape,
+    Up,
+    Down,
+    Left,
+    Right,
+    Home,
+    End,
+    PageUp,
+    PageDown,
+}
+
+/// One step of auto-typing an entry. Field values aren't here: fetch each with `reveal_field`
+/// (and the code with `totp_code`) as it's typed, and wipe it after.
+#[derive(uniffi::Enum)]
+pub enum AutoTypeStep {
+    /// Type this field's value ("UserName", "Password", a custom field's name, …).
+    Field { key: String },
+    /// Type the entry's current one-time code.
+    Totp,
+    /// Type this text, which comes from the sequence itself.
+    Text { text: String },
+    /// Press a key this many times.
+    Key { key: AutoTypeKey, count: u32 },
+    /// Wait this long.
+    Delay { milliseconds: u32 },
+    /// Select everything in the field and delete it.
+    ClearField,
+}
+
 /// Who is asking for a passkey. See the engine's `webauthn::Client`.
 #[derive(uniffi::Enum)]
 pub enum PasskeyClient {
@@ -680,6 +717,48 @@ impl UnlockedDatabase {
                 .ok_or(Error::NotFound)?;
             let totp = Totp::from_entry(&hit.entry)?.ok_or(Error::NotFound)?;
             Ok(totp.code_at(unix_seconds).as_bytes().to_vec())
+        })
+    }
+
+    /// The steps to auto-type an entry: its own sequence, its nearest group's, or KeePass's
+    /// default (`{USERNAME}{TAB}{PASSWORD}{ENTER}`). Fails with `NotFound` if there's no such
+    /// entry, and with `Invalid` (a sentence for the user) if auto-type is turned off for it or
+    /// its sequence can't be typed. Nothing secret: values are fetched one step at a time.
+    pub fn auto_type(&self, entry_id: String) -> Result<Vec<AutoTypeStep>> {
+        use crate::AutoTypeKey as K;
+        self.with(|db| {
+            let steps = db.auto_type(&uuid_from_hex(&entry_id).ok_or(Error::NotFound)?)?;
+            Ok(steps
+                .into_iter()
+                .map(|step| match step {
+                    crate::AutoTypeStep::Field(key) => AutoTypeStep::Field { key },
+                    crate::AutoTypeStep::Totp => AutoTypeStep::Totp,
+                    crate::AutoTypeStep::Text(text) => AutoTypeStep::Text { text },
+                    crate::AutoTypeStep::Delay(milliseconds) => {
+                        AutoTypeStep::Delay { milliseconds }
+                    }
+                    crate::AutoTypeStep::ClearField => AutoTypeStep::ClearField,
+                    crate::AutoTypeStep::Key(key, count) => AutoTypeStep::Key {
+                        key: match key {
+                            K::Tab => AutoTypeKey::Tab,
+                            K::Enter => AutoTypeKey::Enter,
+                            K::Space => AutoTypeKey::Space,
+                            K::Backspace => AutoTypeKey::Backspace,
+                            K::Delete => AutoTypeKey::Delete,
+                            K::Escape => AutoTypeKey::Escape,
+                            K::Up => AutoTypeKey::Up,
+                            K::Down => AutoTypeKey::Down,
+                            K::Left => AutoTypeKey::Left,
+                            K::Right => AutoTypeKey::Right,
+                            K::Home => AutoTypeKey::Home,
+                            K::End => AutoTypeKey::End,
+                            K::PageUp => AutoTypeKey::PageUp,
+                            K::PageDown => AutoTypeKey::PageDown,
+                        },
+                        count,
+                    },
+                })
+                .collect())
         })
     }
 

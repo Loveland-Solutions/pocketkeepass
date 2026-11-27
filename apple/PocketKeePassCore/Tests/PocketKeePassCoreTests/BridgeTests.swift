@@ -149,6 +149,16 @@ struct BridgeTests {
         else { Issue.record("expected NotFound"); return }
     }
 
+    @Test func autoTypeStepsNameFieldsWithoutTheirValues() throws {
+        let db = try open("browse.kdbx")
+        let bank = String(repeating: "08", count: 16)
+        #expect(try db.autoType(entryId: bank) == [
+            .field(key: "UserName"), .key(key: .tab, count: 1), .field(key: "Password"), .key(key: .enter, count: 1),
+        ])
+        guard case .NotFound = error({ _ = try db.autoType(entryId: String(repeating: "ee", count: 16)) })
+        else { Issue.record("expected NotFound"); return }
+    }
+
     @Test func theKeyHashOpensTheDatabaseAgain() throws {
         let file = try fixture("kdbx41-keepassxc.kdbx")
         let hash = try open("kdbx41-keepassxc.kdbx").keyHash()

@@ -10,6 +10,7 @@
 //! The Android app doesn't use these types directly. It goes through the bridge in [`ffi`].
 
 mod autofill;
+mod autotype;
 mod browse;
 mod create;
 mod edit;
@@ -29,6 +30,7 @@ mod webauthn;
 pub mod xml;
 
 pub use autofill::FillTarget;
+pub use autotype::{AutoTypeKey, AutoTypeStep, DEFAULT_SEQUENCE as DEFAULT_AUTO_TYPE_SEQUENCE};
 pub use browse::{Listing, SearchHit};
 pub use edit::{Deletion, EntryEdit, FieldEdit, FieldValue, STANDARD_FIELDS};
 pub use error::Error;
