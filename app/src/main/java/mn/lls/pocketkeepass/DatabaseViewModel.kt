@@ -90,6 +90,8 @@ sealed interface DatabaseState {
         val listing: GroupListing,
         /** Whether the search bar is open. The query itself is [DatabaseViewModel.searchQuery]. */
         val searching: Boolean = false,
+        /** Bumped by Ctrl+F ([DatabaseViewModel.find]): the search field takes the cursor again. */
+        val searchFocus: Int = 0,
         /** Entries matching the query. Empty while the query is blank. */
         val results: List<SearchResult> = emptyList(),
         /**
@@ -848,6 +850,19 @@ class DatabaseViewModel(app: Application) : AndroidViewModel(app) {
 
     fun openSearch() {
         _state.update { (it as? DatabaseState.Unlocked)?.copy(searching = true) ?: it }
+    }
+
+    /**
+     * Ctrl+F on a keyboard: from a group or an entry, opens search (closing the entry) with the
+     * cursor in its field. Returns false when no database is open.
+     */
+    fun find(): Boolean {
+        if (_state.value !is DatabaseState.Unlocked) return false
+        entryJob?.cancel()
+        _state.update {
+            (it as? DatabaseState.Unlocked)?.copy(searching = true, entry = null, searchFocus = it.searchFocus + 1) ?: it
+        }
+        return true
     }
 
     fun closeSearch() {

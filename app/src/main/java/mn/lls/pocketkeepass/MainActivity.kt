@@ -1,6 +1,10 @@
 package mn.lls.pocketkeepass
 
 import android.os.Bundle
+import android.view.KeyEvent
+import android.view.KeyboardShortcutGroup
+import android.view.KeyboardShortcutInfo
+import android.view.Menu
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -60,6 +64,7 @@ import mn.lls.pocketkeepass.ui.theme.PocketKeePassTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DatabaseViewModel by viewModels()
+    private val editor: EditViewModel by viewModels()
 
     // Registered before the activity starts, like any activity result. The result carries the
     // cipher the user unlocked, so it still works if the activity was recreated meanwhile.
@@ -95,6 +100,27 @@ class MainActivity : ComponentActivity() {
     override fun onUserInteraction() {
         super.onUserInteraction()
         autoLock.onUserInteraction()
+    }
+
+    // Ctrl+F on a keyboard: search, from a group or an entry. Not while the entry editor is
+    // open (it would throw away the form). Dialogs are windows of their own and never get here.
+    override fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_F && event.isCtrlPressed && editor.state.value.entryForm == null && viewModel.find()) {
+            return true
+        }
+        return super.onKeyShortcut(keyCode, event)
+    }
+
+    // Listed in Android's keyboard shortcuts screen (Meta + /).
+    override fun onProvideKeyboardShortcuts(data: MutableList<KeyboardShortcutGroup>, menu: Menu?, deviceId: Int) {
+        super.onProvideKeyboardShortcuts(data, menu, deviceId)
+        if (viewModel.state.value !is DatabaseState.Unlocked) return
+        data.add(
+            KeyboardShortcutGroup(
+                getString(R.string.app_name),
+                listOf(KeyboardShortcutInfo(getString(R.string.search), KeyEvent.KEYCODE_F, KeyEvent.META_CTRL_ON)),
+            ),
+        )
     }
 
     override fun onStart() {
