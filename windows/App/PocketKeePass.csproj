@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The Windows app: WinUI 3 on the Windows App SDK, over the same Rust engine as the Android,
+    iPhone, and Mac apps (../Engine). Builds only on Windows:
+    dotnet build -p:Platform=ARM64 (or x64). See ../README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <RootNamespace>PocketKeePass</RootNamespace>
+    <AssemblyName>PocketKeePass</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>ARM64;x64</Platforms>
+    <RuntimeIdentifiers>win-arm64;win-x64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <!-- Unpackaged for now, with the Windows App SDK inside the app's folder. Packaging (MSIX,
+         for the Microsoft Store) comes with the release work. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- The engine is built for the platform this app is built for, not the computer's own. -->
+    <EngineRustTarget Condition="'$(Platform)' == 'ARM64'">aarch64-pc-windows-msvc</EngineRustTarget>
+    <EngineRustTarget Condition="'$(Platform)' == 'x64'">x86_64-pc-windows-msvc</EngineRustTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.7.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Engine/PocketKeePass.Engine.csproj"
+                      AdditionalProperties="RustTarget=$(EngineRustTarget)" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,17 @@
+<Project Sdk="MSTest.Sdk/4.5.3">
+  <!--
+    Calls the engine through the generated C# bindings, as BridgeTest.kt (Android) and
+    BridgeTests.swift (Apple) do. Runs on Windows and on the dev Mac: `dotnet test`.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PocketKeePass.Engine.Tests</RootNamespace>
+  </PropertyGroup>
+  <!-- Where the fixtures are, read by the tests: the build output may be far from the repository. -->
+  <ItemGroup>
+    <AssemblyMetadata Include="Fixtures" Value="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../core/tests/fixtures'))" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Engine/PocketKeePass.Engine.csproj" />
+  </ItemGroup>
+</Project>

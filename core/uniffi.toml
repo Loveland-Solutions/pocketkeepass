@@ -12,3 +12,10 @@ ffi_module_filename = "PocketKeePassCoreFFI"
 # Our own LocalizedError (apple/PocketKeePassCore/Sources/PocketKeePassCore/KeePassError+Message.swift)
 # shows the engine's sentence; UniFFI's would show a debug dump.
 omit_localized_error_conformance = true
+
+# How uniffi-bindgen-cs generates the C# side, for the Windows app (windows/Engine).
+[bindings.csharp]
+namespace = "PocketKeePass.Core"
+cdylib_name = "pocketkeepass_core"
+# Public, so the app and the tests (other assemblies) can use the engine library's types.
+access_modifier = "public"

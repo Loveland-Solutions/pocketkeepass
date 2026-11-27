@@ -1,0 +1,21 @@
+<Project>
+  <!-- Settings every project under windows/ shares. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    On Windows, build output goes to the local disk. The repository is usually reached through a
+    Parallels shared folder, which is slow, and the Mac builds into the same bin/ and obj/
+    folders there, so the two would keep overwriting each other's build state.
+  -->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <PocketKeePassBuildRoot>$(LOCALAPPDATA)\PocketKeePass\build\$(MSBuildProjectName)\</PocketKeePassBuildRoot>
+    <BaseIntermediateOutputPath>$(PocketKeePassBuildRoot)obj\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(PocketKeePassBuildRoot)bin\</BaseOutputPath>
+    <!-- The Mac's own output in the project folders isn't source. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

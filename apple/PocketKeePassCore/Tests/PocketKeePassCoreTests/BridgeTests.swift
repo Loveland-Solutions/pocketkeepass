@@ -153,7 +153,7 @@ struct BridgeTests {
         let db = try open("browse.kdbx")
         let bank = String(repeating: "08", count: 16)
         #expect(try db.autoType(entryId: bank) == [
-            .field(key: "UserName"), .key(key: .tab, count: 1), .field(key: "Password"), .key(key: .enter, count: 1),
+            .field(key: "UserName"), .press(key: .tab, count: 1), .field(key: "Password"), .press(key: .enter, count: 1),
         ])
         guard case .NotFound = error({ _ = try db.autoType(entryId: String(repeating: "ee", count: 16)) })
         else { Issue.record("expected NotFound"); return }
