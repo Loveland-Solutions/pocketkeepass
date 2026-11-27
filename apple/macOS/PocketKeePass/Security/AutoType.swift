@@ -52,7 +52,7 @@ enum AutoType {
                 try await type(bytes, into: target)
             case .text(let text):
                 try await type(Data(text.utf8), into: target)
-            case .key(let key, let count):
+            case .press(let key, let count):
                 for _ in 0..<count { try await press(keyCode(key), into: target) }
             case .delay(let milliseconds):
                 try await Task.sleep(for: .milliseconds(Int(milliseconds)))

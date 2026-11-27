@@ -208,8 +208,9 @@ pub enum AutoTypeStep {
     Totp,
     /// Type this text, which comes from the sequence itself.
     Text { text: String },
-    /// Press a key this many times.
-    Key { key: AutoTypeKey, count: u32 },
+    /// Press a key this many times. (Not `Key`: C#'s generated bindings can't have a variant
+    /// named like another variant's field.)
+    Press { key: AutoTypeKey, count: u32 },
     /// Wait this long.
     Delay { milliseconds: u32 },
     /// Select everything in the field and delete it.
@@ -738,7 +739,7 @@ impl UnlockedDatabase {
                         AutoTypeStep::Delay { milliseconds }
                     }
                     crate::AutoTypeStep::ClearField => AutoTypeStep::ClearField,
-                    crate::AutoTypeStep::Key(key, count) => AutoTypeStep::Key {
+                    crate::AutoTypeStep::Key(key, count) => AutoTypeStep::Press {
                         key: match key {
                             K::Tab => AutoTypeKey::Tab,
                             K::Enter => AutoTypeKey::Enter,
