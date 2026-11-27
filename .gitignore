@@ -26,3 +26,6 @@ xcuserdata/
 DerivedData/
 /apple/PocketKeePassCore/.build-engine.log
 /apple/build/
+# Windows: .NET build output (includes the generated C# bindings and, on the Mac, cargo's folder).
+/windows/**/bin/
+/windows/**/obj/

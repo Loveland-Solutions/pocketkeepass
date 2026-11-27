@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The KeePass engine for the Windows app: the Rust crate in core/, built for the platform being
+    built for, plus the C# bindings uniffi-bindgen-cs generates from it. Like Gradle's
+    buildRust/generateRustBindings tasks, this builds both on every build (cargo skips work when
+    nothing changed). The generated C# lands in obj/uniffi (on Windows, the local build folder: see
+    ../Directory.Build.props) and is never checked in.
+
+    It targets plain net10.0, not Windows, so the bridge tests (../Engine.Tests) also run on the
+    dev Mac against the engine built for it.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PocketKeePass.Core</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- The generated bindings aren't written for nullable analysis or our warning level. -->
+    <NoWarn>$(NoWarn);CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- The version of uniffi-bindgen-cs whose output matches our UniFFI (see windows/README.md). -->
+    <UniffiBindgenCsVersion>0.12.0+v0.32.0</UniffiBindgenCsVersion>
+    <CoreDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../core'))</CoreDir>
+    <IsWindowsHost>$([MSBuild]::IsOSPlatform('Windows'))</IsWindowsHost>
+
+    <!-- Which Rust target to build: from the runtime identifier, else this computer's own. -->
+    <RustTarget Condition="'$(RuntimeIdentifier)' == 'win-arm64'">aarch64-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(RuntimeIdentifier)' == 'win-x64'">x86_64-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(RustTarget)' == '' and '$(IsWindowsHost)' == 'true' and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">aarch64-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(RustTarget)' == '' and '$(IsWindowsHost)' == 'true'">x86_64-pc-windows-msvc</RustTarget>
+
+    <!--
+      cargo's own folder. On Windows it's on the local disk: the repository is usually reached
+      through a Parallels shared folder, which is slow, and the Mac's core/target is there too.
+    -->
+    <CargoTargetDir Condition="'$(IsWindowsHost)' == 'true'">$(LOCALAPPDATA)\PocketKeePass\cargo-target</CargoTargetDir>
+    <CargoTargetDir Condition="'$(IsWindowsHost)' != 'true'">$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(BaseIntermediateOutputPath)cargo-target'))</CargoTargetDir>
+    <CargoTargetArg Condition="'$(RustTarget)' != ''">--target $(RustTarget)</CargoTargetArg>
+    <RustOutDir Condition="'$(RustTarget)' != ''">$(CargoTargetDir)/$(RustTarget)/release</RustOutDir>
+    <RustOutDir Condition="'$(RustTarget)' == ''">$(CargoTargetDir)/release</RustOutDir>
+    <NativeLibraryName Condition="'$(IsWindowsHost)' == 'true'">pocketkeepass_core.dll</NativeLibraryName>
+    <NativeLibraryName Condition="'$(IsWindowsHost)' != 'true' and $([MSBuild]::IsOSPlatform('OSX'))">libpocketkeepass_core.dylib</NativeLibraryName>
+    <NativeLibraryName Condition="'$(NativeLibraryName)' == ''">libpocketkeepass_core.so</NativeLibraryName>
+    <NativeLibrary>$(RustOutDir)/$(NativeLibraryName)</NativeLibrary>
+    <GeneratedBindingsDir>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(BaseIntermediateOutputPath)uniffi'))</GeneratedBindingsDir>
+
+    <!-- Paths from this computer stay out of the library, as in the Android and Apple builds. -->
+    <HomeDir Condition="'$(IsWindowsHost)' == 'true'">$(USERPROFILE)</HomeDir>
+    <HomeDir Condition="'$(IsWindowsHost)' != 'true'">$(HOME)</HomeDir>
+    <CargoHomeDir>$(CARGO_HOME)</CargoHomeDir>
+    <CargoHomeDir Condition="'$(CargoHomeDir)' == ''">$(HomeDir)/.cargo</CargoHomeDir>
+    <RustupHomeDir>$(RUSTUP_HOME)</RustupHomeDir>
+    <RustupHomeDir Condition="'$(RustupHomeDir)' == ''">$(HomeDir)/.rustup</RustupHomeDir>
+    <EngineRustFlags>--remap-path-prefix=$(HomeDir)=~ --remap-path-prefix=$(CargoHomeDir)=/cargo --remap-path-prefix=$(RustupHomeDir)=/rustup --remap-path-prefix=$(CoreDir)=/src</EngineRustFlags>
+    <!-- cargo from the PATH (rustup's installer puts it there), unless Cargo is set. The
+         generator lives where `cargo install` puts it. -->
+    <Cargo Condition="'$(Cargo)' == ''">cargo</Cargo>
+    <CargoBin>$(CargoHomeDir)/bin</CargoBin>
+  </PropertyGroup>
+
+  <!-- Builds the engine. Always runs; cargo decides whether anything needs compiling. -->
+  <Target Name="BuildRustEngine" BeforeTargets="BeforeBuild">
+    <Exec Command="&quot;$(Cargo)&quot; build --release --locked --lib --manifest-path &quot;$(CoreDir)/Cargo.toml&quot; --target-dir &quot;$(CargoTargetDir)&quot; $(CargoTargetArg)"
+          EnvironmentVariables="RUSTFLAGS=$(EngineRustFlags)" />
+  </Target>
+
+  <!-- Generates the C# bindings from the built library, after checking the generator's version. -->
+  <Target Name="GenerateRustBindings" AfterTargets="BuildRustEngine" BeforeTargets="CoreCompile">
+    <Exec Command="&quot;$(CargoBin)/uniffi-bindgen-cs&quot; --version" ConsoleToMSBuild="true" StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="UniffiBindgenCsFound" />
+    </Exec>
+    <Error Condition="!$(UniffiBindgenCsFound.Contains('$(UniffiBindgenCsVersion)'))"
+           Text="uniffi-bindgen-cs $(UniffiBindgenCsVersion) is needed, found '$(UniffiBindgenCsFound)'. Install it as windows/README.md says." />
+    <!-- It finds uniffi.toml through cargo metadata, so it runs from the crate's folder. -->
+    <Exec Command="&quot;$(CargoBin)/uniffi-bindgen-cs&quot; --library --no-format --out-dir &quot;$(GeneratedBindingsDir)&quot; &quot;$(NativeLibrary)&quot;"
+          WorkingDirectory="$(CoreDir)" />
+    <ItemGroup>
+      <Compile Include="$(GeneratedBindingsDir)/*.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- The engine library goes next to whatever uses this project (the app, the tests). -->
+  <ItemGroup>
+    <None Include="$(NativeLibrary)" Link="$(NativeLibraryName)" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+</Project>
