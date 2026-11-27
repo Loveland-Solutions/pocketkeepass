@@ -51,6 +51,10 @@ struct PocketKeePassApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     weak var session: Session?
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        AppAppearance.saved.apply()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
     func applicationWillTerminate(_ notification: Notification) {

@@ -235,6 +235,16 @@
         }
       }
     },
+    "Appearance": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Харагдах байдал"
+          }
+        }
+      }
+    },
     "Ask for the master password every": {
       "localizations": {
         "mn": {
@@ -507,6 +517,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Шинэ өгөгдлийн сан үүсгэх…"
+          }
+        }
+      }
+    },
+    "Dark": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бараан"
           }
         }
       }
@@ -947,6 +967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Урт: %lld"
+          }
+        }
+      }
+    },
+    "Light": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цайвар"
           }
         }
       }
@@ -1457,6 +1487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нөөцийг сэргээх үү?"
+          }
+        }
+      }
+    },
+    "Same as the Mac": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac-ийн тохиргоогоор"
           }
         }
       }
@@ -2419,6 +2459,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "«%@» бүрмөсөн устна. Үүнийг буцаах боломжгүй."
+          }
+        }
+      }
+    },
+    "“Same as the Mac” switches between light and dark with macOS.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Mac-ийн тохиргоогоор” гэвэл macOS-ийн адил цайвар, бараан хооронд шилжинэ."
           }
         }
       }
