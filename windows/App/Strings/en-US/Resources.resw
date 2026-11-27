@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The app's strings. Keys with a dot are set on the XAML element with that x:Uid; the rest are read
+  in code (Strings.Get). Most are Android's (app/src/main/res/values/strings.xml), word for word,
+  with %1$s written {0}. Every string here is also in ../mn/Resources.resw.
+-->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="WelcomeTagline.Text" xml:space="preserve"><value>Your KeePass passwords, free and offline.</value></data>
+  <data name="OpenDatabaseButton.Content" xml:space="preserve"><value>Open database</value></data>
+  <data name="OpenDatabaseHint.Text" xml:space="preserve"><value>Choose a .kdbx file on this PC, or in a folder that OneDrive, Dropbox, or another storage app keeps in sync.</value></data>
+  <data name="Credits.Text" xml:space="preserve"><value>An independent app for KeePass databases. Written with Claude.</value></data>
+  <data name="UnlockCredits.Text" xml:space="preserve"><value>An independent app for KeePass databases. Written with Claude.</value></data>
+  <data name="AboutButton.Content" xml:space="preserve"><value>About</value></data>
+  <data name="UnlockAboutButton.Content" xml:space="preserve"><value>About</value></data>
+  <data name="ChangeDatabaseButton.Content" xml:space="preserve"><value>Change</value></data>
+  <data name="PasswordBox.Header" xml:space="preserve"><value>Master password</value></data>
+  <data name="AddKeyFileButton.Content" xml:space="preserve"><value>Add key file</value></data>
+  <data name="RemoveKeyFileButton.Content" xml:space="preserve"><value>Remove</value></data>
+  <data name="UnlockButton.Content" xml:space="preserve"><value>Unlock</value></data>
+  <data name="UnlockingText.Text" xml:space="preserve"><value>Unlocking… This can take a few seconds.</value></data>
+  <data name="LockButton.Content" xml:space="preserve"><value>Lock</value></data>
+  <data name="UpButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Back</value></data>
+  <data name="UpButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Back</value></data>
+  <data name="SearchBox.PlaceholderText" xml:space="preserve"><value>Search entries</value></data>
+  <data name="SearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Search</value></data>
+  <data name="SearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve"><value>Searches titles, usernames, URLs, notes, and tags. Passwords and other protected fields are never searched.</value></data>
+  <data name="SearchBox.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Searches titles, usernames, URLs, notes, and tags. Passwords and other protected fields are never searched.</value></data>
+  <data name="KeyFile" xml:space="preserve"><value>Key file: {0}</value></data>
+  <data name="CantReadDatabase" xml:space="preserve"><value>PocketKeePass can't open the database file anymore. It may have been moved, renamed, or deleted. Choose it again.</value></data>
+  <data name="CantReadKeyFile" xml:space="preserve"><value>PocketKeePass can't open the key file anymore. It may have been moved, renamed, or deleted. Remove it and add it again.</value></data>
+  <data name="ErrorWrongKey" xml:space="preserve"><value>The password or key file is incorrect.</value></data>
+  <data name="ErrorInvalidKeyFile" xml:space="preserve"><value>That key file couldn't be read.</value></data>
+  <data name="ErrorNotKeePass" xml:space="preserve"><value>This isn't a KeePass database.</value></data>
+  <data name="ErrorNeedsUpgrade" xml:space="preserve"><value>This database uses the older KDBX 3 format. It has to be upgraded to KDBX 4 before it can be saved.</value></data>
+  <data name="ErrorRandom" xml:space="preserve"><value>This device couldn't provide secure random numbers, so the database wasn't saved.</value></data>
+  <data name="ErrorSaveCheckFailed" xml:space="preserve"><value>The new copy of the database failed its safety check, so it wasn't saved.</value></data>
+  <data name="ErrorLocked" xml:space="preserve"><value>The database is locked.</value></data>
+  <data name="ErrorNotFound" xml:space="preserve"><value>That group or entry isn't in the database anymore.</value></data>
+  <data name="ErrorPasskeyExists" xml:space="preserve"><value>A passkey for this account is already in the database.</value></data>
+  <data name="SyncSettingsChanged" xml:space="preserve"><value>The database's security settings were changed on another device. Lock, then unlock it again to take in the changes.</value></data>
+  <data name="SearchNoResults" xml:space="preserve"><value>No matching entries.</value></data>
+  <data name="GroupEmpty" xml:space="preserve"><value>This group is empty.</value></data>
+  <data name="UntitledGroup" xml:space="preserve"><value>(no name)</value></data>
+  <data name="UntitledEntry" xml:space="preserve"><value>(no title)</value></data>
+  <data name="About" xml:space="preserve"><value>About</value></data>
+  <data name="AboutKeePass" xml:space="preserve"><value>PocketKeePass opens and saves KeePass databases (.kdbx). KeePass and its file format were created by Dominik Reichl (keepass.info). PocketKeePass is an independent app. It isn't made or endorsed by the KeePass project and uses none of its code.</value></data>
+  <data name="AboutClaude" xml:space="preserve"><value>PocketKeePass is written with Claude, an AI model made by Anthropic.</value></data>
+  <data name="AboutLicense" xml:space="preserve"><value>Free and open-source software, licensed under the GPLv3.</value></data>
+  <data name="Close" xml:space="preserve"><value>Close</value></data>
+  <data name="EngineVersion" xml:space="preserve"><value>Engine {0}</value></data>
+</root>
