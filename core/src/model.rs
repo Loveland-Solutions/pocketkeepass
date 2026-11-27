@@ -229,6 +229,24 @@ impl<'a> Group<'a> {
         }
     }
 
+    /// The group's own auto-type setting: `Some(false)` turns auto-type off for its entries
+    /// (and those of its subgroups, unless they say otherwise), `None` inherits the parent's.
+    pub fn enable_auto_type(&self) -> Option<bool> {
+        let value = self.el.child_text("EnableAutoType").trim();
+        if value.eq_ignore_ascii_case("true") {
+            Some(true)
+        } else if value.eq_ignore_ascii_case("false") {
+            Some(false)
+        } else {
+            None // "null", or missing
+        }
+    }
+
+    /// The auto-type sequence the group gives its entries, or "" to inherit the parent's.
+    pub fn default_auto_type_sequence(&self) -> &'a str {
+        self.el.child_text("DefaultAutoTypeSequence")
+    }
+
     pub fn groups(&self) -> impl Iterator<Item = Group<'a>> + 'a {
         self.el.children_named("Group").map(|el| Group { el })
     }
@@ -272,6 +290,20 @@ impl<'a> Entry<'a> {
         self.el
             .children_named("String")
             .map(|s| s.child_text("Key"))
+    }
+
+    /// Whether auto-type is allowed for this entry (`AutoType/Enabled`; on unless it says
+    /// "False"), and its own sequence ("" to use its group's).
+    pub fn auto_type(&self) -> (bool, &'a str) {
+        match self.el.child("AutoType") {
+            None => (true, ""),
+            Some(at) => (
+                !at.child_text("Enabled")
+                    .trim()
+                    .eq_ignore_ascii_case("false"),
+                at.child_text("DefaultSequence"),
+            ),
+        }
     }
 
     /// Whether the file marks this field as protected (passwords, usually).

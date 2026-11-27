@@ -1,3 +1,4 @@
+import AppKit
 import PocketKeePassCore
 import SwiftUI
 
@@ -15,9 +16,16 @@ struct BrowserView: View {
     /// The sidebar group an entry or group is being dragged over.
     @State private var dropTarget: String?
     @FocusState private var searchFocused: Bool
+    /// Whether the entry list has the keyboard focus, so ⌘C copies the password.
+    @FocusState private var entriesFocused: Bool
     /// Where to go once the open editor's changes are saved or discarded.
     @State private var pendingLeave: (@MainActor () -> Void)?
     @State private var askingLeave = false
+    /// "Copied …" after copying from an entry's menu.
+    @State private var copiedMessage: String?
+    /// Something an entry's menu couldn't do, explained.
+    @State private var problem: Problem?
+    @State private var askingTypingPermission = false
     #if DEBUG
     @Environment(\.openSettings) private var openSettings
     #endif
@@ -48,6 +56,7 @@ struct BrowserView: View {
                     SyncLine { showingSync = true }
                 }
             }
+            .overlay(alignment: .bottom) { CopiedToast(message: copiedMessage) }
             .overlay {
                 if entries.isEmpty {
                     Text(query.isEmpty ? String(localized: "This group is empty.") : String(localized: "No matching entries."))
@@ -62,6 +71,7 @@ struct BrowserView: View {
             } primaryAction: { ids in
                 if let id = ids.first, ids.count == 1 { edit(id) }
             }
+            .focused($entriesFocused)
             .searchable(text: $query, placement: .toolbar, prompt: Text("Search entries"))
             .searchFocused($searchFocused)
             .navigationSplitViewColumnWidth(min: 240, ideal: 300)
@@ -84,6 +94,14 @@ struct BrowserView: View {
         }
         .navigationTitle(session.fileName)
         .focusedSceneValue(\.findAction, FindAction { searchFocused = true })
+        .focusedSceneValue(\.entryActions, selectedEntry.map { id in
+            EntryActions(copyUsername: { copy(id, field: "UserName") },
+                         copyPassword: { copy(id, field: "Password") },
+                         copyURL: { copy(id, field: "URL") },
+                         openURL: { openURL(id) },
+                         autoType: { autoType(id) },
+                         listFocused: entriesFocused)
+        })
         .alert(leaveTitle, isPresented: $askingLeave) {
             Button("Save") { Task { await saveAndLeave() } }
             Button("Discard Changes", role: .destructive) {
@@ -93,6 +111,15 @@ struct BrowserView: View {
             Button("Keep Editing", role: .cancel) { pendingLeave = nil }
         } message: {
             Text("Your changes to this entry aren’t saved yet.")
+        }
+        .alert(item: $problem) { problem in
+            Alert(title: Text(problem.message))
+        }
+        .alert("Allow PocketKeePass to type into other apps", isPresented: $askingTypingPermission) {
+            Button("Open System Settings") { AutoType.openSettings() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Auto-type works by pressing keys for you, which macOS allows only with your permission. In System Settings › Privacy & Security › Accessibility, turn on PocketKeePass, then quit PocketKeePass (⌘Q) and open it again: macOS applies the permission when the app starts. Only allow it if you want to use auto-type: an app with this permission can press keys in any app.")
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { SaveBar() }
         .sheet(isPresented: $showingSync) { SyncDetailsView().macSheetFrame(width: 460, height: 420) }
@@ -271,10 +298,102 @@ struct BrowserView: View {
     @ViewBuilder
     private func entryMenu(_ row: EntryRow) -> some View {
         let item = EditItem.entry(id: row.id, name: row.entry.title, inRecycleBin: inRecycleBin)
+        // The shortcuts are the Entry menu's (`EntryCommands`), shown here as KeePass does.
+        Button("Copy Username") { copy(row.id, field: "UserName") }
+            .keyboardShortcut("b", modifiers: .command)
+        Button("Copy Password") { copy(row.id, field: "Password") }
+            .keyboardShortcut("c", modifiers: .command)
+        Button("Copy URL") { copy(row.id, field: "URL") }
+            .keyboardShortcut("u", modifiers: [.command, .shift])
+        Button("Open URL") { openURL(row.id) }
+            .keyboardShortcut("u", modifiers: .command)
+        Divider()
+        Button("Perform Auto-Type") { autoType(row.id) }
+            .keyboardShortcut("v", modifiers: [.command, .shift])
+        Divider()
         Button("Edit…") { edit(row.id) }
         Button("Duplicate") { editing.duplicate(session, id: row.id, open: false) }
         Button("Move…") { editing.move(session, item) }
         Button("Delete…", role: .destructive) { editing.delete(session, item) }
+    }
+
+    /// Copies one field of an entry from its menu, fetched as bytes and wiped after.
+    private func copy(_ id: String, field key: String) {
+        let label = switch key {
+        case "UserName": String(localized: "Username")
+        case "Password": String(localized: "Password")
+        default: String(localized: "URL")
+        }
+        Task {
+            do {
+                var bytes = try await engine(session) { try $0.revealField(entryId: id, key: key) }
+                defer { bytes.wipe() }
+                if bytes.isEmpty {
+                    show(String(localized: "Nothing to copy: the \(label.lowercased()) is empty."))
+                    return
+                }
+                Clipboard.shared.copy(bytes)
+                show(String(localized: "Copied \(label). It clears in \(durationText(seconds: Preferences.clipboardSeconds))."))
+            } catch {
+                if session.isUnlocked { problem = Problem(message: error.userMessage) }
+            }
+        }
+    }
+
+    /// Opens the entry's URL in the default browser. Only web addresses: KeePass also runs
+    /// `cmd://` URLs as commands, and other schemes open whatever app claims them.
+    private func openURL(_ id: String) {
+        Task {
+            do {
+                var bytes = try await engine(session) { try $0.revealField(entryId: id, key: "URL") }
+                let text = String(decoding: bytes, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+                bytes.wipe()
+                guard !text.isEmpty else {
+                    show(String(localized: "This entry has no URL."))
+                    return
+                }
+                // "example.com" opens as https://example.com, as KeePass does.
+                let withScheme = text.contains("://") ? text : "https://" + text
+                guard let url = URL(string: withScheme), let scheme = url.scheme?.lowercased(),
+                      scheme == "https" || scheme == "http", url.host() != nil else {
+                    problem = Problem(message: String(localized: "PocketKeePass opens only web addresses (http and https). Copy the URL to use it elsewhere."))
+                    return
+                }
+                NSWorkspace.shared.open(url)
+            } catch {
+                if session.isUnlocked { problem = Problem(message: error.userMessage) }
+            }
+        }
+    }
+
+    private func autoType(_ id: String) {
+        Task {
+            do {
+                try await AutoType.perform(entryId: id, session: session)
+            } catch AutoType.Failure.needsPermission {
+                askingTypingPermission = true
+            } catch AutoType.Failure.noTarget {
+                NSApp.unhide(nil)
+                problem = Problem(message: String(localized: "There’s no other app to type into. Open the window you want to sign in to first, then come back and choose Perform Auto-Type."))
+            } catch AutoType.Failure.interrupted {
+                NSApp.unhide(nil)
+                NSApp.activate()
+                problem = Problem(message: String(localized: "Auto-type stopped because another window came to the front. Some of the entry may already have been typed."))
+            } catch is CancellationError {
+            } catch {
+                NSApp.unhide(nil)
+                if session.isUnlocked { problem = Problem(message: error.userMessage) }
+            }
+        }
+    }
+
+    private func show(_ message: String) {
+        withAnimation { copiedMessage = message }
+        AccessibilityNotification.Announcement(message).post()
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            if copiedMessage == message { withAnimation { copiedMessage = nil } }
+        }
     }
 
     /// Opens an entry for editing in the right-hand column.
@@ -390,6 +509,12 @@ struct BrowserView: View {
         entries = found
         if let selectedEntry, !found.contains(where: { $0.id == selectedEntry }) { self.selectedEntry = nil }
     }
+}
+
+/// A message for an alert.
+private struct Problem: Identifiable {
+    let id = UUID()
+    let message: String
 }
 
 /// A group and its subgroups, for the sidebar's outline.
