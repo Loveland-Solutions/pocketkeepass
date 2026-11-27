@@ -12,6 +12,8 @@ struct BrowserView: View {
     @State private var query = ""
     @State private var editing = Editing()
     @State private var showingSync = false
+    /// The sidebar group an entry or group is being dragged over.
+    @State private var dropTarget: String?
     @FocusState private var searchFocused: Bool
     /// Where to go once the open editor's changes are saved or discarded.
     @State private var pendingLeave: (@MainActor () -> Void)?
@@ -26,11 +28,9 @@ struct BrowserView: View {
                 // The top group as a row of its own, with its subgroups shown below it (not
                 // folded inside it, which would hide everything at first).
                 ForEach(tree) { root in
-                    groupLabel(root).tag(root.id)
-                        .contextMenu { groupMenu(root, isRoot: true) }
+                    sidebarRow(root, isRoot: true)
                     OutlineGroup(root.children ?? [], children: \.children) { node in
-                        groupLabel(node).tag(node.id)
-                            .contextMenu { groupMenu(node, isRoot: false) }
+                        sidebarRow(node, isRoot: false)
                     }
                 }
             }
@@ -41,6 +41,8 @@ struct BrowserView: View {
                     ForEach(entries) { row in
                         EntryRowView(row: row, showsPath: !query.isEmpty)
                             .tag(row.id)
+                            // Dragged onto a group in the sidebar, it moves there.
+                            .draggable(DraggedItem(.entry(id: row.id, name: row.entry.title, inRecycleBin: inRecycleBin)))
                     }
                 } header: {
                     SyncLine { showingSync = true }
@@ -291,6 +293,65 @@ struct BrowserView: View {
     private var inRecycleBin: Bool {
         guard query.isEmpty, let selected = selectedGroup, let node = node(selected) else { return false }
         return node.isRecycleBin || node.inRecycleBin
+    }
+
+    /// A group in the sidebar: its menu, dragging it (not the top group or the recycle bin), and
+    /// dropping entries and groups on it to move them there, or on the recycle bin to delete them
+    /// (which asks first).
+    @ViewBuilder
+    private func sidebarRow(_ node: GroupNode, isRoot: Bool) -> some View {
+        let row = groupLabel(node)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .background {
+                if dropTarget == node.id {
+                    RoundedRectangle(cornerRadius: 5).strokeBorder(Color.accentColor, lineWidth: 2)
+                }
+            }
+            .tag(node.id)
+            .contextMenu { groupMenu(node, isRoot: isRoot) }
+            .dropDestination(for: DraggedItem.self) { items, _ in
+                drop(items, on: node)
+            } isTargeted: { targeted in
+                if targeted {
+                    dropTarget = node.id
+                } else if dropTarget == node.id {
+                    dropTarget = nil
+                }
+            }
+        if isRoot || node.isRecycleBin {
+            row
+        } else {
+            row.draggable(DraggedItem(.group(id: node.id, name: node.name, inRecycleBin: node.inRecycleBin, isRecycleBin: false)))
+        }
+    }
+
+    /// Whether `item` can be dropped on `target`: a move into any group outside the recycle bin
+    /// (for a group, not into itself or its own subgroups), or a delete on the recycle bin.
+    private func accepts(_ item: DraggedItem, on target: GroupNode) -> Bool {
+        if target.isRecycleBin { return !item.inRecycleBin }
+        if target.inRecycleBin { return false }
+        if item.kind == .group {
+            guard item.id != target.id, let moving = node(item.id) else { return false }
+            func contains(_ nodes: [GroupNode]) -> Bool {
+                nodes.contains { $0.id == target.id || contains($0.children ?? []) }
+            }
+            return !contains(moving.children ?? [])
+        }
+        return true
+    }
+
+    private func drop(_ items: [DraggedItem], on target: GroupNode) -> Bool {
+        dropTarget = nil
+        // One at a time: the lists select one item, so a drag carries one.
+        guard let dragged = items.first, items.count == 1, accepts(dragged, on: target) else { return false }
+        if target.isRecycleBin {
+            editing.delete(session, dragged.item)
+        } else {
+            let item = dragged.item
+            editing.begin(session) { editing.moveTo(item, groupId: target.id) }
+        }
+        return true
     }
 
     private func groupLabel(_ node: GroupNode) -> some View {

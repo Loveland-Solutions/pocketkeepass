@@ -1,15 +1,26 @@
 import PocketKeePassCore
 import SwiftUI
 
-/// The Settings window (⌘,): Touch ID, AutoFill, auto-lock, the clipboard, and About.
+/// The Settings window (⌘,): appearance, Touch ID, AutoFill, auto-lock, the clipboard, and About.
 struct SettingsView: View {
     @Environment(AutoLock.self) private var autoLock
     @AppStorage(Preferences.autoLockKey, store: AppGroup.defaults) private var autoLockSeconds = 300
     @AppStorage(Preferences.lockOnDeviceLockKey) private var lockOnDeviceLock = true
     @AppStorage(Preferences.clipboardKey) private var clipboardSeconds = 30
+    @AppStorage(AppAppearance.key) private var appearance = AppAppearance.system
 
     var body: some View {
         Form {
+            Section {
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(AppAppearance.allCases) { choice in
+                        Text(choice.title).tag(choice)
+                    }
+                }
+            } footer: {
+                Text("“Same as the Mac” switches between light and dark with macOS.")
+            }
+
             QuickUnlockSection()
             AutoFillSection()
 
@@ -51,5 +62,6 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 480)
         .onChange(of: autoLockSeconds) { autoLock.restart() }
+        .onChange(of: appearance) { appearance.apply() }
     }
 }
