@@ -205,6 +205,16 @@
         }
       }
     },
+    "Allow PocketKeePass to type into other apps": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass-д бусад апп руу бичихийг зөвшөөрөх"
+          }
+        }
+      }
+    },
     "An independent app for KeePass databases. Written with Claude.": {
       "localizations": {
         "mn": {
@@ -261,6 +271,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Автомат түгжээ"
+          }
+        }
+      }
+    },
+    "Auto-type stopped because another window came to the front. Some of the entry may already have been typed.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Өөр цонх урд гарч ирсэн тул автоматаар бичих зогслоо. Бичлэгийн зарим хэсэг аль хэдийн бичигдсэн байж магадгүй."
+          }
+        }
+      }
+    },
+    "Auto-type works by pressing keys for you, which macOS allows only with your permission. In System Settings › Privacy & Security › Accessibility, turn on PocketKeePass, then quit PocketKeePass (⌘Q) and open it again: macOS applies the permission when the app starts. Only allow it if you want to use auto-type: an app with this permission can press keys in any app.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автоматаар бичих нь таны өмнөөс товч дардаг бөгөөд macOS үүнийг зөвхөн таны зөвшөөрлөөр хийлгэдэг. System Settings › Privacy & Security › Accessibility хэсэгт PocketKeePass-ийг асаагаад, PocketKeePass-ийг хаагаад (⌘Q) дахин нээнэ үү: macOS зөвшөөрлийг апп эхлэхэд хэрэгжүүлдэг. Автоматаар бичихийг ашиглах бол л зөвшөөрнө үү: энэ зөвшөөрөлтэй апп ямар ч апп дотор товч дарж чадна."
           }
         }
       }
@@ -491,6 +521,36 @@
         }
       }
     },
+    "Copy Password": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нууц үг хуулах"
+          }
+        }
+      }
+    },
+    "Copy URL": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "URL хуулах"
+          }
+        }
+      }
+    },
+    "Copy Username": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хэрэглэгчийн нэр хуулах"
+          }
+        }
+      }
+    },
     "Create": {
       "localizations": {
         "mn": {
@@ -717,6 +777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Хөдөлгүүр"
+          }
+        }
+      }
+    },
+    "Entry": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бичлэг"
           }
         }
       }
@@ -1271,6 +1341,16 @@
         }
       }
     },
+    "Nothing to copy: the %@ is empty.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуулах зүйл алга: %@ хоосон байна."
+          }
+        }
+      }
+    },
     "One-time code": {
       "localizations": {
         "mn": {
@@ -1287,6 +1367,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сайтууд ихэвчлэн зөвшөөрдөг тэмдэгтүүд л: %@"
+          }
+        }
+      }
+    },
+    "Open System Settings": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Системийн тохиргоог нээх"
+          }
+        }
+      }
+    },
+    "Open URL": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "URL нээх"
           }
         }
       }
@@ -1327,6 +1427,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нууц үгс"
+          }
+        }
+      }
+    },
+    "Perform Auto-Type": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автоматаар бичих"
           }
         }
       }
@@ -1417,6 +1527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "PocketKeePass нь KeePass өгөгдлийн санг (.kdbx) нээж, хадгалдаг. KeePass болон түүний файлын форматыг Dominik Reichl (keepass.info) бүтээсэн. PocketKeePass бол бие даасан апп. Үүнийг KeePass төсөл хийгээгүй, дэмжээгүй бөгөөд тэдний кодыг огт ашигладаггүй."
+          }
+        }
+      }
+    },
+    "PocketKeePass opens only web addresses (http and https). Copy the URL to use it elsewhere.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PocketKeePass зөвхөн вэб хаяг (http, https) нээдэг. Өөр газар ашиглах бол URL-ийг хуулна уу."
           }
         }
       }
@@ -1911,6 +2031,16 @@
         }
       }
     },
+    "There’s no other app to type into. Open the window you want to sign in to first, then come back and choose Perform Auto-Type.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бичих өөр апп алга. Эхлээд нэвтрэх цонхоо нээгээд, энд буцаж ирээд «Автоматаар бичих» командыг сонгоно уу."
+          }
+        }
+      }
+    },
     "This database uses the older KDBX 3 format, and PocketKeePass only saves KDBX 4. Upgrading keeps everything in it. KeePass 2.35 or later, KeePassXC 2.3 or later, and current KeePass apps open KDBX 4, but apps that only know KDBX 3 won’t open the file after you save.": {
       "localizations": {
         "mn": {
@@ -1937,6 +2067,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Энэ төхөөрөмж найдвартай санамсаргүй тоо гаргаж чадаагүй тул өгөгдлийн санг хадгалсангүй."
+          }
+        }
+      }
+    },
+    "This entry has no URL.": {
+      "localizations": {
+        "mn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Энэ бичлэгт URL алга."
           }
         }
       }

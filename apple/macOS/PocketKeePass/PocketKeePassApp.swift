@@ -36,6 +36,7 @@ struct PocketKeePassApp: App {
                     .disabled(!session.isUnlocked)
             }
             FindCommands()
+            EntryCommands()
         }
 
         Settings {
