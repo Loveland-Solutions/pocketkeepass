@@ -94,6 +94,14 @@ final class Editing {
     var message: String?
     /// A change is running.
     private(set) var busy = false
+    /// Bumped by Find (⌘F): the root screen, which holds the search field, focuses it.
+    private(set) var findRequests = 0
+
+    /// Find (⌘F): back to the root screen, where search covers the whole database.
+    func find() {
+        path = []
+        findRequests += 1
+    }
 
     /// Runs `edit` now, or after asking to upgrade a KDBX 3 file, which can't be saved as it is.
     func begin(_ session: Session, _ edit: @escaping @MainActor () -> Void) {

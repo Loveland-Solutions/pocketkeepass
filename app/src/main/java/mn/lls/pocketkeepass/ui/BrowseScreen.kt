@@ -166,7 +166,7 @@ fun BrowseScreen(
     Scaffold(
         topBar = {
             if (state.searching) {
-                SearchBar(searchQuery, onCloseSearch, onLock)
+                SearchBar(searchQuery, state.searchFocus, onCloseSearch, onLock)
             } else {
                 TopAppBar(
                     navigationIcon = {
@@ -301,7 +301,7 @@ private fun GroupTitle(listing: GroupListing, databaseName: String) {
  * slot: typing didn't reach a field placed there.
  */
 @Composable
-private fun SearchBar(query: TextFieldState, onClose: () -> Unit, onLock: () -> Unit) {
+private fun SearchBar(query: TextFieldState, focusKey: Int, onClose: () -> Unit, onLock: () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(
             Modifier.fillMaxWidth().windowInsetsPadding(TopAppBarDefaults.windowInsets).height(64.dp).padding(horizontal = 4.dp),
@@ -310,7 +310,7 @@ private fun SearchBar(query: TextFieldState, onClose: () -> Unit, onLock: () -> 
             IconButton(onClick = onClose) {
                 Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.back))
             }
-            SearchField(query, Modifier.weight(1f).padding(start = 12.dp))
+            SearchField(query, Modifier.weight(1f).padding(start = 12.dp), focusKey = focusKey)
             if (query.text.isNotEmpty()) {
                 IconButton(onClick = { query.clearText() }) {
                     Icon(painterResource(R.drawable.ic_close), stringResource(R.string.clear_search))
@@ -324,9 +324,10 @@ private fun SearchBar(query: TextFieldState, onClose: () -> Unit, onLock: () -> 
 }
 
 @Composable
-internal fun SearchField(query: TextFieldState, modifier: Modifier, focusAtOnce: Boolean = true) {
+internal fun SearchField(query: TextFieldState, modifier: Modifier, focusAtOnce: Boolean = true, focusKey: Any = Unit) {
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { if (focusAtOnce) focus.requestFocus() }
+    // A new `focusKey` (Ctrl+F again) takes the cursor back.
+    LaunchedEffect(focusKey) { if (focusAtOnce) focus.requestFocus() }
     val style = MaterialTheme.typography.titleLarge
     BasicTextField(
         state = query,

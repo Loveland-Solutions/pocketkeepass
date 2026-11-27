@@ -2,8 +2,9 @@ import Observation
 import PocketKeePassCore
 import SwiftUI
 
-/// Presents the browser's edits: the entry editor, the group form, the move picker, and the
-/// questions. Put once on the browser's root.
+/// Presents the browser's edits: the entry editor (iPhone only: the Mac edits in place, in the
+/// window's right-hand column), the group form, the move picker, and the questions. Put once on
+/// the browser's root.
 struct EditingPresenter: ViewModifier {
     @Bindable var editing: Editing
     /// Shows an entry: the iPhone pushes its screen, the Mac selects it.
@@ -12,11 +13,13 @@ struct EditingPresenter: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            #if os(iOS)
             .sheet(item: $editing.entryForm) { form in
                 // A new entry opens once it's saved, as on Android.
                 EntryEditorView(form: form, created: openEntry)
-                    .formStyle(.grouped).macSheetFrame(width: 560, height: 640)
+                    .formStyle(.grouped)
             }
+            #endif
             .sheet(item: $editing.groupForm) { form in
                 GroupEditorView(form: form)
                     .formStyle(.grouped).macSheetFrame(width: 460, height: 320)

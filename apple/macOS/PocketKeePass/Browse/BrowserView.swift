@@ -12,13 +12,17 @@ struct BrowserView: View {
     @State private var query = ""
     @State private var editing = Editing()
     @State private var showingSync = false
+    @FocusState private var searchFocused: Bool
+    /// Where to go once the open editor's changes are saved or discarded.
+    @State private var pendingLeave: (@MainActor () -> Void)?
+    @State private var askingLeave = false
     #if DEBUG
     @Environment(\.openSettings) private var openSettings
     #endif
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selectedGroup) {
+            List(selection: groupSelection) {
                 // The top group as a row of its own, with its subgroups shown below it (not
                 // folded inside it, which would hide everything at first).
                 ForEach(tree) { root in
@@ -32,12 +36,11 @@ struct BrowserView: View {
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 220)
         } content: {
-            List(selection: $selectedEntry) {
+            List(selection: entrySelection) {
                 Section {
                     ForEach(entries) { row in
                         EntryRowView(row: row, showsPath: !query.isEmpty)
                             .tag(row.id)
-                            .contextMenu { entryMenu(row) }
                     }
                 } header: {
                     SyncLine { showingSync = true }
@@ -49,10 +52,28 @@ struct BrowserView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            // Double-clicking an entry opens it for editing; right-clicking gives its menu.
+            .contextMenu(forSelectionType: String.self) { ids in
+                if let id = ids.first, ids.count == 1, let row = entries.first(where: { $0.id == id }) {
+                    entryMenu(row)
+                }
+            } primaryAction: { ids in
+                if let id = ids.first, ids.count == 1 { edit(id) }
+            }
             .searchable(text: $query, placement: .toolbar, prompt: Text("Search entries"))
+            .searchFocused($searchFocused)
             .navigationSplitViewColumnWidth(min: 240, ideal: 300)
         } detail: {
-            if let selectedEntry {
+            if let form = editing.entryForm {
+                // Edited in place. Choosing another entry or group leaves it, asking first
+                // if anything changed (`leavingEditor`).
+                EntryEditorView(form: form, created: { id in
+                    query = ""
+                    selectedEntry = id
+                }, close: { editing.entryForm = nil })
+                .formStyle(.grouped)
+                .id(form.id)
+            } else if let selectedEntry {
                 EntryDetailView(id: selectedEntry)
                     .id(selectedEntry)
             } else {
@@ -60,6 +81,17 @@ struct BrowserView: View {
             }
         }
         .navigationTitle(session.fileName)
+        .focusedSceneValue(\.findAction, FindAction { searchFocused = true })
+        .alert(leaveTitle, isPresented: $askingLeave) {
+            Button("Save") { Task { await saveAndLeave() } }
+            Button("Discard Changes", role: .destructive) {
+                editing.entryForm = nil
+                runPendingLeave()
+            }
+            Button("Keep Editing", role: .cancel) { pendingLeave = nil }
+        } message: {
+            Text("Your changes to this entry aren’t saved yet.")
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) { SaveBar() }
         .sheet(isPresented: $showingSync) { SyncDetailsView().macSheetFrame(width: 460, height: 420) }
         .modifier(EditingPresenter(editing: editing) { id in
@@ -70,7 +102,9 @@ struct BrowserView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
-                    Button("New Entry") { if let group = targetGroup { editing.newEntry(session, groupId: group) } }
+                    Button("New Entry") {
+                        leavingEditor { if let group = targetGroup { editing.newEntry(session, groupId: group) } }
+                    }
                         .keyboardShortcut("n", modifiers: .command)
                     Button("New Group") { if let group = targetGroup { editing.newGroup(session, parentId: group) } }
                         .keyboardShortcut("n", modifiers: [.command, .shift])
@@ -117,6 +151,12 @@ struct BrowserView: View {
             }
             switch environment["PKP_DEBUG_SHOW"] {
             case "new-entry": if let group = targetGroup { editing.newEntry(session, groupId: group) }
+            case "new-entry-field":
+                if let group = targetGroup { editing.newEntry(session, groupId: group) }
+                if let field = editing.entryForm?.addField() {
+                    field.name = "Recovery codes"
+                    field.setValue("1111-2222\n3333-4444\n5555-6666")
+                }
             case "new-group": if let group = targetGroup { editing.newGroup(session, parentId: group) }
             case "settings": openSettings()
             default: break
@@ -130,6 +170,61 @@ struct BrowserView: View {
                 guard !Task.isCancelled else { return }
             }
             await loadEntries()
+        }
+    }
+
+    /// The entry list's selection. Choosing another entry while one is being edited leaves the
+    /// editor first.
+    private var entrySelection: Binding<String?> {
+        Binding(get: { selectedEntry }, set: { id in
+            guard id != selectedEntry else { return }
+            leavingEditor { selectedEntry = id }
+        })
+    }
+
+    /// The group tree's selection, which leaves the editor the same way.
+    private var groupSelection: Binding<String?> {
+        Binding(get: { selectedGroup }, set: { id in
+            guard id != selectedGroup else { return }
+            leavingEditor { selectedGroup = id }
+        })
+    }
+
+    /// Runs `go` once the entry editor is out of the way: at once if it's closed or has no
+    /// changes (it just closes), otherwise after asking whether to save or discard them.
+    private func leavingEditor(_ go: @escaping @MainActor () -> Void) {
+        guard let form = editing.entryForm else { return go() }
+        if form.isModified {
+            pendingLeave = go
+            askingLeave = true
+        } else {
+            editing.entryForm = nil
+            go()
+        }
+    }
+
+    private var leaveTitle: String {
+        let title = editing.entryForm?.mainFields.first { $0.key == "Title" }?.value ?? ""
+        return title.isEmpty ? String(localized: "Save changes to this entry?") : String(localized: "Save changes to “\(title)”?")
+    }
+
+    private func runPendingLeave() {
+        let go = pendingLeave
+        pendingLeave = nil
+        go?()
+    }
+
+    /// "Save" in the question: saves, then goes where the user was going. If saving fails, the
+    /// editor stays open with the reason.
+    private func saveAndLeave() async {
+        guard let form = editing.entryForm else { return runPendingLeave() }
+        do {
+            _ = try await form.save(in: session)
+            if editing.entryForm === form { editing.entryForm = nil }
+            runPendingLeave()
+        } catch {
+            pendingLeave = nil
+            if session.isUnlocked { editing.message = error.userMessage }
         }
     }
 
@@ -174,9 +269,22 @@ struct BrowserView: View {
     @ViewBuilder
     private func entryMenu(_ row: EntryRow) -> some View {
         let item = EditItem.entry(id: row.id, name: row.entry.title, inRecycleBin: inRecycleBin)
+        Button("Edit…") { edit(row.id) }
         Button("Duplicate") { editing.duplicate(session, id: row.id, open: false) }
         Button("Move…") { editing.move(session, item) }
         Button("Delete…", role: .destructive) { editing.delete(session, item) }
+    }
+
+    /// Opens an entry for editing in the right-hand column.
+    private func edit(_ id: String) {
+        if editing.entryForm?.entryId == id { return } // already editing it
+        leavingEditor {
+            selectedEntry = id
+            Task {
+                guard let entry = try? await engine(session, { try $0.entry(id: id) }), editing.entryForm == nil else { return }
+                editing.editEntry(session, entry)
+            }
+        }
     }
 
     /// Whether the entries shown are in the recycle bin (search never finds those).
