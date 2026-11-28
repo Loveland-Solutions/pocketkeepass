@@ -63,9 +63,17 @@ struct UnlockView: View {
             model.refreshBiometry()
             if model.recent == nil {
                 quickUnlock.forgetAll()
-            } else {
-                model.offerQuickUnlock(into: session, quickUnlock: quickUnlock)
+                return
             }
+            // macOS shows the Touch ID dialog over every app, so after an auto-lock while the
+            // user is working elsewhere it waits until they come back to PocketKeePass.
+            if !NSApp.isActive {
+                for await _ in NotificationCenter.default.notifications(
+                    named: NSApplication.didBecomeActiveNotification
+                ) { break }
+            }
+            guard !Task.isCancelled else { return }
+            model.offerQuickUnlock(into: session, quickUnlock: quickUnlock)
         }
     }
 
